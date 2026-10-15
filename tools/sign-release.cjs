@@ -43,7 +43,8 @@ function sign(directory, compilerPackage, key = publicKey()) {
       assert.equal(manifest.version, VERSION);assert.equal(manifest.architecture, arch)
       assert.equal(hash(before), manifest.packageSha256);assert.equal(before.length, manifest.packageBytes)
       run(['verify', '--allow-untrusted', '--keys-dir', empty, file])
-      run(['adbsign', '--sign-key', privateFile, file])
+      // 签名工具需要允许读取尚未签名的输入；生成后必须独立严格验签，不用于用户安装。
+      run(['adbsign', '--allow-untrusted', '--sign-key', privateFile, file])
       run(['verify', '--keys-dir', trusted, file])
       reject(file)
       const signed = fs.readFileSync(file), tampered = Buffer.from(signed), bad = path.join(stage, 'tampered.apk')

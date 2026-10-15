@@ -722,7 +722,7 @@
     },
     {
       "path": "tools/sign-release.cjs",
-      "sha256": "08ac503fd8d70ca36e7019c83115b063ed3c810c1963f94090b4679d1fd59c6a"
+      "sha256": "d0a05cfef113574d1b6d97d2619d6a544e356619041b97bcaff7e04dd5a5abd0"
     },
     {
       "path": "tools/ui-tests/package-lock.json",
