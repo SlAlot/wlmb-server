@@ -1,7 +1,7 @@
 # 网络面板项目配置；保留运行入口、依赖版本与安全边界。
 [package]
 name = "wlmb-server"
-version = "1.0.5"
+version = "1.0.6"
 edition = "2024"
 rust-version = "1.85"
 publish = false

@@ -99,9 +99,22 @@ pub fn request(method: &str, args: Value) -> Result<Value> {
     transport::write_frame(&mut stream, &json!({"method":method,"args":args}), deadline)?;
     transport::read_frame(&mut stream, deadline)
 }
+fn validate_health(reply: &Value) -> Result<()> {
+    if reply["ok"] == true
+        && reply["data"]["backend"] == "rust"
+        && reply["data"]["version"] == VERSION
+    {
+        Ok(())
+    } else {
+        Err(unavailable())
+    }
+}
+/// 通过仅限根用户的本地套接字确认同版服务响应，不经过需要登录的网页接口。
+pub fn check_ready() -> Result<()> {
+    validate_health(&request("ping", json!({}))?)
+}
 fn runtime() -> Value {
-    let ready =
-        request("ping", json!({})).is_ok_and(|r| r["ok"] == true && r["data"]["backend"] == "rust");
+    let ready = check_ready().is_ok();
     let boot = transport::process(
         "/sbin/uci",
         &["-q", "get", "network_panel.main.boot_enabled"],
@@ -243,4 +256,28 @@ pub fn serve(
         }
         let _ = fs::remove_file(SOCKET);
     }))
+}
+
+#[cfg(test)]
+mod health_tests {
+    use super::*;
+
+    #[test]
+    fn readiness_requires_successful_same_version_rust_response() {
+        assert!(
+            validate_health(&json!({"ok":true,"data":{"backend":"rust","version":VERSION}}))
+                .is_ok()
+        );
+        for reply in [
+            json!(null),
+            json!({"data":{"running":true}}),
+            json!({"ok":false,"error":{"code":"SESSION_EXPIRED"}}),
+            json!({"ok":true,"data":{"backend":"rust","version":"0.0.0"}}),
+            json!({"ok":true,"data":{"backend":"rust"}}),
+            json!({"ok":true,"data":{"backend":"other","version":VERSION}}),
+            json!({"ok":false,"data":{"backend":"rust","version":VERSION}}),
+        ] {
+            assert!(validate_health(&reply).is_err());
+        }
+    }
 }

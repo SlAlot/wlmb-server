@@ -181,10 +181,11 @@ marker=$("/usr/sbin/wlmb-server" --version 2>/dev/null || true)
 case "$marker" in "WLMB_BUILD=$VERSION;"*) ;; *) fail '安装后版本未匹配；请检查包管理器输出' ;; esac
 ready=0
 for attempt in 1 2 3 4 5 6 7 8 9 10; do
-  if ubus call network-panel service_status 2>/dev/null | grep -Eq '"running"[[:space:]]*:[[:space:]]*true'; then ready=1; break; fi
+  # 本地套接字校验权限、服务响应与版本；不向受保护的网页接口发送无会话请求。
+  if "/usr/sbin/wlmb-server" --check-ready >/dev/null 2>&1; then ready=1; break; fi
   sleep 1
 done
-[ "$ready" = 1 ] || fail '安装包已写入，但服务未就绪；请在LuCI启动项检查，或运行 logread -e wlmb-server'
+[ "$ready" = 1 ] || fail '安装包已写入，但同版服务尚未就绪；无需重复安装，请运行 /etc/init.d/wlmb-server status 和 logread -e wlmb-server 排查'
 printf '\n安装完成：网络面板 %s\n后台入口：LuCI → 服务 → 网络面板\n' "$VERSION"
 address=$(uci -q get network.lan.ipaddr 2>/dev/null || true)
 address=${address%%/*}

@@ -23,6 +23,12 @@ mod linux {
     }
     #[test]
     fn rpc_acl_is_required_and_method_specific() {
+        assert_eq!(
+            rpc::authorize(&Mock(true), "service_status", &json!({}))
+                .err()
+                .map(|error| error.code),
+            Some("SESSION_EXPIRED")
+        );
         assert!(
             rpc::authorize(
                 &Mock(true),

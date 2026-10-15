@@ -9,6 +9,7 @@ assert(!/@[A-Z0-9_]+@/.test(source))
 assert(source.includes("VERSION='" + VERSION + "'") && source.includes(key.sha256))
 assert(!/--allow-untrusted|--no-check-certificate|--force-|curl[^\n]*\|\s*sh|eval\s|uci\s+(?:set|commit)|(?:^|\n)\s*(?:reboot|sysupgrade)\b/.test(source))
 assert(source.includes('--simulate') && source.includes('--noaction') && source.includes('PKG_SHA') && source.includes('--keys-dir'))
+assert(source.includes('--check-ready') && !source.includes('ubus call network-panel service_status'))
 assert.throws(() => render(new Map()), /安装包/)
 if (process.platform !== 'linux') {
   console.log('安装器版本、固定摘要、无校验绕过及模板检查通过；POSIX流程回归由Linux CI执行。')
@@ -25,7 +26,7 @@ function fixture(name, options = {}) {
   write(path.join(bundle, key.fileName), key.publicKeyPem)
   write(path.join(dir, 'config-kept'), '已有配置不删除\n')
   const config = { manager: options.manager || 'apk', abi: options.abi || 'aarch64_cortex-a53', ...options, dir, bundle, trust, server, log }
-  const marker = version => '#!/bin/sh\nprintf "%s\\n" "WLMB_BUILD=' + version + ';pushplus-https=1"\n'
+  const marker = version => '#!' + process.execPath + '\n' + `const fs=require('node:fs'),c=${JSON.stringify(config)},a=process.argv.slice(2);fs.appendFileSync(c.log,JSON.stringify({name:'wlmb-server',a})+'\\n');if(a[0]==='--version'){console.log('WLMB_BUILD=${version};pushplus-https=1');process.exit(0)}if(a[0]==='--check-ready'){const checks=fs.readFileSync(c.log,'utf8').split('\\n').filter(v=>v.includes('--check-ready')).length;process.exit(c.notReady||c.staleDaemon||checks<=(c.readyDelay||0)?1:0)}process.exit(2);\n`
   if (options.current) write(server, marker(options.current), 0o755)
   if (options.conflictingKey) write(path.join(trust, key.fileName), '另一个公钥')
   if (options.existingKey) write(path.join(trust, key.fileName), key.publicKeyPem)
@@ -42,7 +43,7 @@ if(name==='id'){console.log(c.nonRoot?'1000':'0');process.exit(0)}
 if(name==='sleep')process.exit(0);
 if(name==='df'){console.log('Filesystem 1024-blocks Used Available Capacity Mounted');console.log('fixture 1000000 1 '+(c.lowSpace?'1':'999999')+' 1% /');process.exit(0)}
 if(name==='uci'){console.log('192.168.66.1');process.exit(0)}
-if(name==='ubus'){console.log(JSON.stringify({data:{running:!c.notReady}}));process.exit(0)}
+if(name==='ubus'){console.log(JSON.stringify({ok:false,error:{code:'SESSION_EXPIRED'}}));process.exit(0)}
 if(name==='curl'){if(c.downloadFails)process.exit(22);const out=a[a.indexOf('--output')+1],file=path.basename(a[a.length-1]);fs.copyFileSync(path.join(c.bundle,file),out);process.exit(0)}
 if(name==='apk'&&a.includes('--print-arch')){if(c.manager!=='apk')process.exit(1);console.log(c.defaultAbi||c.abi);process.exit(0)}
 if(name==='opkg'&&a.includes('print-architecture')){if(c.manager!=='opkg')process.exit(1);console.log('arch all 1\\narch '+c.abi+' 10');process.exit(0)}
@@ -72,13 +73,18 @@ process.exit(1);`
     assert.notEqual(result.status, 0, name + ': 应拒绝\n' + output)
     assert(!output.includes('安装完成：'), name + ': 失败不能显示安装完成')
   } else assert.equal(result.status, 0, name + '\n' + output)
-  const expectedInstalls = options.fail ? (options.installFails || options.notReady ? 1 : 0) : options.check || options.cancel ? 0 : 1
+  const expectedInstalls = options.fail ? (options.installFails || options.notReady || options.staleDaemon ? 1 : 0) : options.check || options.cancel ? 0 : 1
   assert.equal(installs.length, expectedInstalls, name)
   const keyPath = path.join(trust, key.fileName)
   if (options.conflictingKey) assert.equal(fs.readFileSync(keyPath, 'utf8'), '另一个公钥')
   else if (options.existingKey || config.manager === 'apk' && (installs.length || !options.fail && !options.check && !options.cancel)) assert.equal(fs.readFileSync(keyPath, 'utf8'), key.publicKeyPem)
   else assert(!fs.existsSync(keyPath), name + ': 取消、检查或预检失败不能残留新公钥')
   if (options.check) assert(!actions.some(row => row.a.includes('update') || row.a.includes('--simulate') || row.a.includes('--noaction')))
+  assert(!actions.some(row => row.name === 'ubus'), name + ': 安装器不能依赖无会话网页RPC')
+  const checks = actions.filter(row => row.name === 'wlmb-server' && row.a.includes('--check-ready'))
+  if (options.notReady || options.staleDaemon) assert.equal(checks.length, 10)
+  else if (!options.fail && !options.check && !options.cancel) assert.equal(checks.length, 1 + (options.readyDelay || 0))
+  else assert.equal(checks.length, 0)
   if (!options.fail && !options.check && !options.cancel) assert(output.includes('192.168.66.1:1117'))
   return { actions, output }
 }
@@ -93,6 +99,9 @@ try {
   fixture('preflight', { preflightFails: true, fail: true })
   fixture('install-failure', { installFails: true, fail: true })
   fixture('not-ready', { notReady: true, fail: true })
+  fixture('stale-daemon', { staleDaemon: true, fail: true })
+  fixture('delayed-ready', { readyDelay: 3 })
+  fixture('ipk-not-ready', { manager: 'opkg', notReady: true, fail: true })
   fixture('non-root', { nonRoot: true, fail: true });fixture('space', { lowSpace: true, fail: true })
   fixture('downgrade', { current: '99.0.0', fail: true });fixture('upgrade', { current: '1.0.3' })
   fixture('symlink', { linkedPackage: true, fail: true })

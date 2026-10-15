@@ -4,7 +4,7 @@
 
 面向OpenWrt的轻量模组信息与管理插件，作者 **SlAlot**。**Rust后端＋独立LuCI WebUI**，默认端口 **1117**，不接管拨号。根据qmodem为参考开发接入，自动选择已适配的模组协议及共享／独立通道。
 
-**当前版本1.0.5，1.0.0为首个公开版本**。源码公开，允许免费非商业使用，使用及分发须保留作者和来源；**不允许未经授权的商用**。采用[自定义非商业许可](LICENSE)，不是MIT／GPL或OSI认可的开源许可。第三方组件保留各自原有许可。
+**当前版本1.0.6，1.0.0为首个公开版本**。源码公开，允许免费非商业使用，使用及分发须保留作者和来源；**不允许未经授权的商用**。采用[自定义非商业许可](LICENSE)，不是MIT／GPL或OSI认可的开源许可。第三方组件保留各自原有许可。
 
 ## 一键安装（推荐）
 
@@ -30,10 +30,10 @@ wget -O /tmp/wlmb-install.sh https://github.com/SlAlot/wlmb-server/releases/late
 
 ```sh
 # IPK固件
-opkg install /tmp/wlmb-server-1.0.5-aarch64.ipk
+opkg install /tmp/wlmb-server-1.0.6-aarch64.ipk
 
 # APK固件：先按教程导入固定公钥，不跳过验签
-apk add /tmp/wlmb-server-1.0.5-aarch64.apk
+apk add /tmp/wlmb-server-1.0.6-aarch64.apk
 ```
 
 缺少依赖时使用固件自身软件源安装LuCI、rpcd、rpcd-mod-iwinfo和uci，不要混用不同固件的软件源。仅在可信局域网使用，不向公网开放1117。
@@ -67,4 +67,4 @@ cargo clippy --locked --all-targets --all-features --manifest-path backend/Cargo
 
 推送与源码版本一致的`vX.Y.Z`标签后，Actions自动检查、交叉编译并生成两架构IPK／APK，核对清单后上传Release，同时提供SHA-256、构建提交和逐型号报告。失败不发布新资产，不覆盖同名资产。见[构建与发布](docs/BUILD.md)。
 
-[更新记录](CHANGELOG.md) · [1.0.5说明](docs/RELEASE-1.0.5.md) · [安全](docs/SECURITY.md) · [性能](docs/PERFORMANCE.md) · [QModem来源](docs/QMODEM.md) · [图标许可](docs/FRONTEND-SOURCES.md)
+[更新记录](CHANGELOG.md) · [1.0.6说明](docs/RELEASE-1.0.6.md) · [安全](docs/SECURITY.md) · [性能](docs/PERFORMANCE.md) · [QModem来源](docs/QMODEM.md) · [图标许可](docs/FRONTEND-SOURCES.md)

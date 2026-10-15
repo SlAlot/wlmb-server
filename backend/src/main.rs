@@ -12,6 +12,14 @@ fn main() {
         return;
     }
     #[cfg(unix)]
+    if std::env::args().skip(1).collect::<Vec<_>>() == ["--check-ready"] {
+        if let Err(error) = wlmb_server::rpc::check_ready() {
+            eprintln!("wlmb-server: {}", error.code);
+            std::process::exit(1);
+        }
+        return;
+    }
+    #[cfg(unix)]
     if std::env::args().skip(1).collect::<Vec<_>>() == ["--serve-auto"] {
         if let Err(error) = wlmb_server::service::run_auto() {
             eprintln!("wlmb-server: {}", error.code);
