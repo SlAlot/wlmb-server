@@ -1,0 +1,6 @@
+# 网络面板项目配置；保留运行入口、依赖版本与安全边界。
+config core 'main'
+    option backend_mode 'auto'
+    option boot_enabled '1'
+    option interval '3'
+    option allow_unsafe_at '0'

@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>使用指南 · 网络面板</title>
+<link rel="stylesheet" href="panel.css?v=1.0.0&rev=release20261015">
+<link rel="stylesheet" href="guide.css?v=1.0.0&rev=release20261015">
+<script src="guide.js?v=1.0.0&rev=release20261015" defer></script>
+</head>
+<body id="wlmb-panel" class="np-root np-guide-page">
+<main class="np-guide-layout">
+<header class="np-guide-topbar">
+<a class="np-guide-brand" href="/cgi-bin/luci/admin/services/wlmb-server"><span class="np-guide-logo" aria-hidden="true">网</span><span>网络面板<small>使用指南</small></span></a>
+<div class="np-actions"><button class="np-btn outline" id="guide-theme" type="button" hidden>外观：自动</button><a class="np-btn outline" href="/cgi-bin/luci/admin/services/wlmb-server">返回面板</a></div>
+</header>
+<div class="np-guide-intro"><span class="np-guide-eyebrow">从这里开始</span><h1>连接小程序，轻松管理设备</h1><p>插件运行在路由器上；日常查看与控制，在「网络面板助手」中完成。</p></div>
+<nav class="np-guide-shortcuts" aria-label="指南章节"><a class="np-btn outline" href="#connect">连接小程序</a><a class="np-btn outline" href="#sms-forward">短信转发</a><a class="np-btn outline" href="#help">常见问题</a></nav>
+<section class="np-native-card" id="connect" aria-labelledby="connect-title">
+<header class="np-native-card-head"><h2 id="connect-title"><span class="np-guide-dot blue" aria-hidden="true"></span>连接只需三步</h2><span class="np-badge neutral">同一局域网</span></header>
+<div class="np-native-card-body">
+<ol class="np-guide-steps">
+<li><span class="np-guide-step-number">01</span><div><h3>确认插件运行</h3><p>在面板「设置」中确认服务正在运行，模组已识别。</p></div></li>
+<li><span class="np-guide-step-number">02</span><div><h3>手机连接路由器 WiFi</h3><p>在微信中搜索并打开「网络面板助手」，设备厂商选择 <strong>openwrt</strong>。</p></div></li>
+<li><span class="np-guide-step-number">03</span><div><h3>填写管理地址与账号</h3><p>使用你的管理地址，端口为 <strong>1117</strong>。填写 <strong>root</strong> 与当前 OpenWrt 后台密码后连接。</p></div></li>
+</ol>
+<div class="np-guide-address"><div><span class="np-guide-label">本机参考连接地址</span><code id="guide-address">你的管理地址:1117</code></div><button class="np-btn outline" id="guide-copy" type="button" hidden>复制地址</button></div>
+<p class="np-guide-note" id="guide-address-note">请使用路由器实际管理地址，务必保留 :1117；不一定是 192.168.1.1。</p>
+<p class="np-guide-note">插件免费使用；小程序是独立客户端，授权单独管理。只在可信局域网使用，不要将 1117 端口开放到公网。</p>
+<p class="np-guide-feedback" id="guide-feedback" role="status" aria-live="polite"></p>
+</div></section>
+<section class="np-native-card" id="sms-forward" aria-labelledby="sms-title">
+<header class="np-native-card-head"><h2 id="sms-title"><span class="np-guide-dot purple" aria-hidden="true"></span>短信与转发，各自开关</h2></header>
+<div class="np-native-card-body np-guide-sms-grid">
+<div class="np-guide-feature"><span class="np-guide-label">查看短信</span><h3>先开启短信收取</h3><p>在插件「短信」页开启收取，再读取收件箱。小程序可在「短信」中查看；没有短信时，空列表是正常状态。</p></div>
+<div class="np-guide-feature"><span class="np-guide-label">PushPlus 转发</span><h3>填入 Token，再开启转发</h3><p>小程序入口：<strong>设置 → 短信转发</strong>。插件入口：<strong>短信 → 短信转发</strong>。保存 PushPlus Token 并开启后，只转发新收到的短信，不补发首次启用前的历史短信。</p></div>
+<p class="np-guide-note np-guide-full">新短信事件到达时优先处理；无事件时默认每 10 秒检查，通道忙碌会退避，不保证固定送达时间。关闭转发会停止转发任务；独立收取开关不受影响，两项都关闭时不运行后台收取任务。</p>
+<p class="np-guide-note np-guide-full">Token 不在页面回显。启用转发后，短信正文将通过 HTTPS 交给 PushPlus；请确认自己的 Token 与隐私设置。</p>
+</div></section>
+<section class="np-native-card" id="help" aria-labelledby="help-title">
+<header class="np-native-card-head"><h2 id="help-title"><span class="np-guide-dot green" aria-hidden="true"></span>需要时再看</h2><span class="np-badge neutral">常见问题</span></header>
+<div class="np-native-card-body np-guide-questions">
+<details id="connection-help"><summary>连接不上小程序怎么办？</summary><p>先核对管理地址与 :1117，再检查手机是否连到同一路由器、微信是否允许本地网络访问。访客 WiFi 可能隔离局域网。仍无法连接时，到插件设置查看运行状态与「脱敏诊断」。</p></details>
+<details id="radio"><summary>信号、频段或邻区显示「—」？</summary><p>功能按模组实际能力开放。「—」表示本次未读取，不代表信号为零。子载波可能只报告频段与带宽，不报告信号参数。请结合通道状态与诊断信息判断，不要反复发送查询。</p></details>
+<details id="locks"><summary>锁频与锁小区，怎样操作更安全？</summary><p>先读取配置，再选频段或从服务小区、邻区加入锁定目标，检查并保存。保存配置不等于已经驻留到目标；请查看后续反馈。插件不自动切飞行模式、重拨或重启，供网设备请谨慎操作。解除锁定也需确认。</p></details>
+<details id="at"><summary>AT 控制台有什么注意事项？</summary><p>优先使用面板已有功能。AT 默认只读，配置型指令需开放权限并逐次确认；不要粘贴来源不明的命令。共享模式使用现有通道，独立模式核验空闲接口，不抢占串口或接管拨号。</p></details>
+<details id="features"><summary>流量统计与其他控制有什么限制？</summary><p>流量按插件记录累计，与运营商账单可能不同；限额停网仅在已核验的防火墙环境开放。WiFi 修改可能短暂断开连接，短信发送可能收费、删除不可撤销。写操作结果不明时，先刷新状态，不要重复提交。</p></details>
+<details id="sms-help"><summary>开启后仍没有新短信或转发？</summary><p>没有收到短信时，列表为空是正常的。确认收取／转发开关、Token 和设备联网状态，再检查插件日志中的具体原因。不同模组及共享通道能力不同，不要以空列表直接判断功能不支持。</p></details>
+</div></section>
+<footer class="np-guide-footer"><span>SlAlot · 网络面板</span><span>根据 qmodem 为参考开发接入</span></footer>
+</main>
+</body></html>

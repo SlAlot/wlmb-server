@@ -1,0 +1,11 @@
+{
+  "name": "wlmb-ui-offline-tests",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Development-only DOM fixture runtime; never installed on OpenWrt",
+  "devDependencies": {
+    "acorn": "8.15.0",
+    "jsdom": "26.1.0",
+    "yaml": "2.9.1"
+  }
+}

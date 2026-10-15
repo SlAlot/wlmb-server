@@ -1,0 +1,13 @@
+target/
+**/target/
+dist/
+tmp/
+node_modules/
+.env
+.env.*
+*.key
+*.pem
+*.apk
+*.ipk
+*.log
+.wlmb-export-state.json

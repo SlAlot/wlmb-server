@@ -1,0 +1,36 @@
+# 网络面板项目配置；保留运行入口、依赖版本与安全边界。
+name: QModem upstream compatibility audit
+on:
+  workflow_dispatch:
+    inputs:
+      upstream_ref:
+        description: Upstream branch or reviewed commit (report only, no auto merge)
+        required: true
+        default: main
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          repository: FUjr/QModem
+          ref: ${{ inputs.upstream_ref }}
+          path: upstream-reference
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '24'
+      - uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249
+      - run: cargo build --manifest-path backend/Cargo.toml --locked
+      - run: node tools/check-qmodem-audit.cjs
+      - name: Compare upstream facts and protocol hashes with Rust implementation
+        run: node tools/qmodem-audit.cjs --upstream upstream-reference --binary backend/target/debug/wlmb-server --report upstream-audit.json
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: qmodem-compatibility-audit
+          path: upstream-audit.json
+          if-no-files-found: error
+          retention-days: 30

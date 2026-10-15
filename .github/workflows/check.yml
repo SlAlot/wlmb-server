@@ -1,0 +1,150 @@
+# 网络面板项目配置；保留运行入口、依赖版本与安全边界。
+name: Rust and frontend checks
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: '正式标签，例如v1.0.0；仅构建可留空'
+        type: string
+        default: ''
+      publish:
+        description: '检查和构建通过后上传Release'
+        type: boolean
+        default: false
+permissions:
+  contents: read
+concurrency:
+  group: wlmb-${{ github.event.release.tag_name || inputs.tag || github.ref }}
+  cancel-in-progress: false
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.event.release.tag_name || inputs.tag || github.ref }}
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '24'
+      - uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249
+        with:
+          components: rustfmt, clippy
+      - run: node tools/check-project.cjs
+      - run: node tools/audit-release-boundary.cjs --summary
+      - run: node tools/check-package.cjs
+      - run: node tools/check-luci.cjs
+      - run: npm ci --prefix tools/ui-tests --ignore-scripts --no-audit --no-fund
+      - run: node tools/check-comments.cjs
+      - run: node tools/check-release-workflow.cjs
+      - run: node tools/check-release-assets.cjs
+      - run: node tools/dependency-notices.cjs --check
+      - run: node tools/check-webui.cjs
+      - run: node tools/check-ui-layout.cjs
+      - run: node tools/check-qmodem-audit.cjs
+      - run: node tools/check-release-readiness.cjs
+      - run: cargo fmt --manifest-path backend/Cargo.toml --check
+      - run: cargo clippy --manifest-path backend/Cargo.toml --all-targets --all-features --locked -- -D warnings
+      - run: cargo test --manifest-path backend/Cargo.toml --all-features --locked
+      - name: Generate honest protocol release readiness
+        run: |
+          cargo run --manifest-path backend/Cargo.toml --locked -- --catalog > "$RUNNER_TEMP/wlmb-catalog.json"
+          node tools/release-readiness.cjs "$RUNNER_TEMP/wlmb-catalog.json" "$RUNNER_TEMP/wlmb-release-readiness.json"
+          node tools/compatibility-report.cjs "$RUNNER_TEMP/wlmb-catalog.json" "$RUNNER_TEMP/wlmb-compatibility.json"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: wlmb-release-readiness
+          path: |
+            ${{ runner.temp }}/wlmb-release-readiness.json
+            ${{ runner.temp }}/wlmb-compatibility.json
+          if-no-files-found: error
+          retention-days: 7
+  native-build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target: [x86_64-unknown-linux-musl, aarch64-unknown-linux-musl]
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.event.release.tag_name || inputs.tag || github.ref }}
+      - uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249
+        with:
+          targets: ${{ matrix.target }}
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '24'
+      - run: sudo apt-get update && sudo apt-get install -y musl-tools gcc-aarch64-linux-gnu
+      - name: Locate toolchain linker
+        run: |
+          linker="$(find "$(rustc --print sysroot)/lib/rustlib" -type f -name rust-lld -print -quit)"
+          test -n "$linker"
+          mkdir -p "$RUNNER_TEMP/wlmb-toolchain"
+          ln -s "$linker" "$RUNNER_TEMP/wlmb-toolchain/rust-lld"
+          echo "$RUNNER_TEMP/wlmb-toolchain" >> "$GITHUB_PATH"
+      - name: Build native Rust with PushPlus HTTPS
+        env:
+          CARGO_TARGET_X86_64_UNKNOWN_LINUX_MUSL_LINKER: rust-lld
+          CARGO_TARGET_AARCH64_UNKNOWN_LINUX_MUSL_LINKER: rust-lld
+          CC_x86_64_unknown_linux_musl: musl-gcc
+          CC_aarch64_unknown_linux_musl: aarch64-linux-gnu-gcc
+        run: cargo build --manifest-path backend/Cargo.toml --release --all-features --locked --target ${{ matrix.target }}
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: wlmb-server-${{ matrix.target }}
+          path: backend/target/${{ matrix.target }}/release/wlmb-server
+          if-no-files-found: error
+          retention-days: 7
+      - name: Build verified APK and IPK containers
+        run: |
+          curl --fail --location --retry 2 https://dl-cdn.alpinelinux.org/alpine/v3.23/main/x86_64/apk-tools-static-3.0.8-r0.apk --output "$RUNNER_TEMP/wlmb-apk-compiler.apk"
+          case '${{ matrix.target }}' in
+            aarch64-unknown-linux-musl) arch=aarch64; abi=aarch64_cortex-a53 ;;
+            x86_64-unknown-linux-musl) arch=x86_64; abi=x86_64 ;;
+            *) exit 1 ;;
+          esac
+          node tools/package-native.cjs backend/target/${{ matrix.target }}/release/wlmb-server "$arch" "$abi" "$RUNNER_TEMP/wlmb-apk-compiler.apk"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: wlmb-packages-${{ matrix.target }}
+          path: dist/
+          if-no-files-found: error
+          retention-days: 7
+  publish:
+    needs: [verify, native-build]
+    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && inputs.publish)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.event.release.tag_name || inputs.tag || github.ref }}
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '24'
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          path: ${{ runner.temp }}/wlmb-artifacts
+      - name: 核对标签及全部制品
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name || inputs.tag || github.ref_name }}
+        run: |
+          expected="v$(node -p "require('./tools/package-source.cjs').VERSION")"
+          test "$RELEASE_TAG" = "$expected"
+          test "$(git rev-parse HEAD)" = "$(git rev-parse "refs/tags/$RELEASE_TAG^{commit}")"
+          node tools/release-assets.cjs "$RUNNER_TEMP/wlmb-artifacts" "$RUNNER_TEMP/wlmb-release" "$RELEASE_TAG"
+          cd "$RUNNER_TEMP/wlmb-release"
+          sha256sum --check SHA256SUMS
+      - name: 上传已验证的安装包和兼容报告
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.event.release.tag_name || inputs.tag || github.ref_name }}
+        run: |
+          node tools/publish-release.cjs "$RUNNER_TEMP/wlmb-release" "$RELEASE_TAG"

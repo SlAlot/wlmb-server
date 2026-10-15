@@ -1,0 +1,891 @@
+{
+  "schema": "WLMB-QMODEM-REFERENCE/1",
+  "repository": "https://github.com/FUjr/QModem",
+  "revision": "c49654efc870f53712ee8e25bf181722eb1466d9",
+  "scope": "hardware-facts-and-source-hashes-only",
+  "hashMode": "committed-git-blob-sha256",
+  "models": [
+    {
+      "model": "a7605c",
+      "vendor": "simcom",
+      "platform": "lte",
+      "transport": "usb"
+    },
+    {
+      "model": "a8200c-m2",
+      "vendor": "simcom",
+      "platform": "asrmicro",
+      "transport": "usb"
+    },
+    {
+      "model": "ag598eeu",
+      "vendor": "quectel",
+      "platform": "qualcomm",
+      "transport": "usb"
+    },
+    {
+      "model": "air724ug",
+      "vendor": "openluat",
+      "platform": "unisoc",
+      "transport": "usb"
+    },
+    {
+      "model": "ec200a",
+      "vendor": "quectel",
+      "platform": "lte",
+      "transport": "usb"
+    },
+    {
+      "model": "ec20f",
+      "vendor": "quectel",
+      "platform": "lte",
+      "transport": "usb"
+    },
+    {
+      "model": "ec21",
+      "vendor": "quectel",
+      "platform": "lte",
+      "transport": "usb"
+    },
+    {
+      "model": "ec25",
+      "vendor": "quectel",
+      "platform": "lte",
+      "transport": "usb"
+    },
+    {
+      "model": "eg25",
+      "vendor": "quectel",
+      "platform": "lte",
+      "transport": "usb"
+    },
+    {
+      "model": "em05-cn",
+      "vendor": "quectel",
+      "platform": "lte",
+      "transport": "usb"
+    },
+    {
+      "model": "em05",
+      "vendor": "quectel",
+      "platform": "lte",
+      "transport": "usb"
+    },
+    {
+      "model": "em12",
+      "vendor": "quectel",
+      "platform": "lte",
+      "transport": "usb"
+    },
+    {
+      "model": "em120k",
+      "vendor": "quectel",
+      "platform": "lte12",
+      "transport": "usb"
+    },
+    {
+      "model": "em160r-gl",
+      "vendor": "quectel",
+      "platform": "lte12",
+      "transport": "usb"
+    },
+    {
+      "model": "em9190",
+      "vendor": "sierra",
+      "platform": "qualcomm",
+      "transport": "pcie"
+    },
+    {
+      "model": "em9190",
+      "vendor": "sierra",
+      "platform": "qualcomm",
+      "transport": "usb"
+    },
+    {
+      "model": "em9291",
+      "vendor": "sierra",
+      "platform": "qualcomm",
+      "transport": "pcie"
+    },
+    {
+      "model": "em9291",
+      "vendor": "sierra",
+      "platform": "qualcomm",
+      "transport": "usb"
+    },
+    {
+      "model": "ep06",
+      "vendor": "quectel",
+      "platform": "lte",
+      "transport": "usb"
+    },
+    {
+      "model": "fm150-ae",
+      "vendor": "fibocom",
+      "platform": "qualcomm",
+      "transport": "pcie"
+    },
+    {
+      "model": "fm150-ae",
+      "vendor": "fibocom",
+      "platform": "qualcomm",
+      "transport": "usb"
+    },
+    {
+      "model": "fm160-cn",
+      "vendor": "fibocom",
+      "platform": "qualcomm",
+      "transport": "pcie"
+    },
+    {
+      "model": "fm160-cn",
+      "vendor": "fibocom",
+      "platform": "qualcomm",
+      "transport": "usb"
+    },
+    {
+      "model": "fm160-eau",
+      "vendor": "fibocom",
+      "platform": "qualcomm",
+      "transport": "pcie"
+    },
+    {
+      "model": "fm160-eau",
+      "vendor": "fibocom",
+      "platform": "qualcomm",
+      "transport": "usb"
+    },
+    {
+      "model": "fm160-na",
+      "vendor": "fibocom",
+      "platform": "qualcomm",
+      "transport": "pcie"
+    },
+    {
+      "model": "fm160-na",
+      "vendor": "fibocom",
+      "platform": "qualcomm",
+      "transport": "usb"
+    },
+    {
+      "model": "fm170-eau",
+      "vendor": "fibocom",
+      "platform": "qualcomm",
+      "transport": "pcie"
+    },
+    {
+      "model": "fm170-eau",
+      "vendor": "fibocom",
+      "platform": "qualcomm",
+      "transport": "usb"
+    },
+    {
+      "model": "fm190w-gl",
+      "vendor": "fibocom",
+      "platform": "qualcomm",
+      "transport": "pcie"
+    },
+    {
+      "model": "fm190w-gl",
+      "vendor": "fibocom",
+      "platform": "qualcomm",
+      "transport": "usb"
+    },
+    {
+      "model": "fm350-gl-00",
+      "vendor": "fibocom",
+      "platform": "mediatek",
+      "transport": "usb"
+    },
+    {
+      "model": "fm350-gl",
+      "vendor": "fibocom",
+      "platform": "mediatek",
+      "transport": "pcie"
+    },
+    {
+      "model": "fm350-gl",
+      "vendor": "fibocom",
+      "platform": "mediatek",
+      "transport": "usb"
+    },
+    {
+      "model": "fm350r-gl",
+      "vendor": "fibocom",
+      "platform": "mediatek",
+      "transport": "pcie"
+    },
+    {
+      "model": "fm350r-gl",
+      "vendor": "fibocom",
+      "platform": "mediatek",
+      "transport": "usb"
+    },
+    {
+      "model": "fm650-cn",
+      "vendor": "fibocom",
+      "platform": "unisoc",
+      "transport": "usb"
+    },
+    {
+      "model": "fn990a40",
+      "vendor": "telit",
+      "platform": "qualcomm",
+      "transport": "pcie"
+    },
+    {
+      "model": "fn990a40",
+      "vendor": "telit",
+      "platform": "qualcomm",
+      "transport": "usb"
+    },
+    {
+      "model": "gm800",
+      "vendor": "gosuncn",
+      "platform": "qualcomm",
+      "transport": "pcie"
+    },
+    {
+      "model": "gm800",
+      "vendor": "gosuncn",
+      "platform": "qualcomm",
+      "transport": "usb"
+    },
+    {
+      "model": "l610-eu",
+      "vendor": "fibocom",
+      "platform": "unisoc",
+      "transport": "usb"
+    },
+    {
+      "model": "mc7354",
+      "vendor": "sierra",
+      "platform": "lte",
+      "transport": "usb"
+    },
+    {
+      "model": "mc7355",
+      "vendor": "sierra",
+      "platform": "lte",
+      "transport": "usb"
+    },
+    {
+      "model": "me3630-w",
+      "vendor": "gosuncn",
+      "platform": "lte",
+      "transport": "usb"
+    },
+    {
+      "model": "mh5000-31",
+      "vendor": "huawei",
+      "platform": "hisilicon",
+      "transport": "usb"
+    },
+    {
+      "model": "mh5000-82",
+      "vendor": "huawei",
+      "platform": "unisoc",
+      "transport": "usb"
+    },
+    {
+      "model": "mh5000-82m",
+      "vendor": "huawei",
+      "platform": "unisoc",
+      "transport": "usb"
+    },
+    {
+      "model": "mh8001-eu",
+      "vendor": "quectel",
+      "platform": "qualcomm",
+      "transport": "pcie"
+    },
+    {
+      "model": "mh8001-eu",
+      "vendor": "quectel",
+      "platform": "qualcomm",
+      "transport": "usb"
+    },
+    {
+      "model": "mt5700m-cn",
+      "vendor": "huawei",
+      "platform": "hisilicon",
+      "transport": "usb"
+    },
+    {
+      "model": "mt5710-cn",
+      "vendor": "huawei",
+      "platform": "hisilicon",
+      "transport": "usb"
+    },
+    {
+      "model": "mv32-w-a",
+      "vendor": "thales",
+      "platform": "qualcomm",
+      "transport": "usb"
+    },
+    {
+      "model": "mv32-w-b",
+      "vendor": "thales",
+      "platform": "qualcomm",
+      "transport": "usb"
+    },
+    {
+      "model": "n510m",
+      "vendor": "neoway",
+      "platform": "unisoc",
+      "transport": "usb"
+    },
+    {
+      "model": "nl668",
+      "vendor": "fibocom",
+      "platform": "lte",
+      "transport": "usb"
+    },
+    {
+      "model": "nl678",
+      "vendor": "fibocom",
+      "platform": "lte",
+      "transport": "usb"
+    },
+    {
+      "model": "rg200u-cn",
+      "vendor": "quectel",
+      "platform": "unisoc",
+      "transport": "usb"
+    },
+    {
+      "model": "rg500q-ea",
+      "vendor": "quectel",
+      "platform": "qualcomm",
+      "transport": "pcie"
+    },
+    {
+      "model": "rg500q-ea",
+      "vendor": "quectel",
+      "platform": "qualcomm",
+      "transport": "usb"
+    },
+    {
+      "model": "rg501q-eu",
+      "vendor": "quectel",
+      "platform": "qualcomm",
+      "transport": "pcie"
+    },
+    {
+      "model": "rg501q-eu",
+      "vendor": "quectel",
+      "platform": "qualcomm",
+      "transport": "usb"
+    },
+    {
+      "model": "rg520f-eb",
+      "vendor": "quectel",
+      "platform": "qualcomm",
+      "transport": "pcie"
+    },
+    {
+      "model": "rg520f-eb",
+      "vendor": "quectel",
+      "platform": "qualcomm",
+      "transport": "usb"
+    },
+    {
+      "model": "rg520f-eu",
+      "vendor": "quectel",
+      "platform": "qualcomm",
+      "transport": "pcie"
+    },
+    {
+      "model": "rg520f-eu",
+      "vendor": "quectel",
+      "platform": "qualcomm",
+      "transport": "usb"
+    },
+    {
+      "model": "rg520f-jo",
+      "vendor": "quectel",
+      "platform": "qualcomm",
+      "transport": "pcie"
+    },
+    {
+      "model": "rg520f-jo",
+      "vendor": "quectel",
+      "platform": "qualcomm",
+      "transport": "usb"
+    },
+    {
+      "model": "rg520n-eb",
+      "vendor": "quectel",
+      "platform": "qualcomm",
+      "transport": "pcie"
+    },
+    {
+      "model": "rg520n-eb",
+      "vendor": "quectel",
+      "platform": "qualcomm",
+      "transport": "usb"
+    },
+    {
+      "model": "rg520n-eu",
+      "vendor": "quectel",
+      "platform": "qualcomm",
+      "transport": "pcie"
+    },
+    {
+      "model": "rg520n-eu",
+      "vendor": "quectel",
+      "platform": "qualcomm",
+      "transport": "usb"
+    },
+    {
+      "model": "rg530f-na",
+      "vendor": "quectel",
+      "platform": "qualcomm",
+      "transport": "pcie"
+    },
+    {
+      "model": "rg530f-na",
+      "vendor": "quectel",
+      "platform": "qualcomm",
+      "transport": "usb"
+    },
+    {
+      "model": "rg650v-eu",
+      "vendor": "quectel",
+      "platform": "qualcomm",
+      "transport": "pcie"
+    },
+    {
+      "model": "rg650v-eu",
+      "vendor": "quectel",
+      "platform": "qualcomm",
+      "transport": "usb"
+    },
+    {
+      "model": "rg801",
+      "vendor": "quectel",
+      "platform": "hisilicon",
+      "transport": "usb"
+    },
+    {
+      "model": "rm500q-ae",
+      "vendor": "quectel",
+      "platform": "qualcomm",
+      "transport": "pcie"
+    },
+    {
+      "model": "rm500q-ae",
+      "vendor": "quectel",
+      "platform": "qualcomm",
+      "transport": "usb"
+    },
+    {
+      "model": "rm500q-cn",
+      "vendor": "quectel",
+      "platform": "qualcomm",
+      "transport": "usb"
+    },
+    {
+      "model": "rm500q-gl",
+      "vendor": "quectel",
+      "platform": "qualcomm",
+      "transport": "pcie"
+    },
+    {
+      "model": "rm500q-gl",
+      "vendor": "quectel",
+      "platform": "qualcomm",
+      "transport": "usb"
+    },
+    {
+      "model": "rm500s-ce",
+      "vendor": "quectel",
+      "platform": "qualcomm",
+      "transport": "pcie"
+    },
+    {
+      "model": "rm500s-ce",
+      "vendor": "quectel",
+      "platform": "qualcomm",
+      "transport": "usb"
+    },
+    {
+      "model": "rm500u-cn",
+      "vendor": "quectel",
+      "platform": "unisoc",
+      "transport": "usb"
+    },
+    {
+      "model": "rm500u-cnv",
+      "vendor": "quectel",
+      "platform": "unisoc",
+      "transport": "usb"
+    },
+    {
+      "model": "rm500u-ea",
+      "vendor": "quectel",
+      "platform": "unisoc",
+      "transport": "usb"
+    },
+    {
+      "model": "rm502q-ae",
+      "vendor": "quectel",
+      "platform": "qualcomm",
+      "transport": "pcie"
+    },
+    {
+      "model": "rm502q-ae",
+      "vendor": "quectel",
+      "platform": "qualcomm",
+      "transport": "usb"
+    },
+    {
+      "model": "rm502q-gl",
+      "vendor": "quectel",
+      "platform": "qualcomm",
+      "transport": "pcie"
+    },
+    {
+      "model": "rm502q-gl",
+      "vendor": "quectel",
+      "platform": "qualcomm",
+      "transport": "usb"
+    },
+    {
+      "model": "rm505q-ae",
+      "vendor": "quectel",
+      "platform": "qualcomm",
+      "transport": "usb"
+    },
+    {
+      "model": "rm510q-gl",
+      "vendor": "quectel",
+      "platform": "qualcomm",
+      "transport": "pcie"
+    },
+    {
+      "model": "rm510q-gl",
+      "vendor": "quectel",
+      "platform": "qualcomm",
+      "transport": "usb"
+    },
+    {
+      "model": "rm510q-glha",
+      "vendor": "quectel",
+      "platform": "qualcomm",
+      "transport": "usb"
+    },
+    {
+      "model": "rm520f-bl",
+      "vendor": "quectel",
+      "platform": "qualcomm",
+      "transport": "pcie"
+    },
+    {
+      "model": "rm520f-bl",
+      "vendor": "quectel",
+      "platform": "qualcomm",
+      "transport": "usb"
+    },
+    {
+      "model": "rm520f-gl",
+      "vendor": "quectel",
+      "platform": "qualcomm",
+      "transport": "pcie"
+    },
+    {
+      "model": "rm520f-gl",
+      "vendor": "quectel",
+      "platform": "qualcomm",
+      "transport": "usb"
+    },
+    {
+      "model": "rm520n-cn",
+      "vendor": "quectel",
+      "platform": "qualcomm",
+      "transport": "usb"
+    },
+    {
+      "model": "rm520n-eu",
+      "vendor": "quectel",
+      "platform": "qualcomm",
+      "transport": "pcie"
+    },
+    {
+      "model": "rm520n-eu",
+      "vendor": "quectel",
+      "platform": "qualcomm",
+      "transport": "usb"
+    },
+    {
+      "model": "rm520n-gl",
+      "vendor": "quectel",
+      "platform": "qualcomm",
+      "transport": "pcie"
+    },
+    {
+      "model": "rm520n-gl",
+      "vendor": "quectel",
+      "platform": "qualcomm",
+      "transport": "usb"
+    },
+    {
+      "model": "rm521f-gl",
+      "vendor": "quectel",
+      "platform": "qualcomm",
+      "transport": "pcie"
+    },
+    {
+      "model": "rm521f-gl",
+      "vendor": "quectel",
+      "platform": "qualcomm",
+      "transport": "usb"
+    },
+    {
+      "model": "rm530n-gl",
+      "vendor": "quectel",
+      "platform": "qualcomm",
+      "transport": "pcie"
+    },
+    {
+      "model": "rm530n-gl",
+      "vendor": "quectel",
+      "platform": "qualcomm",
+      "transport": "usb"
+    },
+    {
+      "model": "rm551e-gl",
+      "vendor": "quectel",
+      "platform": "qualcomm",
+      "transport": "pcie"
+    },
+    {
+      "model": "rm551e-gl",
+      "vendor": "quectel",
+      "platform": "qualcomm",
+      "transport": "usb"
+    },
+    {
+      "model": "rw350r-gl",
+      "vendor": "fibocom",
+      "platform": "mediatek",
+      "transport": "pcie"
+    },
+    {
+      "model": "rw350r-gl",
+      "vendor": "fibocom",
+      "platform": "mediatek",
+      "transport": "usb"
+    },
+    {
+      "model": "s10",
+      "vendor": "huawei",
+      "platform": "hisilicon",
+      "transport": "usb"
+    },
+    {
+      "model": "simcom-a8200-serias",
+      "vendor": "simcom",
+      "platform": "asrmicro",
+      "transport": "usb"
+    },
+    {
+      "model": "simcom-d8200g",
+      "vendor": "simcom",
+      "platform": "qualcomm",
+      "transport": "usb"
+    },
+    {
+      "model": "simcom-sim8200ea-m2",
+      "vendor": "simcom",
+      "platform": "qualcomm",
+      "transport": "usb"
+    },
+    {
+      "model": "simcom-sim8202g-m2",
+      "vendor": "simcom",
+      "platform": "qualcomm",
+      "transport": "usb"
+    },
+    {
+      "model": "simcom-sim8380g-m2",
+      "vendor": "simcom",
+      "platform": "qualcomm",
+      "transport": "pcie"
+    },
+    {
+      "model": "simcom-sim8380g-m2",
+      "vendor": "simcom",
+      "platform": "qualcomm",
+      "transport": "usb"
+    },
+    {
+      "model": "srm815",
+      "vendor": "meig",
+      "platform": "qualcomm",
+      "transport": "usb"
+    },
+    {
+      "model": "srm821",
+      "vendor": "meig",
+      "platform": "unisoc",
+      "transport": "usb"
+    },
+    {
+      "model": "srm825",
+      "vendor": "meig",
+      "platform": "qualcomm",
+      "transport": "usb"
+    },
+    {
+      "model": "srm825n",
+      "vendor": "meig",
+      "platform": "qualcomm",
+      "transport": "usb"
+    },
+    {
+      "model": "t77w968",
+      "vendor": "foxconn",
+      "platform": "qualcomm",
+      "transport": "usb"
+    },
+    {
+      "model": "t99w175",
+      "vendor": "foxconn",
+      "platform": "qualcomm",
+      "transport": "pcie"
+    },
+    {
+      "model": "t99w175",
+      "vendor": "foxconn",
+      "platform": "qualcomm",
+      "transport": "usb"
+    },
+    {
+      "model": "t99w368",
+      "vendor": "foxconn",
+      "platform": "qualcomm",
+      "transport": "pcie"
+    },
+    {
+      "model": "t99w368",
+      "vendor": "foxconn",
+      "platform": "qualcomm",
+      "transport": "usb"
+    },
+    {
+      "model": "t99w373",
+      "vendor": "foxconn",
+      "platform": "qualcomm",
+      "transport": "pcie"
+    },
+    {
+      "model": "t99w373",
+      "vendor": "foxconn",
+      "platform": "qualcomm",
+      "transport": "usb"
+    },
+    {
+      "model": "t99w640",
+      "vendor": "foxconn",
+      "platform": "qualcomm",
+      "transport": "pcie"
+    }
+  ],
+  "files": {
+    "LICENSE": "9344aa749b264f7660705da104b2bb6e1f9230621e158c75eec2e606a1d6be2e",
+    "application/libqmodem-sms/Makefile": "27b709cae8e96396666bd409479bd7f4255b9af3022ccfec711af570501108bf",
+    "application/libqmodem-sms/src/Makefile": "7e8e2ef11ed3558b592e9a67270c76470f3b89425a4874072b9c55d06248ec77",
+    "application/libqmodem-sms/src/pdu.c": "e532bdb182fa6844a186bdfed8f13e7e02bf87d6bc0a920a140f8ab003ddda13",
+    "application/libqmodem-sms/src/qmodem-sms/pdu.h": "a9b158643839f689f16e05745369eacd906e8cb6584579b2f53ec1a3e69b58c0",
+    "application/libqmodem-sms/src/ucs2_to_utf8.c": "bd6706087b3ba0c23deb8b1c4e3b728dec144bd44987b433fc80f824c8d6aa87",
+    "application/modem_scan/Makefile": "349bb43e7d52afede3260b0aab3d8f120e4b184c02a5125c061a80b02282d645",
+    "application/modem_scan/src/Makefile": "798eb71fdaf09f081ca7d4d926ef7b3628bd9bc596cb7ff567f1a935d5c732c1",
+    "application/modem_scan/src/modem_scan_common.h": "caf798ae973fab9ac99ef0e39c4448ca1851d30efe73fd6f00fe66814c890ff6",
+    "application/modem_scan/src/modem_scanc.c": "83fe37bad7ac215e1d421a6d2abdfa545358c717d15a385191c86fd2568bb2e4",
+    "application/modem_scan/src/modem_scand.c": "20a4c6592b64b89890b0a7a9b2c2da569baa23347c14a1787110e19516f14fdd",
+    "application/qmodem/files/usr/share/qmodem/cmds/fibocom.sh": "223beae537d338e1ebc59e29520d9aada680755bbbd6f970eac5eeb67bb879c3",
+    "application/qmodem/files/usr/share/qmodem/cmds/foxconn.sh": "0900bbae3056176ad68ace0aca97199867bcf38f6135320dd5b22c70555ca363",
+    "application/qmodem/files/usr/share/qmodem/cmds/generic.sh": "8a0f55cedcdd24511551147f8569172b04ec64700f68a9513c84577baaabdb3e",
+    "application/qmodem/files/usr/share/qmodem/cmds/gosuncn.sh": "01638ba0717cb88d3b3c4951b6e44995285ad81c443cc91de60942689fb26467",
+    "application/qmodem/files/usr/share/qmodem/cmds/huawei.sh": "a5e5cc912b1ccae2fde714d7b6fc307054f0874baa6a9321bfc7dbcf7f20a0de",
+    "application/qmodem/files/usr/share/qmodem/cmds/meig.sh": "c43e95090060587fe9492c64e77931efe77b6a9738ed79613921e83fd3fabba2",
+    "application/qmodem/files/usr/share/qmodem/cmds/modem_dial.sh": "88bf35383db7124762e4d2f21c8636d2214754b762d068203935e1502916701a",
+    "application/qmodem/files/usr/share/qmodem/cmds/modem_util.sh": "dcc0e255d6c42cb33e444e7d6cdd74df685e69ac77fc8d1fe661ac9ae0617736",
+    "application/qmodem/files/usr/share/qmodem/cmds/neoway.sh": "cbc723ad9dd9a85decda2e2b88266906f1e0e6568f85f3dac54faa6e11587205",
+    "application/qmodem/files/usr/share/qmodem/cmds/openluat.sh": "1e13794cc0b05ed565a75d4521c4ca4533626f62f22b83563fb4fb8774cc4c16",
+    "application/qmodem/files/usr/share/qmodem/cmds/quectel.sh": "03b6db0c6981c5fa20f34572efb9ca0da892f932a19a70dddb85171987d2c509",
+    "application/qmodem/files/usr/share/qmodem/cmds/sierra.sh": "2f04faa630e2287a81fb51a4df323e4280d69d3daf5a4ccf700369faf694b0aa",
+    "application/qmodem/files/usr/share/qmodem/cmds/simcom.sh": "efca886032644ed09fad544d0462db3d8f868058033a682dbca5a56647e1b622",
+    "application/qmodem/files/usr/share/qmodem/cmds/telit.sh": "28ed42faed34d77d8b33112641731557805ce6235a6a7676ce55c39673b44070",
+    "application/qmodem/files/usr/share/qmodem/cmds/thales.sh": "9b197b37312badc94c9aa3080f29e7c8288f7f7fccf44e7c6b831edf33f3e6b0",
+    "application/qmodem/files/usr/share/qmodem/generic.sh": "1bbddad187fb2b745482b9d1d370512cdead5d73a61f782cb1258dd9cb3e3573",
+    "application/qmodem/files/usr/share/qmodem/modem_port_rule.json": "2ccac14b00f9db2dcfe67a0d0868fd9f392396d30917f75260d200da1c01139c",
+    "application/qmodem/files/usr/share/qmodem/modem_scan.sh": "142d33b9d6d1795deda1657671cf900c69ba7beed3ec0e6e8f0cc019a8a6b17a",
+    "application/qmodem/files/usr/share/qmodem/modem_support.json": "cc9ef9affa788076d6fbfed2b091617eec7335aa016811a5cb62a5dfc29d969d",
+    "application/qmodem/files/usr/share/qmodem/vendor/dynamic_load.json": "47e5873c735bbe386c470ffe08b4e2c72bb844bc76488fb30b3f4b7142100b71",
+    "application/qmodem/files/usr/share/qmodem/vendor/fibocom.sh": "282e73eea3b834ba3a5e13d975aeb9791df3f4514f779c28d65a0ec5193877aa",
+    "application/qmodem/files/usr/share/qmodem/vendor/foxconn.sh": "a0bdea1a7daa1dd4799a29dac9a9ae3339e47cca3f4108df51c53d781b060787",
+    "application/qmodem/files/usr/share/qmodem/vendor/gosuncn.sh": "65ce7958fa7228d2cdad519450f220724fbb4aee5b29ac030638e5e98f5c70a5",
+    "application/qmodem/files/usr/share/qmodem/vendor/huawei.sh": "155ac18bd895319832225a11753d2d85125d10ab14ae626641e17511c555d1ea",
+    "application/qmodem/files/usr/share/qmodem/vendor/meig.sh": "6a4221029c82cbf7f207e85ba0cf43e29171009d5e810e217501efc47b1d3c48",
+    "application/qmodem/files/usr/share/qmodem/vendor/neoway.sh": "034ba6676cf04f4135107e83a743309cafca65d788792c1766d895a807556fb3",
+    "application/qmodem/files/usr/share/qmodem/vendor/openluat.sh": "3562c044472cb1123820c239b84e49246d37c5f7aa2c65cc7722de59f72e6638",
+    "application/qmodem/files/usr/share/qmodem/vendor/quectel.sh": "d89bf2603b7c9bab7f75b36dbf66297d0e5fb73585d98196ee4415e661c0aa42",
+    "application/qmodem/files/usr/share/qmodem/vendor/sierra.sh": "9de2f680a803d6234e334151da6229d6d214c3ce9e259c89d38f6c56bfc144ef",
+    "application/qmodem/files/usr/share/qmodem/vendor/simcom.sh": "0653eaf9ad478e7936bdb2bb8512b52388a9fd0a84ff44778e7afc10310a2408",
+    "application/qmodem/files/usr/share/qmodem/vendor/telit.sh": "20b6737e59227ebb2f83bbf20f4226eb9b4b5fa11a80fdcba4a5267e49906598",
+    "application/qmodem/files/usr/share/qmodem/vendor/thales.sh": "bea6d644aa57ef7ef20f36aa6b94f2be6570e42d4a46326e96f29c22837c539c",
+    "application/qmodem_smsd/Makefile": "d76b8519f01805844bf8d5e9c0076c79f5105d53fa485b8905b8415ecb570dcb",
+    "application/qmodem_smsd/files/etc/config/qmodem_sms": "bd411891a954c8103f5af1f2eddc90e2d655b9dd19f38b486a1cdd754d4b8e9f",
+    "application/qmodem_smsd/files/etc/init.d/qmodem-smsd": "6ec1d36c3895488645b12af39ddc1238cdaed79304c659fe3a12677774085211",
+    "application/qmodem_smsd/files/usr/share/rpcd/acl.d/qmodem-sms.json": "265d83ff6d185d5f1d9dfbafcd74035f082fbd0a2eb75253b8252dd47c684bac",
+    "application/qmodem_smsd/src/Makefile": "b5f56e7edbf43badf649101f385d7f2f3b176d2da2e5eb623557d2763acc67ab",
+    "application/qmodem_smsd/src/legacy_migrate.c": "971b99dd46f3a1c901997d34d1b27ba2fedd67e26e3b3a5a15a6f23d8a2b0e6e",
+    "application/qmodem_smsd/src/legacy_migrate.h": "c9f71ec93013152b352239435818427c6bc940f173e2420e7fc47aae596f9956",
+    "application/qmodem_smsd/src/main.c": "e43a7f8e51c37c3ebbc3048572acf5c6baa9fbfde1aae9277c0036dad142d3bf",
+    "application/qmodem_smsd/src/sms_db.c": "fcad7ce9f558f46d8e8f0c5e526995887d1f9c9f02f032456e864b69c09ad3d4",
+    "application/qmodem_smsd/src/sms_db.h": "e1af92a606f130a18b7a678a37b2703dcc900c8810eaff3d1831331ce47a07f3",
+    "application/qmodem_smsd/src/tom_response.c": "1b088ed4cd8705d3504e9fcadf5b3f7fc72084c783ffd50a29031c43feeb53da",
+    "application/qmodem_smsd/src/tom_response.h": "7fd54a617bc17efcfaafd055ae77691f8dbdda308b510f1ec5158c9dec70019b",
+    "application/sms-tool_q/Makefile": "2427f129e0f2882356cad2e1e6b35a0c0c2e5d79313c04dc07614b9cc9147ca2",
+    "application/sms-tool_q/src/LICENSE-2.0.txt": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+    "application/sms-tool_q/src/Makefile": "3f73cf5ac284efc68d503cc1d5b0403f0286649b62103b907fa2d86d5ce9ab8b",
+    "application/sms-tool_q/src/README.md": "5027a824cb3182f033042af22024354fab1501567bf8aaeb89f3c0b8c657db79",
+    "application/sms-tool_q/src/pdu_lib/Makefile": "f13bf1129b15cd63952dae64c5ef68443dc82b51e6a6564fde8825013436227f",
+    "application/sms-tool_q/src/pdu_lib/pdu.c": "9bfeea4834ea580eb6c13badb135d0b648aee280b95149bf476e00adefb5faed",
+    "application/sms-tool_q/src/pdu_lib/pdu.h": "f82ec62a29c7b4f9388fafa453b280a25f0532383e1be97b0c69fa9068e12ae9",
+    "application/sms-tool_q/src/pdu_lib/pdu_decoder.c": "d2e1ea6391b2a25dbd116553c898160959f6cd1648be1dcf1d9f6368ac76ac66",
+    "application/sms-tool_q/src/pdu_lib/ucs2_to_utf8.c": "bd6706087b3ba0c23deb8b1c4e3b728dec144bd44987b433fc80f824c8d6aa87",
+    "application/sms-tool_q/src/sms_main.c": "26e7ffa0627fae987bf37f34db1de2783b009ff052addbadd242fa0574c2fc91",
+    "application/tom_modem/Makefile": "7c608c3a843deac5acb5183556054e01a7f492deacc2aade3e0851d35768c97b",
+    "application/tom_modem/src/Makefile": "b5acf0e07540022ca03ec746209dc8f9f3eadb182a6e98ae56be57cc3ddb97a2",
+    "application/tom_modem/src/extlib/pdu_decoder.c": "d2e1ea6391b2a25dbd116553c898160959f6cd1648be1dcf1d9f6368ac76ac66",
+    "application/tom_modem/src/main.c": "14c5977162e39f1f7c0d80141169d29a0a97921466dc5492d179857952e5061e",
+    "application/tom_modem/src/main.h": "ce539006c79ddd448cdc8f7b37356d0d3f4b82d6b7b731f3f87c04e134585cc3",
+    "application/tom_modem/src/modem_types.h": "8781610b28a25ff6379e894b9a5d39be28771697ff81da86564dc9673f50292e",
+    "application/tom_modem/src/operations.c": "3069295ca8a939a3caca3ce75929fb6142fe98e609ac35d90d7c5a19326562a7",
+    "application/tom_modem/src/operations.h": "f3dd8e62eb8f9326dd883e78b739e17dd941736a46589ec4e5892ec380a40745",
+    "application/tom_modem/src/transport.c": "73837554e6199bfb16e5ea46c0dd2190d1d1d11194ba013827db4fac8c8ec924",
+    "application/tom_modem/src/transport.h": "c15085da458c948aa45b4ba1379ec47cb0c02f14e759cf6efd278894d0eaab63",
+    "application/tom_modem/src/ttydevice.c": "ec40a88f2d6a044aa35c573010649e3b6413b22eea9d6006c88e537c96369da1",
+    "application/tom_modem/src/ttydevice.h": "ecfd6fac4e2fe7f5e54ac6920ff5493be54ad33d71e3ab303bd1d76ed282c7b4",
+    "application/tom_modem/src/ubus_client.c": "7181882dd85b4a6311944fddcfaf738c9986ede37d6e3b45e7f56c86e48b9945",
+    "application/tom_modem/src/ubus_client.h": "e9206bf8ab326d170872b21ce5966a3cf5297a0ee37819d0818390aef6420f54",
+    "application/tom_modem/src/utils.c": "3c8ae621a5d7c3a4e1d9f95ec646cee01e73ac006f5cb3ece7169b2679ea833e",
+    "application/tom_modem/src/utils.h": "1b0700316267051d3d2f9db52e9fbebb4ee07193d6e9db48dff5e07fcd1eeeb5",
+    "application/ubus_at_daemon/Makefile": "96e5c12947d1fb2ba921c83f48ebb2abf76e81566559280938f1ddbe1d045fd8",
+    "application/ubus_at_daemon/files/etc/config/ubus-at-daemon": "bef91499a2106953f3527350137cef5f8ec26ee5a6d547e0df56ca60b84149bf",
+    "application/ubus_at_daemon/files/etc/init.d/ubus-at-daemon": "7375f0203b557d8e45937feea4f5f6881931cdb7a2506404e45e4cb980ae9cc0",
+    "application/ubus_at_daemon/src/Makefile": "e45a90a057c7981a62508d07677e1a54f357e83230c1d396d15bf1e01997091a",
+    "application/ubus_at_daemon/src/at_handler.c": "3c11c38401e250290b27c9e9ddf6c75768ccb3256f4748bdf52c1cd6647cb86b",
+    "application/ubus_at_daemon/src/config_loader.c": "e83d573365939d61ee1ad9c559722eaf675da2c8f635d3c5f70f5ca4aaecbdf1",
+    "application/ubus_at_daemon/src/const.h": "565e8238abdc2ec143631151c76af4536917e205dc9d67e92cf4d90fefb2c4a8",
+    "application/ubus_at_daemon/src/control.c": "5ee51cfde320acd6aace116c12a3c972d888af492006b5d342e786632ab518d1",
+    "application/ubus_at_daemon/src/event_callback.c": "2559e89c65f1a83cb11edd4f780082f0249a4b64197125708afd2d28135625e3",
+    "application/ubus_at_daemon/src/line_events.c": "e20a29c140aa9db14140569459c04cd777568fc03e978d8d1fa3cec563b8e1bf",
+    "application/ubus_at_daemon/src/main.c": "3fc3c31a2d94d746ffc3d3ee44a308b67219b2e3c197cc80cc0d9598e222c441",
+    "application/ubus_at_daemon/src/port_manager.c": "bf024229ddc8c106117085e80b1985a72de4acbc3f4f50b4d4c0fb649163ef31",
+    "application/ubus_at_daemon/src/ubus_at_daemon.h": "c4102ba8a905c6cc0d3dab0ce28bb629da8f3de1dcceb1fca841c1733164ecc9"
+  }
+}

@@ -1,0 +1,23 @@
+'use strict'
+// 检查发布触发、失败门禁和固定依赖；完整构建仍由GitHub Actions执行。
+const fs = require('node:fs'), path = require('node:path'), assert = require('node:assert/strict')
+const root = path.resolve(__dirname, '..')
+const yaml = require('./ui-tests/node_modules/yaml')
+const flow = yaml.parse(fs.readFileSync(path.join(root, '.github/workflows/check.yml'), 'utf8'))
+assert.deepEqual(flow.on.push.tags, ['v*']);assert.deepEqual(flow.on.release.types, ['published'])
+assert(flow.on.workflow_dispatch.inputs.publish.default === false, '手动构建默认不发布')
+assert.deepEqual(flow.jobs.publish.needs, ['verify', 'native-build'])
+assert.equal(flow.jobs.publish.permissions.contents, 'write')
+assert.equal(flow.permissions.contents, 'read', '普通检查不需要写仓库')
+assert.equal(flow.concurrency['cancel-in-progress'], false, '不能取消已开始的正式发布')
+for (const job of Object.values(flow.jobs)) for (const step of job.steps) {
+  if (step.uses) assert(/@[a-f0-9]{40}$/.test(step.uses), '第三方Action固定到完整提交')
+  if (step.run) assert(!/--clobber|gh repo edit|visibility|--force/.test(step.run), '自动工作流不覆盖资产、改公开状态或强推')
+}
+const commands = flow.jobs.publish.steps.map(step => step.run || '').join('\n')
+assert(commands.includes('tools/release-assets.cjs') && commands.includes('tools/publish-release.cjs') && commands.includes('SHA256SUMS'))
+const publisher = fs.readFileSync(path.join(root, 'tools/publish-release.cjs'), 'utf8')
+assert(publisher.includes("'--draft'") && publisher.includes("'--draft=false'"), '制品齐全后才公开发布条目')
+assert(publisher.includes("'--verify-tag'") && commands.includes('refs/tags/'), '发布必须使用已存在的版本标签')
+assert(!publisher.includes('--clobber') && publisher.includes('item.digest === digests.get(item.name)'), '断点重跑只接受摘要相同的远端资产')
+console.log('正式发布流程检查通过：固定Action、双构建门禁、版本标签、草稿上传、校验清单，不覆盖旧资产。')

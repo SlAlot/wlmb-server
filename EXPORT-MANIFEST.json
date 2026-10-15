@@ -1,0 +1,704 @@
+{
+  "scope": "wlmb-server-only",
+  "author": "SlAlot",
+  "visibility": "source-available",
+  "license": "LicenseRef-WLMB-NonCommercial",
+  "commercialClientSourceIncluded": false,
+  "protocol": "NETWORK-PANEL-OPENWRT/1",
+  "pluginVersion": "1.0.0",
+  "backendLanguage": "Rust",
+  "files": [
+    {
+      "path": ".gitattributes",
+      "sha256": "c7d2ae40ca937529a3ac2838c022dabad00136bfa349a8797dac179997a84d13"
+    },
+    {
+      "path": ".github/workflows/check.yml",
+      "sha256": "c3aa56af7f8add88ae50e1de35032418f73b3f107325675b255d821aef431119"
+    },
+    {
+      "path": ".github/workflows/qmodem-audit.yml",
+      "sha256": "fe0fff5be0c9418eda9e2870e4e5cf59856a7eadf58be4bd761837bd603b8460"
+    },
+    {
+      "path": ".gitignore",
+      "sha256": "8b8c8022f7c59894b8d36cf0bbac732792010cdccebdd408f903f58e09476a08"
+    },
+    {
+      "path": "AUTHORS.md",
+      "sha256": "7d7b4d1be20e988064d0e7a05cde5a1031da1d78a1d5d30d09289a1396ce3043"
+    },
+    {
+      "path": "backend/Cargo.lock",
+      "sha256": "be5ebcb886e660c019de114d99ca1b96c24cb80e91310bd9433fc597ea9aaf64"
+    },
+    {
+      "path": "backend/Cargo.toml",
+      "sha256": "ed1dac5b21caa1f56c7cadc78d42d5910d0f8ebe8c3175f578127c6a9b9a2e00"
+    },
+    {
+      "path": "backend/src/actions.rs",
+      "sha256": "4df090179067c8a96189b3c48222cd6bd36eb2dfaf916547eba0c06b7ac92ead"
+    },
+    {
+      "path": "backend/src/at_channel.rs",
+      "sha256": "e2bc52aa7dc25dac183399c7921532a4db624d4f1464c1087b41ef6267ca32cd"
+    },
+    {
+      "path": "backend/src/band_inventory.rs",
+      "sha256": "120f11d9dfe25e59d645858f1b6860e2c8faf8455250e337aa61f3c570b6ed34"
+    },
+    {
+      "path": "backend/src/band_locks.rs",
+      "sha256": "f1b1215fccc9002ac60429b62ed4d32a24612532c93774bc160cfbca25d91bee"
+    },
+    {
+      "path": "backend/src/band_locks/templates.rs",
+      "sha256": "9b18f29b49ddb3a06ebae15a584d0f54c70c220dbabb534131d85438dd2e6184"
+    },
+    {
+      "path": "backend/src/blob.rs",
+      "sha256": "38376369e93345e17e6d2fb876346bef0048d1533ba23654f6ab617c328edb58"
+    },
+    {
+      "path": "backend/src/boundary.rs",
+      "sha256": "5ca5d74b413adecba650b61ce3128d1280e104eb065dc134e080eb0ea30da79e"
+    },
+    {
+      "path": "backend/src/catalog.rs",
+      "sha256": "77bf6d28c22e4460b293e8d1efed1a41a7b792b0439c0b6465d293270061c19b"
+    },
+    {
+      "path": "backend/src/compat_sms.rs",
+      "sha256": "4a8fe4996c549473c9787a0fba477e4cd556c8b297cbb04731cc35c6817e8f79"
+    },
+    {
+      "path": "backend/src/connection_mode.rs",
+      "sha256": "8a008acd2c12f2babdf49d58c8aa1f928713408b5c7d990c1be896b6289144d5"
+    },
+    {
+      "path": "backend/src/control_runtime.rs",
+      "sha256": "d5ac22a026a3611c953bd5889bbf0c720c7141d1166fa102f8d42244e7abc343"
+    },
+    {
+      "path": "backend/src/controls.rs",
+      "sha256": "5716ef26b9f676b4cb22db45c4cf9dd8660a9916c03d3220309383ee41fd8918"
+    },
+    {
+      "path": "backend/src/events.rs",
+      "sha256": "029c4539b859e9d8e4ca4ac8e27f5a978431736f07fae84437aad824a1f88e82"
+    },
+    {
+      "path": "backend/src/host_controls.rs",
+      "sha256": "3540ab3134c2121f558b572224ed2cd704cf9691fcf697c75d0e1ff2b83184b7"
+    },
+    {
+      "path": "backend/src/http.rs",
+      "sha256": "cbf78860bf4596340fd173673835a1f5abc8bd720691295f43a4c2fa3c907561"
+    },
+    {
+      "path": "backend/src/independent_at.rs",
+      "sha256": "16b0bf0f04ffc41238604f3a36726328c64043418206abf0e1e60dc4868dbe09"
+    },
+    {
+      "path": "backend/src/lan_ports.rs",
+      "sha256": "58cbc07dbcdc48033b5017f0d15a79761047c375162c1c0110f75bd4d6160b68"
+    },
+    {
+      "path": "backend/src/lan.rs",
+      "sha256": "315f9c1b952ab6ac553d6ae70c188f16843e0245b754114069a4e62b026aefbc"
+    },
+    {
+      "path": "backend/src/lib.rs",
+      "sha256": "18a8dec48d7b781158a338c0b8a60cc009d7ae9d530c34e09d955be2a4ece6b3"
+    },
+    {
+      "path": "backend/src/lock_protocol.rs",
+      "sha256": "5828b0f99d320b95d901c567709cbc2db310bf08a8a9d832b41b6636e1f780cd"
+    },
+    {
+      "path": "backend/src/main.rs",
+      "sha256": "8aa0da117995073e8c8d47a04ed2d0432b0d57069147d0ccbd2601bfaee89756"
+    },
+    {
+      "path": "backend/src/modem_inventory.rs",
+      "sha256": "aa21071e91353c83bc8ee57b3b11ba19320a44fc6e506bc6714f006c7f3bdb06"
+    },
+    {
+      "path": "backend/src/native_host.rs",
+      "sha256": "42d5576aeed4d7c38ba3d0431a7fd2add5465a63b819e2fe985dbdaa146c3ad2"
+    },
+    {
+      "path": "backend/src/native_ubus.rs",
+      "sha256": "3895c7150a1d2ff24f0155bde81a934c9f8fc52c20256859039efb7763a8f478"
+    },
+    {
+      "path": "backend/src/network_operator.rs",
+      "sha256": "22c2cb93ffdfefaefea63fcb42c25d274b4ac806ac916ffb975757fd2db3f528"
+    },
+    {
+      "path": "backend/src/private_store.rs",
+      "sha256": "a191ccf1d49ac2950f3aead42e1c0f52c2cc4214ab5e244c126d169e39ea8a37"
+    },
+    {
+      "path": "backend/src/qmodem_queue.rs",
+      "sha256": "ef136df17ab46a506b411098acc1f0fdf8ea0bbcea5e978ae84b3d61110f399b"
+    },
+    {
+      "path": "backend/src/qmodem_sms.rs",
+      "sha256": "a7817457ab5ad402660ec2d4b62622ecf29b22460be6d5d0e180c04cc1350bf5"
+    },
+    {
+      "path": "backend/src/quectel_lock.rs",
+      "sha256": "b52f69bc837d352609694a1c835e484173a3a6417820fb4d76bace52d0a4321e"
+    },
+    {
+      "path": "backend/src/radio_controls.rs",
+      "sha256": "2ac879eeb8389718090ad527104477e83a4924ab432bc666dd3fd2abf6f3c4a5"
+    },
+    {
+      "path": "backend/src/radio.rs",
+      "sha256": "1d6e5419db9fb2f3ed6190acea443a7b9ee42aadfcd097dd85ebb851ae264362"
+    },
+    {
+      "path": "backend/src/radio/fibocom_lte.rs",
+      "sha256": "00aa7722a3aed018c96de3aa8d9fdf9a483542a390f9d265123ba88855a97f1d"
+    },
+    {
+      "path": "backend/src/radio/openluat.rs",
+      "sha256": "3eac0a5056e00d3512b7413adff802f9292e467e28252658942075cc0834b275"
+    },
+    {
+      "path": "backend/src/radio/sierra_lte.rs",
+      "sha256": "9906a3c56d9e517cd81234ea7fd9df3fd9201170fa25dc572338f15c1ce6a074"
+    },
+    {
+      "path": "backend/src/radio/sierra.rs",
+      "sha256": "39c2de4d83ffcf3ad4c98d427808149ca69c53e9abbab11c6910f73645916ced"
+    },
+    {
+      "path": "backend/src/radio/vendor_csv.rs",
+      "sha256": "dc1680a51bb41a95d632022e663c25e7cb068d8ab120c0f2c2879fe2c07193f6"
+    },
+    {
+      "path": "backend/src/radio/vendor_labels.rs",
+      "sha256": "0621ab4c4ba11b9f268f0fe21563ddc8de7a18f01404711d6aa74990b109e34d"
+    },
+    {
+      "path": "backend/src/rpc.rs",
+      "sha256": "7cc7e6ea9f7eb47d252362cc575b8237b275e3d564aa0daa6f76e1ca8c498264"
+    },
+    {
+      "path": "backend/src/sampler.rs",
+      "sha256": "d9aa51f1ea5e36f4786b68dd600ebb69a5af622ef67095c5a9e52f53ac115f38"
+    },
+    {
+      "path": "backend/src/sampling.rs",
+      "sha256": "f475b011a0dfe90fb833b93f4b9e662848f73d03184575105d1b24c0b8ca54ec"
+    },
+    {
+      "path": "backend/src/security.rs",
+      "sha256": "795d893d791d8c2a7647b1865957a71dd6b5f09ff9c7d351c7aacd896be77f86"
+    },
+    {
+      "path": "backend/src/service.rs",
+      "sha256": "d8c3a42a64446197940682b06013caf702497b6b8b79f50509b51ca41c231882"
+    },
+    {
+      "path": "backend/src/session_qos.rs",
+      "sha256": "d9d1491db4ccd7319090c57e5bdcfdb82d0165b8fb01a6257dea28b996fa7ca8"
+    },
+    {
+      "path": "backend/src/shared_sms.rs",
+      "sha256": "10fe99d9f434dac235f11bb1e145e940318145398b62fdf145c41da0acda9960"
+    },
+    {
+      "path": "backend/src/sms_forward.rs",
+      "sha256": "60b409d181aeb40f610f0666a8df33bc77b4c589a624d9f8bbb0e2394e9eabe6"
+    },
+    {
+      "path": "backend/src/sms_notice.rs",
+      "sha256": "e84b4b33399f3435892f67632e98e230ee7e1b3663f4d459683b019e2d54707c"
+    },
+    {
+      "path": "backend/src/sms_pdu.rs",
+      "sha256": "d5ba40a51e2703b06f346834bd8d9d5212866ea4597fe5db217bb087f653c3d4"
+    },
+    {
+      "path": "backend/src/sms_read_state.rs",
+      "sha256": "d1f85f50522e10f9b389c6fa1b70b73a105450b806527ba10e5b2cb2ed9bfa76"
+    },
+    {
+      "path": "backend/src/sms_runtime.rs",
+      "sha256": "0c1efe6f4cf30368c1604c2d3de1f0b778d0665f004a2aa184d28ad47b67a82b"
+    },
+    {
+      "path": "backend/src/sms_session.rs",
+      "sha256": "28d1344b2259d69baf7d848b1168b73a23df8ff0047f8e2f2621f0c28835e044"
+    },
+    {
+      "path": "backend/src/sms_settings.rs",
+      "sha256": "5e01df1944bd5303a1527f21faf2905fa88a9970bfaee5ab49429f7a52bf4f09"
+    },
+    {
+      "path": "backend/src/sms_text.rs",
+      "sha256": "07da3a36c6c9ed4a20c751471bf17b3c9c08401a5111abd5d8bed13b08f6c261"
+    },
+    {
+      "path": "backend/src/sms.rs",
+      "sha256": "2f73c9f1914303e301e2aad0c02349d8fa4eab4b6dba8525450467d89f4cf31a"
+    },
+    {
+      "path": "backend/src/telemetry.rs",
+      "sha256": "215a74c778093f31d3a2c6e27111377dc83c9821db1017d4dff6c77ab1709cb2"
+    },
+    {
+      "path": "backend/src/temperature.rs",
+      "sha256": "9140709cf8a1c48674d5c51f910870224bfe970b4db35ed5475e34594be8cffc"
+    },
+    {
+      "path": "backend/src/temperature/protocols.rs",
+      "sha256": "437a3149411566648f78ed0e9ce59a9614ec0e323dd2dd4885ae8273a38bbd29"
+    },
+    {
+      "path": "backend/src/traffic.rs",
+      "sha256": "51ba8d5ce7526f34fb55844725744fa7f60b1a6f197a4bf8681534c8440665f2"
+    },
+    {
+      "path": "backend/src/transport.rs",
+      "sha256": "f64f12d12876fc0dce6c6792afff2b45924033f105acc1f9dee018a6b702bf57"
+    },
+    {
+      "path": "backend/src/vendor_cell_lock.rs",
+      "sha256": "8684c3bdfde39a21c5dc468e0cfbc18ff8047aca401de660eca424e39a681e56"
+    },
+    {
+      "path": "backend/tests/at_channel.rs",
+      "sha256": "f698d6703dffe3f3e96efece671f41f7f75de97c6a0c479b1df6c5beb1bf381a"
+    },
+    {
+      "path": "backend/tests/catalog.rs",
+      "sha256": "d13d54ff198e048452697ca8de8bb5c19f3ed05e9f45713857deb99a04584efc"
+    },
+    {
+      "path": "backend/tests/compat_sms.rs",
+      "sha256": "83e188ba872d6b0a6b4c5b68001213c800801892672692641c405eb5eb2ea845"
+    },
+    {
+      "path": "backend/tests/control_runtime.rs",
+      "sha256": "ee4070f24bc0013396e08b4e6c6e4a3dde2cba22f6335171506965a070b6770e"
+    },
+    {
+      "path": "backend/tests/core.rs",
+      "sha256": "58c053785f1b20cceeb17aa0cf9ef6f37e3862728b23550079d5105c1371f2bb"
+    },
+    {
+      "path": "backend/tests/error_details.rs",
+      "sha256": "c4f988943ed0b139f2ce5b451dc33762fffa5d3f02fe912329be18f13573ee1b"
+    },
+    {
+      "path": "backend/tests/fibocom.rs",
+      "sha256": "19877ee52c9f0225a86499c8a3603d542df4f4ce14745ea671dd9a05912f78e9"
+    },
+    {
+      "path": "backend/tests/host_controls.rs",
+      "sha256": "3e080bd014c941dee5c8c7fa9aada5e6c0cdf56a3ec2fca778ba65e8470649d4"
+    },
+    {
+      "path": "backend/tests/host_service.rs",
+      "sha256": "8fd8b50e6086af0a234f18c7450032a8fbf3959a52e76b3601b577d59b85672b"
+    },
+    {
+      "path": "backend/tests/independent_at.rs",
+      "sha256": "90985a033defac4cc6d1f798936e1d1b4e2d9907ef37215acccd81c76f7d7485"
+    },
+    {
+      "path": "backend/tests/lan_ports.rs",
+      "sha256": "adacbe506cc29fe714e9a2ed7868e751b65c47e21976e91539bc230e47373834"
+    },
+    {
+      "path": "backend/tests/lan.rs",
+      "sha256": "75ad37559d55176a88eabfc25d25b73c4d2d1fe2b7346cfa08d4b0fe5f69c7bb"
+    },
+    {
+      "path": "backend/tests/lock_presets.rs",
+      "sha256": "3a2e4f82dbcff3a1df9a45954e4d05b68f2f49579ffce080e22816b8700410e1"
+    },
+    {
+      "path": "backend/tests/lock_protocol.rs",
+      "sha256": "b6c958746904c141c1c35ed89cc4b9a43b6b2758321f6654cf4e60269065dc4b"
+    },
+    {
+      "path": "backend/tests/lte_protocols.rs",
+      "sha256": "44274bc83bbadd4365b6780a85b79cffe1849ac545290449049f187b8533bd89"
+    },
+    {
+      "path": "backend/tests/mode_parity.rs",
+      "sha256": "e32f0d9917da545b9d3556a8dc9780a43925d3d251631d97c2dd8f644c8462d1"
+    },
+    {
+      "path": "backend/tests/modem_inventory.rs",
+      "sha256": "a66d93f9e5c4e22ad79d269b40ca7b20f2947a344b596408b4e86a3b65394168"
+    },
+    {
+      "path": "backend/tests/native_host.rs",
+      "sha256": "0a45ed8f3f1f55b0f30a1e44bdfad1f841c02c9a2642ee73bb5db4270e06fc96"
+    },
+    {
+      "path": "backend/tests/native.rs",
+      "sha256": "6c88dac3d6b4644fc4a882b48ebffb184111f7bbd4334b9498200c6b8618aaf2"
+    },
+    {
+      "path": "backend/tests/network_operator.rs",
+      "sha256": "2761c1233d7dc9ce7b4378240104b5c1fba44768ea1c95fcff8a1d0e83cad41e"
+    },
+    {
+      "path": "backend/tests/qmodem_queue.rs",
+      "sha256": "3f147a13f37f597d1c5f0db614664a776bebbdecc87ca604423b87624d78ca3a"
+    },
+    {
+      "path": "backend/tests/qmodem_sms.rs",
+      "sha256": "b04bf7f4ae1c61ae77d5be79b99fe48119202c006251dad5bfab1109a7b3864d"
+    },
+    {
+      "path": "backend/tests/quectel_lock.rs",
+      "sha256": "8878910bb5136163df9cfb521f4a1ddc8f83172989a865a181168b3b074f706f"
+    },
+    {
+      "path": "backend/tests/quectel.rs",
+      "sha256": "a136ab43c450d81cf4f3052d2f36a25f616b04dd72afe9bbb92501c7306ccb1a"
+    },
+    {
+      "path": "backend/tests/rpc.rs",
+      "sha256": "237a6b52738d5166ba3094ed1f10ba5442a20acf272ef32b757b89450f0d3fc3"
+    },
+    {
+      "path": "backend/tests/runtime.rs",
+      "sha256": "d06767fe8d5a94ecaf81024cfd5748885189fe0b8b2c9f98a5653a88781c0801"
+    },
+    {
+      "path": "backend/tests/session_qos.rs",
+      "sha256": "a05454f269b23f6716c69f3a55a0a4f142043f5e201f141f8e078eaadc13ade2"
+    },
+    {
+      "path": "backend/tests/shared_sms.rs",
+      "sha256": "9453ea124716cf81ae38b98d612da5baa437ad791cb213ae7fd92e34d69b75bb"
+    },
+    {
+      "path": "backend/tests/sierra.rs",
+      "sha256": "ed25fa4491cc3fee2ad24b2af1ae2d1505801fcc593835c5c1cf83094d94fccb"
+    },
+    {
+      "path": "backend/tests/simcom.rs",
+      "sha256": "ca7794cb0d7aa73bb7a31467a070efd9223a04ee6e42f956249ded301498ec4d"
+    },
+    {
+      "path": "backend/tests/sms_notice.rs",
+      "sha256": "fab8551d5b84b29c225c017c84cf556dacfb8c24719b5ea70ce8dc7ef562867b"
+    },
+    {
+      "path": "backend/tests/sms_pdu.rs",
+      "sha256": "dfd187b14dc79aab3a279cd1b49ffc07f80849a1e2d50156458f875a579c0477"
+    },
+    {
+      "path": "backend/tests/sms_read_state.rs",
+      "sha256": "aaf6cc73cb55cff2e2870a43b3ee92beef26dd1e727d6671d8d7b0d2cb096bb6"
+    },
+    {
+      "path": "backend/tests/sms_runtime.rs",
+      "sha256": "4470f273e6b82da13c8b965ac061d76a7cc1b4c473f84b55d656acfe976c764d"
+    },
+    {
+      "path": "backend/tests/sms_service.rs",
+      "sha256": "53cd71bb7a103f8d1761744a5f3c8640675630d0b8e67be0df0ec6ce5f559db1"
+    },
+    {
+      "path": "backend/tests/sms_session.rs",
+      "sha256": "15a6d3b46c381e61ca1702e1594c492c870e99523e5e407233c5dda1a33f2d31"
+    },
+    {
+      "path": "backend/tests/sms_settings.rs",
+      "sha256": "8865c2f9dcaf52c3fdb6ad9261e5d0aa4c7a4a26b22cf56cd1b7231e83ccc13a"
+    },
+    {
+      "path": "backend/tests/sms_text.rs",
+      "sha256": "5331157c050955e85a5fd35ddc33287ea4b929c7a02cff0418b851b676fc31bc"
+    },
+    {
+      "path": "backend/tests/sms.rs",
+      "sha256": "3a31d9075caead848405c2d0418b62f7a607ac468f182b851e26263777249f52"
+    },
+    {
+      "path": "backend/tests/support/band_templates.rs",
+      "sha256": "134743094bd43fd1f9bc794a51eaee61627b60521aebeaccc661c4d1af318991"
+    },
+    {
+      "path": "backend/tests/support/temperature_cases.rs",
+      "sha256": "844506a3072ed2ff95eac9ea4814af046f8acaa7131b9042a97d3ba0eb1626d7"
+    },
+    {
+      "path": "backend/tests/temperature.rs",
+      "sha256": "6ed55872462f2467400df9663f70a4635ffd3cef307b477284e4d19d10e14744"
+    },
+    {
+      "path": "backend/tests/template_bands.rs",
+      "sha256": "6161fc331f601825b475e9ab4ed9a8151e2d59046d8ad6a27ab07844d7df5a58"
+    },
+    {
+      "path": "backend/tests/traffic.rs",
+      "sha256": "d43cdf2a07fca87f85de7ed05dac472777ac45923b6612b76ccc2612cf5d1c64"
+    },
+    {
+      "path": "backend/tests/vendor_locks.rs",
+      "sha256": "d5f578cfed2a62e3dbcfc2a35f4c95f23c1657e337212c3551f7970fb07165a8"
+    },
+    {
+      "path": "backend/tests/vendor_radio.rs",
+      "sha256": "c8765718347e3871bf4d2da277cd3bd9934f502c355b1f1cc51b83065f1d416c"
+    },
+    {
+      "path": "CHANGELOG.md",
+      "sha256": "0b9ef102b404a45ed9ddf59b9237f050d74e2e1786f26b5afec7b1b223841722"
+    },
+    {
+      "path": "docs/api-contract.json",
+      "sha256": "9d00b64a6117873ddd2291ae48aacd4edbf64d2b2e5ad11ee3168e1456bacce8"
+    },
+    {
+      "path": "docs/API.en.md",
+      "sha256": "df90612abe6ad97d6861427a540929a9e26d258e778891468e65d64bb49360ee"
+    },
+    {
+      "path": "docs/API.zh-CN.md",
+      "sha256": "013974bd21be65d6688a60cc946f8400958db1926e15de432f212dcbfe7e17bb"
+    },
+    {
+      "path": "docs/BUILD.md",
+      "sha256": "d309a669a9c842640042b68ff9636b8cfaaaf263096c5ce933f874313a83937f"
+    },
+    {
+      "path": "docs/FEATURES.md",
+      "sha256": "68134b91a69421ab1a3ec6931330f9a5a1ffa819cab2f3f78796df5235fbbbe8"
+    },
+    {
+      "path": "docs/FRONTEND-SOURCES.md",
+      "sha256": "de7fa974405411e182c6824537f056d2dba5274c329b9f036bcc4194f3e22a23"
+    },
+    {
+      "path": "docs/ICON-SOURCES.md",
+      "sha256": "1786eb1e901c4b5fe84ba94abf4f569fff6633351d2a8590122c7ddce2f92c67"
+    },
+    {
+      "path": "docs/LAN-RATES.md",
+      "sha256": "528231ec96608e4d7f7ce98eb21fe071f0f53151f88f94991fe63866401bc6fe"
+    },
+    {
+      "path": "docs/model-bands.json",
+      "sha256": "41ba9a73d1474354deaca1db8783d5937682ce40e8168abb277ea9812481ae36"
+    },
+    {
+      "path": "docs/MODEM-COMPATIBILITY.md",
+      "sha256": "59160cc4c7837b894afb635fef842053049412791ddd99c3b9977039fbe1ede2"
+    },
+    {
+      "path": "docs/PERFORMANCE.md",
+      "sha256": "cf1f1819f09a54119677e59330119648f19724baaa4488b00876f5d227d76786"
+    },
+    {
+      "path": "docs/qmodem-upstream.json",
+      "sha256": "df105ef4034313b9624b430808077733e0d8b0865794e6145369bc66999b77a6"
+    },
+    {
+      "path": "docs/QMODEM.md",
+      "sha256": "0fb075d443c4533418a1583245b36a407408b337795fb5640d3fbc7a585a4a25"
+    },
+    {
+      "path": "docs/RELEASE-1.0.0.md",
+      "sha256": "0020cb502dafaab1c95601cc6186bfad26ac4a01a5dbb47527f20c5033400575"
+    },
+    {
+      "path": "docs/RELEASE-AUDIT.md",
+      "sha256": "819a5fec88e5944ebec07708c737b536a863d8719c0b835941a587ccf4d496b5"
+    },
+    {
+      "path": "docs/RELEASE-CRITERIA.md",
+      "sha256": "0af8cd114b51128bf37e739f8c9d724300c89dc5546c3359676e929cd98da437"
+    },
+    {
+      "path": "docs/SECURITY.md",
+      "sha256": "c83c7dc3ab58e9dd1a2568d899c12fd34a86fbdbb2955ead255984c882414c5f"
+    },
+    {
+      "path": "docs/SMS.md",
+      "sha256": "0e78a98db001246fc9c28a27e8fc7179216743f48d284e8db0ee82e8037d775f"
+    },
+    {
+      "path": "docs/STATUS.md",
+      "sha256": "01f8d6ddebbe9a2853d326c1b19a544f71d71b9b7ce04ca391020dedd084c1f5"
+    },
+    {
+      "path": "docs/UPSTREAM-PARITY.md",
+      "sha256": "a5072b44639991cd1db4a5d0043401a19cb17915615b45b26a83eb8a2dbd708e"
+    },
+    {
+      "path": "frontend/usr/share/luci/menu.d/network-panel.json",
+      "sha256": "b7f9db26393a82ef1a116c8108ddc75a6a7703c2cbf9a287697b550533f33c15"
+    },
+    {
+      "path": "frontend/usr/share/rpcd/acl.d/network-panel.json",
+      "sha256": "079da3f7d880afb45f5b3954db5a7f934fd163a357637a903ba71043e9f6e4b4"
+    },
+    {
+      "path": "frontend/www/luci-static/resources/view/wlmb-server/index-v1_0_0_release.js",
+      "sha256": "9baf471683da116efacc7ac8655b6f39c2681aed1687ed49909121d951df05e8"
+    },
+    {
+      "path": "frontend/www/luci-static/resources/wlmb-server/guide.css",
+      "sha256": "cbff4e3721313a5b2c7644f49d6c8477c3395121fd69334b8771231f6bb7c5d5"
+    },
+    {
+      "path": "frontend/www/luci-static/resources/wlmb-server/guide.html",
+      "sha256": "5c0f76be5d30b0370ea02fd1f4ea562d1eb78c0fb4bb6253c3470db2f648cb43"
+    },
+    {
+      "path": "frontend/www/luci-static/resources/wlmb-server/guide.js",
+      "sha256": "5c818a417193b0dc57e242b3cbcf71e87472460075df1d51293bc5c4add08819"
+    },
+    {
+      "path": "frontend/www/luci-static/resources/wlmb-server/panel.css",
+      "sha256": "73d929ab67a1dc72475a5a547afcda07b333034f5155fc16bd6de6ec9e92c2c5"
+    },
+    {
+      "path": "frontend/www/luci-static/resources/wlmb-server/ui-notices.html",
+      "sha256": "5b59e1ca488396a0fcb6afca8f53b07c2bb620d9f16798a6b249c6e9568fe55a"
+    },
+    {
+      "path": "frontend/www/luci-static/resources/wlmb-server/webui-data-1.0.0.js",
+      "sha256": "7e335f67b9851b25cfbeed0824ed2d82766637852cfd877759d30c67acc403f8"
+    },
+    {
+      "path": "frontend/www/luci-static/resources/wlmb-server/webui-icons-1.0.0.js",
+      "sha256": "21afa904cbb57a8a58a308fe7e13106d6b6cdc8f42f10ca6f4e8808d717e2f6e"
+    },
+    {
+      "path": "frontend/www/luci-static/resources/wlmb-server/webui-shell-1.0.0.js",
+      "sha256": "49f6646c860ad80c6570f37987c989fc57bbb36f1f8174262bbfbfdca9570daa"
+    },
+    {
+      "path": "LICENSE",
+      "sha256": "fddd66971e5dd6f6fc25289669309572e1baa8828427d1287558e147fec21f06"
+    },
+    {
+      "path": "packaging/files/etc/config/network_panel",
+      "sha256": "b3f46bfdcb88ea6d400ec5a2eebed98f03a3a604f6f7d1d7b091c5589152bd9c"
+    },
+    {
+      "path": "packaging/files/etc/init.d/wlmb-server",
+      "sha256": "287ba1a63754d431efd7bd822c2c8cae7b5547199b02c4418bd181f46beaab06"
+    },
+    {
+      "path": "packaging/files/usr/share/wlmb-server/THIRD-PARTY-NOTICES",
+      "sha256": "5941cfe97d09bb9951094dab580589331c76031e448b8690871075e1254d1b90"
+    },
+    {
+      "path": "README.en.md",
+      "sha256": "1bdc0f4dcb27f5ccbf8eed50bbfa922308a053278a5c86c8bc05bc5bd5a2a556"
+    },
+    {
+      "path": "README.md",
+      "sha256": "f1cf7ad91e5c11938b3252498860cfd2239a3c4319e8f439db7b80fbd0618bcb"
+    },
+    {
+      "path": "tools/audit-release-boundary.cjs",
+      "sha256": "5fd2ca95d324d25437add04647aa05cc22a932bc3b8142d5542f66c7ad110944"
+    },
+    {
+      "path": "tools/check-comments.cjs",
+      "sha256": "318e9ec28a9bffe4e65bff48a4d20ebca7d4c3b5b1f61d3c499bdf2cde59db11"
+    },
+    {
+      "path": "tools/check-guide.cjs",
+      "sha256": "8b152e4ca2629ee1eb04ce96a38e4fb3f607cba6fd8aada99180ea0e63cc3eb2"
+    },
+    {
+      "path": "tools/check-luci.cjs",
+      "sha256": "f5a6fc6775a53fe4ba23068576a43215bf08cc09db5f24b47fb6f1cbe34c2697"
+    },
+    {
+      "path": "tools/check-package.cjs",
+      "sha256": "17650515c800a6daccbfe15cca8454db85416514ea260928c3ebc6e9ca35bba8"
+    },
+    {
+      "path": "tools/check-project.cjs",
+      "sha256": "9d34c45171b087433ae12507583dc5127a3fba9ad2502a9860e268e06edee3d2"
+    },
+    {
+      "path": "tools/check-qmodem-audit.cjs",
+      "sha256": "62f4e83b2fcefc3e63b0e66972b3f254b6d1db973ba71fc980589d30496af958"
+    },
+    {
+      "path": "tools/check-release-assets.cjs",
+      "sha256": "6d0ca66a20db521f417bf36528379f848fcc2ad6b65a03096b2b82a6874d9259"
+    },
+    {
+      "path": "tools/check-release-readiness.cjs",
+      "sha256": "afbdee600f2af9fd2be027dc440c5669f80a6a029077203ca1d05cb802459efb"
+    },
+    {
+      "path": "tools/check-release-workflow.cjs",
+      "sha256": "45b2cde5a6a147386e73ab41b1605316c35a3d07e2b7548e5a167fcf8ce4fa2e"
+    },
+    {
+      "path": "tools/check-ui-layout.cjs",
+      "sha256": "d15fbb50175c13069c0bc882d3b20ebb8d67612e73b4a7c2ac16b5f188d68718"
+    },
+    {
+      "path": "tools/check-webui.cjs",
+      "sha256": "63f2745b739368370e8d1d5cac6b89e1b8554d8197b28836342eaa5088257eb9"
+    },
+    {
+      "path": "tools/compatibility-report.cjs",
+      "sha256": "576c5aabc070ce09ebb2bf1293c3b13016ac8b0d1526df1bae6dd13f9e3e69a3"
+    },
+    {
+      "path": "tools/dependency-notices.cjs",
+      "sha256": "fc355cc6b81fdc96b87d19e19fc8ba8b4cf546b6dbf4929f6a4bdb8e41ca3e47"
+    },
+    {
+      "path": "tools/import-band-facts.cjs",
+      "sha256": "f1d41b7064d77a8a108f873cac1aafa58fddb3595da05b478edf70f547733546"
+    },
+    {
+      "path": "tools/package-native.cjs",
+      "sha256": "b72ac8852feab8d0aae7068b159e5873bfadf6f8fd9b6bb688824ff5ffa2396e"
+    },
+    {
+      "path": "tools/package-source.cjs",
+      "sha256": "d824a0d4bf5315b6cbba9ffda64d1fc4369d3e464933e9ff05a5b18e6970f48b"
+    },
+    {
+      "path": "tools/publish-release.cjs",
+      "sha256": "e2afec619aa9be0b5245cde6904140a4be52a4fac596341dd004f07a8e52a937"
+    },
+    {
+      "path": "tools/qmodem-audit.cjs",
+      "sha256": "000a7762e21078d254e53543eb8cf1bd39d39612dd69b4b7af740a5560b232fa"
+    },
+    {
+      "path": "tools/release-assets.cjs",
+      "sha256": "4381d7508ed2cb99133d0f990baa645522fd93ac98f777b61f5b3f3a1f0fdad7"
+    },
+    {
+      "path": "tools/release-readiness.cjs",
+      "sha256": "7bc0dbca877f9ed7813298687bff7b3b5d21ed4e0b72a356e4374cac8d58bb2c"
+    },
+    {
+      "path": "tools/ui-tests/package-lock.json",
+      "sha256": "357d7b5534966b0b835ff8ba15ed8d93c31873347f62010ddcae9ac84790de9b"
+    },
+    {
+      "path": "tools/ui-tests/package.json",
+      "sha256": "a4d83ad9bcb06a1f1943527b58cfacf564f4c30305b07e560af3c24bd163a847"
+    }
+  ]
+}

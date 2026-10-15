@@ -1,0 +1,79 @@
+网络面板非商业使用与来源声明许可 1.0
+Network Panel Non-Commercial Attribution License 1.0
+标识 / Identifier: LicenseRef-WLMB-NonCommercial
+
+Copyright (c) 2026 SlAlot. 保留所有未明确授予的权利。
+项目来源 / Project: https://github.com/SlAlot/wlmb-server
+
+1. 适用范围
+本许可仅适用于SlAlot拥有著作权、且未另行声明许可的网络面板OpenWrt插件文件。
+第三方依赖、图标和其他第三方材料继续遵守各自原有许可；本许可不替代或缩减其权利。
+网络面板助手微信小程序、商业Web客户端、授权服务及其代码不在本许可授权范围内。
+
+2. 非商业授权
+在遵守本许可的前提下，允许为个人使用、学习、研究及其他非商业目的，免费使用、
+复制、修改、编译和再分发本软件及其衍生版本，包括源代码和安装包。
+不授予商业使用权。未经SlAlot另行书面许可，不得将本软件或其衍生版本用于收费、
+销售、付费服务、商业固件／设备的预装或捆绑、广告变现、商业运营或其他直接或
+间接商业获利目的。免费提供并不自动意味着非商业使用。
+
+3. 作者与来源声明
+使用、修改和再分发时须保留本许可及原有版权、来源和第三方声明，不得冒称原作者。
+再分发或公开部署衍生版本时，须在说明文档和可见的关于／项目说明中注明：
+“基于SlAlot的网络面板（wlmb-server），来源：https://github.com/SlAlot/wlmb-server”。
+修改版本须说明已作修改，不得暗示获得原作者认可。衍生版本中包含的本项目代码
+继续受本许可约束，不得通过另行授权规避非商业使用和来源声明要求。
+
+4. 独立软件与商标
+通过公开API独立接入的软件不因此获得本软件代码的权利，也不因此被要求公开自身
+源码；商业使用本插件仍须遵守第2条或另行取得SlAlot的书面许可。
+本许可不授予商标、名称背书或专利许可。
+
+5. 终止与免责
+违反本许可时，上述授权自动终止；恢复授权须经SlAlot书面同意。
+本软件按“现状”提供，无任何明示或默示保证，包括适销性、特定用途适用性、
+不侵权或网络连接连续性。在法律允许范围内，作者不对使用本软件造成的任何损失、
+索赔或其他责任承担责任。请在更改设备配置前准备恢复手段。
+
+6. 性质与文本
+本许可包含非商业限制，是源码可用许可，不是OSI认可的开源许可。中文文本为准，
+下列英文为便利使用而提供。需要商业授权请联系项目维护者SlAlot。
+
+English summary and terms
+
+This license covers only SlAlot's original files of the wlmb-server OpenWrt
+plugin that do not specify another license. Third-party materials retain their
+own licenses. The WeChat mini-program, commercial Web client and licensing
+services are excluded.
+
+Permission is granted, free of charge, to use, copy, modify, compile and
+redistribute this software and derivative versions solely for non-commercial
+purposes, subject to retaining this license, copyright and third-party notices.
+No commercial rights are granted. Charging, sales, paid services, commercial
+device or firmware bundling, advertising monetization, business operations,
+and other direct or indirect commercial benefit require separate written
+permission from SlAlot. Offering software without charge is not by itself
+non-commercial use.
+
+Redistributed or publicly deployed derivatives must credit SlAlot and identify
+the original project in documentation and a visible About or project notice:
+"Based on Network Panel (wlmb-server) by SlAlot;
+source: https://github.com/SlAlot/wlmb-server".
+Modifications must be disclosed and must not imply endorsement. Covered code
+in derivatives remains subject to the non-commercial and attribution terms.
+
+Independent API clients do not receive rights to covered code and are not
+required by this license to disclose their own source. Commercial use of the
+plugin still requires separate permission. No trademark, endorsement or
+patent rights are granted.
+
+Permission terminates automatically upon breach and may be restored only by
+SlAlot's written consent. THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY
+OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING MERCHANTABILITY, FITNESS FOR A
+PARTICULAR PURPOSE AND NON-INFRINGEMENT. TO THE EXTENT PERMITTED BY LAW,
+THE AUTHOR SHALL NOT BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY
+ARISING FROM USE OF THE SOFTWARE.
+
+This is a source-available license with a non-commercial restriction, not an
+OSI-approved open-source license. The Chinese text prevails in case of
+inconsistency. Contact SlAlot for commercial licensing.

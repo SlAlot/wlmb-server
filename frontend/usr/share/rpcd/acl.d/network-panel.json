@@ -1,0 +1,7 @@
+{
+  "luci-app-network-panel": {
+    "description": "Network Panel frontend RPC contract; native RPC integration pending",
+    "read": { "ubus": { "network-panel": ["status", "settings", "diagnostics", "service_status", "control_result", "sms_list", "sms_forward_settings"] } },
+    "write": { "ubus": { "network-panel": ["refresh", "configure", "at_prepare", "at_execute", "service_control", "lock_status", "lock_prepare", "lock_execute", "host_prepare", "host_execute", "sms_refresh", "sms_read_state", "sms_prepare", "sms_execute", "sms_settings_prepare", "sms_settings_execute", "sms_forward_configure"] } }
+  }
+}
