@@ -8,6 +8,12 @@ assert.deepEqual(flow.on.push.tags, ['v*']);assert.deepEqual(flow.on.release.typ
 assert(flow.on.workflow_dispatch.inputs.publish.default === false, '手动构建默认不发布')
 assert.deepEqual(flow.jobs.publish.needs, ['verify', 'native-build'])
 assert.equal(flow.jobs.publish.permissions.contents, 'write')
+assert.equal(flow.jobs.publish.environment, 'release-signing')
+assert(flow.jobs.publish.if.includes("startsWith(github.ref, 'refs/tags/v')") && flow.jobs.publish.if.includes("github.repository == 'SlAlot/wlmb-server'"))
+const secretSteps = Object.entries(flow.jobs).flatMap(([job, value]) => value.steps.filter(step => JSON.stringify(step).includes('secrets.')).map(step => ({ job, step })))
+assert.equal(secretSteps.length, 1, '密钥只暴露给独立签名步骤')
+assert.equal(secretSteps[0].job, 'publish')
+assert(secretSteps[0].step.run.includes('tools/sign-release.cjs'))
 assert.equal(flow.permissions.contents, 'read', '普通检查不需要写仓库')
 assert.equal(flow.concurrency['cancel-in-progress'], false, '不能取消已开始的正式发布')
 for (const job of Object.values(flow.jobs)) for (const step of job.steps) {

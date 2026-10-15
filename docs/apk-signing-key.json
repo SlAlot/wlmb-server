@@ -1,0 +1,8 @@
+{
+  "schema": "WLMB-APK-SIGNING-KEY/1",
+  "owner": "SlAlot",
+  "algorithm": "ECDSA-P256",
+  "fileName": "wlmb-server-signing.pem",
+  "sha256": "402d9e009fb2064df25dfccec6855b037c039c22c61a95febc9f400d4b53d8ec",
+  "publicKeyPem": "-----BEGIN PUBLIC KEY-----\nMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEE/H7GHuJ01kFw3m8FjraIAH4+kF5\nOAnLuGeKVEpo4udFUK9MXjC+tqcYEZw/gwBBb2usUG2TVZD/2Si31BUukg==\n-----END PUBLIC KEY-----\n"
+}

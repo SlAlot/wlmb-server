@@ -3,6 +3,7 @@
 const fs = require('node:fs'), os = require('node:os'), path = require('node:path'), crypto = require('node:crypto'), assert = require('node:assert/strict')
 const { build, VERSION } = require('./package-source.cjs'), { prepare } = require('./release-assets.cjs')
 const { publish } = require('./publish-release.cjs')
+const { publicKey } = require('./sign-release.cjs')
 const hash = bytes => crypto.createHash('sha256').update(bytes).digest('hex')
 const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'wlmb-release-fixture-'))
 assert(path.dirname(directory) === path.resolve(os.tmpdir()) && path.basename(directory).startsWith('wlmb-release-fixture-'))
@@ -14,6 +15,8 @@ try {
     write(binary, bytes)
     const result = build(binary, arch, abi), apk = Buffer.from('合成APK，仅用于摘要测试')
     result.manifest.packageSha256 = hash(apk);result.manifest.packageBytes = apk.length
+    const key = publicKey()
+    result.manifest.packageSignature = { format: 'apk-v3', publicKeyFile: key.fileName, publicKeySha256: key.sha256 }
     const pkg = path.join(directory, 'wlmb-packages-' + target)
     write(path.join(pkg, `wlmb-server-${VERSION}-${arch}.apk`), apk)
     write(path.join(pkg, `wlmb-server-${VERSION}-${arch}.ipk`), result.ipk)
@@ -23,7 +26,9 @@ try {
   write(path.join(report, 'wlmb-compatibility.json'), JSON.stringify({ schema: 'WLMB-COMPATIBILITY-AUDIT/1', version: VERSION, referenceRevision: ref, summary: { models: 91, identityGaps: 0, protocolComplete: false, hardwareComplete: false } }))
   write(path.join(report, 'wlmb-release-readiness.json'), JSON.stringify({ schema: 'WLMB-RELEASE-READINESS/1', referenceRevision: ref, identifiedModels: 91, missingIdentity: [] }))
   const output = path.join(directory, 'release'), files = prepare(directory, output, 'b'.repeat(40), 'v' + VERSION)
-  assert.equal(files.length, 10)
+  assert.equal(files.length, 12)
+  const key = publicKey()
+  assert.equal(hash(fs.readFileSync(path.join(output, key.fileName))), key.sha256)
   assert.equal(JSON.parse(fs.readFileSync(path.join(output, 'release.json'))).protocolComplete, false, '不能为了发布改成全模组通过')
   let remote, uploadCalls = 0, failUpload = true
   const execute = (program, args) => {
@@ -47,12 +52,12 @@ try {
       const name = path.basename(args[3]);assert(!remote.assets.some(item => item.name === name))
       remote.assets.push({ name, digest: 'sha256:' + hash(fs.readFileSync(args[3])) });return ''
     }
-    assert.equal(args[1], 'edit');assert.equal(remote.assets.length, 10);remote.draft = false;return ''
+    assert.equal(args[1], 'edit');assert.equal(remote.assets.length, 12);remote.draft = false;return ''
   }
   assert.throws(() => publish(output, 'v' + VERSION, 'SlAlot/wlmb-server', execute), /模拟上传中断/)
   assert.equal(remote.assets.length, 3);assert.equal(remote.draft, true, '资产未齐不能发布草稿')
   failUpload = false
-  assert.equal(publish(output, 'v' + VERSION, 'SlAlot/wlmb-server', execute).assets, 10)
+  assert.equal(publish(output, 'v' + VERSION, 'SlAlot/wlmb-server', execute).assets, 12)
   const completed = uploadCalls
   publish(output, 'v' + VERSION, 'SlAlot/wlmb-server', execute)
   assert.equal(uploadCalls, completed, '相同制品重跑不重复上传')
@@ -65,5 +70,10 @@ try {
   fs.appendFileSync(apk, '篡改')
   assert.throws(() => prepare(directory, path.join(directory, 'bad'), 'b'.repeat(40), 'v' + VERSION))
   assert(!fs.existsSync(path.join(directory, 'bad')), '校验失败不能产生发布资产')
+  write(apk, Buffer.from('合成APK，仅用于摘要测试'))
+  const manifestFile = path.join(directory, 'wlmb-packages-x86_64-unknown-linux-musl', 'manifest-x86_64.json')
+  const manifest = JSON.parse(fs.readFileSync(manifestFile, 'utf8'))
+  delete manifest.packageSignature;write(manifestFile, JSON.stringify(manifest))
+  assert.throws(() => prepare(directory, path.join(directory, 'unsigned'), 'b'.repeat(40), 'v' + VERSION), /正式APK/)
   console.log('发布制品门禁回归通过：版本、架构、摘要、源码清单、报告、无覆盖和失败不产出；合成包不作硬件证据。')
 } finally { fs.rmSync(directory, { recursive: true, force: true }) }

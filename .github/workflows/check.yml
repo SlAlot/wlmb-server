@@ -117,8 +117,9 @@ jobs:
           retention-days: 7
   publish:
     needs: [verify, native-build]
-    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && inputs.publish)
+    if: github.repository == 'SlAlot/wlmb-server' && startsWith(github.ref, 'refs/tags/v') && (github.event_name != 'workflow_dispatch' || inputs.publish)
     runs-on: ubuntu-latest
+    environment: release-signing
     permissions:
       contents: write
     steps:
@@ -131,6 +132,20 @@ jobs:
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
           path: ${{ runner.temp }}/wlmb-artifacts
+      - name: 核对签名标签
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name || inputs.tag || github.ref_name }}
+        run: |
+          expected="v$(node -p "require('./tools/package-source.cjs').VERSION")"
+          test "$RELEASE_TAG" = "$expected"
+          test "$GITHUB_REF" = "refs/tags/$RELEASE_TAG"
+          test "$(git rev-parse HEAD)" = "$(git rev-parse "refs/tags/$RELEASE_TAG^{commit}")"
+      - name: 签名并验证正式APK
+        env:
+          WLMB_APK_SIGNING_KEY: ${{ secrets.WLMB_APK_SIGNING_KEY }}
+        run: |
+          curl --fail --location --retry 2 https://dl-cdn.alpinelinux.org/alpine/v3.23/main/x86_64/apk-tools-static-3.0.8-r0.apk --output "$RUNNER_TEMP/wlmb-signing-compiler.apk"
+          node tools/sign-release.cjs "$RUNNER_TEMP/wlmb-artifacts" "$RUNNER_TEMP/wlmb-signing-compiler.apk"
       - name: 核对标签及全部制品
         env:
           RELEASE_TAG: ${{ github.event.release.tag_name || inputs.tag || github.ref_name }}
