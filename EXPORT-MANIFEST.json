@@ -14,7 +14,7 @@
     },
     {
       "path": ".github/workflows/check.yml",
-      "sha256": "ed48811d5dfdb182921b3585875f823896fe913a219f5761eb97305cff038563"
+      "sha256": "8d69598a774a8bfadaa75c677fce1b1f04561e0ffc6c1d35d8dad0c76726bac0"
     },
     {
       "path": ".github/workflows/qmodem-audit.yml",
@@ -546,7 +546,7 @@
     },
     {
       "path": "docs/SECURITY.md",
-      "sha256": "c83c7dc3ab58e9dd1a2568d899c12fd34a86fbdbb2955ead255984c882414c5f"
+      "sha256": "0d24de398bc33832c12bc80fafaf8bb5764de0b2613d8b5c2e8ec6df2f9080ee"
     },
     {
       "path": "docs/SMS.md",
@@ -631,6 +631,10 @@
     {
       "path": "tools/audit-release-boundary.cjs",
       "sha256": "5fd2ca95d324d25437add04647aa05cc22a932bc3b8142d5542f66c7ad110944"
+    },
+    {
+      "path": "tools/check-apk-signing.cjs",
+      "sha256": "1437f8ac6c08463e4025abc8077e0217e4eec062cc1b0a98783d6195fdb36890"
     },
     {
       "path": "tools/check-cell-draft.cjs",
@@ -718,7 +722,7 @@
     },
     {
       "path": "tools/sign-release.cjs",
-      "sha256": "495847727bb66ec1091c0f6363e2235d73f67f569f2b4104264ec941c289aa81"
+      "sha256": "08ac503fd8d70ca36e7019c83115b063ed3c810c1963f94090b4679d1fd59c6a"
     },
     {
       "path": "tools/ui-tests/package-lock.json",

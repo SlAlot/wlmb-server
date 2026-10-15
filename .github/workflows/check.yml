@@ -43,6 +43,10 @@ jobs:
       - run: node tools/check-comments.cjs
       - run: node tools/check-release-workflow.cjs
       - run: node tools/check-release-assets.cjs
+      - name: 验证真实APK签名容器
+        run: |
+          curl --fail --location --retry 2 https://dl-cdn.alpinelinux.org/alpine/v3.23/main/x86_64/apk-tools-static-3.0.8-r0.apk --output "$RUNNER_TEMP/wlmb-sign-test-compiler.apk"
+          node tools/check-apk-signing.cjs "$RUNNER_TEMP/wlmb-sign-test-compiler.apk"
       - run: node tools/dependency-notices.cjs --check
       - run: node tools/check-webui.cjs
       - run: node tools/check-ui-layout.cjs

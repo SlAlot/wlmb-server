@@ -14,9 +14,9 @@ function publicKey() {
   assert.equal(object.asymmetricKeyDetails.namedCurve, 'prime256v1')
   return key
 }
-function sign(directory, compilerPackage) {
+function sign(directory, compilerPackage, key = publicKey()) {
   assert.equal(process.platform, 'linux', '正式签名仅在隔离的Linux发布任务中执行')
-  const key = publicKey(), secret = process.env.WLMB_APK_SIGNING_KEY
+  const secret = process.env.WLMB_APK_SIGNING_KEY
   assert(secret, '缺少签名密钥；拒绝发布未签名APK')
   delete process.env.WLMB_APK_SIGNING_KEY
   const privateKey = crypto.createPrivateKey(secret)
