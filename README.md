@@ -4,9 +4,9 @@
 
 面向OpenWrt的轻量模组信息与管理插件，作者 **SlAlot**。**Rust后端＋独立LuCI WebUI**，默认端口 **1117**，不接管拨号。根据qmodem为参考开发接入，自动选择已适配的模组协议及共享／独立通道。
 
-**当前版本1.0.6，1.0.0为首个公开版本**。源码公开，允许免费非商业使用，使用及分发须保留作者和来源；**不允许未经授权的商用**。采用[自定义非商业许可](LICENSE)，不是MIT／GPL或OSI认可的开源许可。第三方组件保留各自原有许可。
+**当前版本1.0.8，1.0.0为首个公开版本**。源码公开，允许免费非商业使用，使用及分发须保留作者和来源；**不允许未经授权的商用**。采用[自定义非商业许可](LICENSE)，不是MIT／GPL或OSI认可的开源许可。第三方组件保留各自原有许可。
 
-main分支正在验证1.0.7的系统接口兼容修复，尚未发布为正式Release；一键安装仍以正式发布页为准。
+1.0.8改进系统WiFi接口兼容和QModem缺省配置识别，增加第三方加速专用安装入口；安装版本以正式发布页为准。
 
 ## 一键安装（推荐）
 
@@ -20,6 +20,14 @@ wget -O /tmp/wlmb-install.sh https://github.com/SlAlot/wlmb-server/releases/late
 
 路由器访问不了GitHub可用离线目录；也可加`--check`仅检查、不安装。详见[一键／离线安装教程](docs/INSTALL.zh-CN.md)。只从本项目正式发布获取安装器，首次运行仍需信任其来源。
 
+可选的第三方加速入口（gh-proxy.com，非项目自营；只用于公开发行文件下载）：
+
+```sh
+wget -O /tmp/wlmb-install-gh-proxy.sh https://gh-proxy.com/https://github.com/SlAlot/wlmb-server/releases/latest/download/install-gh-proxy.sh && sh /tmp/wlmb-install-gh-proxy.sh
+```
+
+该脚本固定下载自身版本，继续校验摘要及APK签名。首次下载脚本本身仍需信任来源，建议通过官方Release的SHA256SUMS独立核对；代理不是永久备份或可用性保证。代理异常时用官方入口或离线方式，不关闭校验。
+
 ## 手动安装
 
 1. 在[Releases](https://github.com/SlAlot/wlmb-server/releases/latest)下载与设备匹配的包。当前提供ARM64（包ABI：`aarch64_cortex-a53`）和x86_64（`x86_64`），不适用于所有CPU／ABI。
@@ -32,10 +40,10 @@ wget -O /tmp/wlmb-install.sh https://github.com/SlAlot/wlmb-server/releases/late
 
 ```sh
 # IPK固件
-opkg install /tmp/wlmb-server-1.0.6-aarch64.ipk
+opkg install /tmp/wlmb-server-1.0.8-aarch64.ipk
 
 # APK固件：先按教程导入固定公钥，不跳过验签
-apk add /tmp/wlmb-server-1.0.6-aarch64.apk
+apk add /tmp/wlmb-server-1.0.8-aarch64.apk
 ```
 
 缺少依赖时使用固件自身软件源安装LuCI、rpcd、rpcd-mod-iwinfo和uci，不要混用不同固件的软件源。仅在可信局域网使用，不向公网开放1117。
@@ -69,4 +77,4 @@ cargo clippy --locked --all-targets --all-features --manifest-path backend/Cargo
 
 推送与源码版本一致的`vX.Y.Z`标签后，Actions自动检查、交叉编译并生成两架构IPK／APK，核对清单后上传Release，同时提供SHA-256、构建提交和逐型号报告。失败不发布新资产，不覆盖同名资产。见[构建与发布](docs/BUILD.md)。
 
-[更新记录](CHANGELOG.md) · [1.0.6说明](docs/RELEASE-1.0.6.md) · [安全](docs/SECURITY.md) · [性能](docs/PERFORMANCE.md) · [QModem来源](docs/QMODEM.md) · [图标许可](docs/FRONTEND-SOURCES.md)
+[更新记录](CHANGELOG.md) · [1.0.8说明](docs/RELEASE-1.0.8.md) · [安全](docs/SECURITY.md) · [性能](docs/PERFORMANCE.md) · [QModem来源](docs/QMODEM.md) · [图标许可](docs/FRONTEND-SOURCES.md)

@@ -329,7 +329,6 @@ impl Sampler {
             {
                 continue;
             }
-            let port = entry.modem["port"].as_str().ok_or_else(failed)?;
             let model = entry.modem["model"].as_str().ok_or_else(failed)?;
             // 已有有效主温度回复时不再发送备用命令；格式不兼容才继续，忙碌或超时仍停止本轮。
             let temperature_queries = crate::temperature::queries(model);
@@ -346,7 +345,7 @@ impl Sampler {
                     continue;
                 }
             }
-            match self.source.query(key, command, port, model) {
+            match self.source.query_bound(&entry.modem, command) {
                 Ok(raw) => {
                     let alternate = matches!(parser, "sierra-em91" | "sierra-em92");
                     if index == 0
@@ -359,7 +358,19 @@ impl Sampler {
                                 .is_none_or(|rows| rows.is_empty())
                         {
                             self.events.record("sampler", "AT_PARSE_UNAVAILABLE");
-                            errors.push(json!({"command":command,"code":"AT_PARSE_UNAVAILABLE"}));
+                            // 仅记录回复结构，便于区分空回复与格式差异，不记录原文或用户数据。
+                            let response_kind = if raw.trim().is_empty() {
+                                "empty"
+                            } else if raw
+                                .split(['\r', '\n'])
+                                .filter(|line| !line.trim().is_empty())
+                                .all(|line| line.trim() == "OK" || line.trim() == command)
+                            {
+                                "terminal-only"
+                            } else {
+                                "unrecognized"
+                            };
+                            errors.push(json!({"command":command,"code":"AT_PARSE_UNAVAILABLE","responseKind":response_kind,"responseBytes":raw.len()}));
                             previous.samples.remove(command);
                             if alternate && index == 0 {
                                 continue;

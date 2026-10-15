@@ -6,7 +6,8 @@ export PATH
 umask 077
 VERSION='@VERSION@'
 KEY_SHA='@KEY_SHA256@'
-BASE="https://github.com/SlAlot/wlmb-server/releases/download/v$VERSION"
+DOWNLOAD_PREFIX='@DOWNLOAD_PREFIX@'
+BASE="${DOWNLOAD_PREFIX}https://github.com/SlAlot/wlmb-server/releases/download/v$VERSION"
 OFFLINE=''
 CHECK=0
 YES=0
@@ -18,7 +19,7 @@ TRUST='/etc/apk/keys/wlmb-server-signing.pem'
 LOCK='/tmp/wlmb-installer.lock'
 fail() { printf '\n安装未完成：%s\n' "$*" >&2; exit 1; }
 help() {
-  printf '网络面板 %s 安装器\n用法：sh install.sh [--check] [--offline 文件目录] [--yes]\n' "$VERSION"
+  printf '网络面板 %s 安装器\n用法：sh @SCRIPT_NAME@ [--check] [--offline 文件目录] [--yes]\n' "$VERSION"
   printf '%s\n' '--check 仅下载校验，不安装、不导入系统公钥。' '--offline 使用同版安装包和公钥，不联网补依赖。' '--yes 明确同意安装及首次信任发布公钥，供自动化使用。'
 }
 while [ "$#" -gt 0 ]; do
@@ -89,6 +90,9 @@ if [ -x "/usr/sbin/wlmb-server" ]; then
   fi
 fi
 printf '网络面板 %s · %s · %s\n' "$VERSION" "$MANAGER" "$ABI"
+if [ -n "$DOWNLOAD_PREFIX" ] && [ -z "$OFFLINE" ]; then
+  printf '%s\n' '下载通道：第三方gh-proxy.com代理；仍核对固定版本摘要及APK发布公钥，不绕过验签。'
+fi
 [ -z "$CURRENT" ] || printf '当前版本：%s；保留已有插件配置。\n' "$CURRENT"
 if [ "$CHECK" = 0 ] && [ "$YES" = 0 ]; then
   printf '%s\n' '将安装网络面板；APK首次自动核对并信任SlAlot发布公钥。' '只使用固件现有依赖源；不改拨号、WiFi，不重启设备。'

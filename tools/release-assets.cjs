@@ -38,6 +38,7 @@ function prepare(directory, output, commit, tag) {
   files.set(key.fileName, Buffer.from(key.publicKeyPem))
   files.set('INSTALL-APK.md', fs.readFileSync(path.resolve(__dirname, '../docs/APK-INSTALL.zh-CN.md')))
   files.set('install.sh', render(files))
+  files.set('install-gh-proxy.sh', render(files, 'gh-proxy'))
   files.set('release.json', Buffer.from(JSON.stringify({
     schema: 'WLMB-RELEASE/1', version: VERSION, tag, commit, license: 'LicenseRef-WLMB-NonCommercial',
     platforms: ['aarch64_cortex-a53', 'x86_64'],

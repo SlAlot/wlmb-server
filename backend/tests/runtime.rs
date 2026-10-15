@@ -464,6 +464,57 @@ fn modem(key: &str) -> Value {
 const MONSC: &str = "^MONSC: NR,460,01,627264,1,ABC,1E8,ABCD,-81,-5,16\n";
 const HFREQ: &str = "^HFREQINFO: 0,7,78,630000,3450000,100000,630000,3450000,100000,78,636664,3549960,100000,636664,3549960,100000\n";
 #[test]
+fn invalid_primary_reports_only_shape_and_never_publishes_measurements() {
+    for (raw, kind) in [
+        ("\r\n", "empty"),
+        ("AT^MONSC\r\nOK\r\n", "terminal-only"),
+        ("+CMT: private-message\r\nOK\r\n", "unrecognized"),
+    ] {
+        let fake = Fake::new();
+        fake.responses
+            .lock()
+            .unwrap()
+            .insert("AT^MONSC".into(), Ok(raw.into()));
+        let panel = Sampler::new(fake.clone());
+        panel.tick().unwrap();
+        wait(|| panel.status(None).unwrap()["radio"]["pending"] == false);
+        let state = panel.status(None).unwrap();
+        assert_eq!(state["radio"]["stale"], true);
+        assert!(state["radio"]["serving"].as_array().unwrap().is_empty());
+        assert_eq!(state["radio"]["errors"][0]["code"], "AT_PARSE_UNAVAILABLE");
+        assert_eq!(state["radio"]["errors"][0]["responseKind"], kind);
+        assert_eq!(state["radio"]["errors"][0]["responseBytes"], raw.len());
+        assert!(!state.to_string().contains("private-message"));
+        assert_eq!(fake.count("AT^HFREQINFO?"), 0);
+        assert!(panel.stop(Duration::from_secs(1)).unwrap());
+    }
+}
+#[test]
+fn sampling_binds_each_query_to_the_discovered_instance() {
+    struct Replaced(AtomicUsize);
+    impl Source for Replaced {
+        fn modems(&self) -> Result<Vec<Value>> {
+            let mut row = modem("m1");
+            row["instance"] = json!(if self.0.fetch_add(1, Ordering::SeqCst) == 0 {
+                "original"
+            } else {
+                "replacement"
+            });
+            Ok(vec![row])
+        }
+        fn query(&self, _: &str, _: &str, _: &str, _: &str) -> Result<String> {
+            panic!("实例已变更，不得继续查询")
+        }
+    }
+    let panel = Sampler::new(Arc::new(Replaced(AtomicUsize::new(0))));
+    panel.tick().unwrap();
+    wait(|| panel.status(None).unwrap()["radio"]["pending"] == false);
+    let state = panel.status(None).unwrap();
+    assert_eq!(state["radio"]["stale"], true);
+    assert_eq!(state["radio"]["errors"][0]["code"], "MODEM_CHANGED");
+    assert!(panel.stop(Duration::from_secs(1)).unwrap());
+}
+#[test]
 fn sierra_lte_only_registration_survives_empty_or_unsupported_nr_in_both_modes() {
     const LTE: &str = "!LTEINFO:\nServing: EARFCN MCC MNC TAC CID Bd D U SNR PCI RSRQ RSRP RSSI RXLV\n1800 460 01 42 00FF0012 3 5 4 12 90 -8 -830 -66 40\nIntraFreq: PCI RSRQ RSRP RSSI RXLV\n91 -10 -900 -70 20\nOK\n";
     for model in ["EM9190", "EM9291"] {
@@ -821,13 +872,14 @@ fn first_signal_publishes_before_optional_and_readers_never_sample() {
     assert_eq!(fake.discoveries.load(Ordering::SeqCst), 0);
     panel.tick().unwrap();
     wait(|| fake.count("AT^HFREQINFO?") == 1);
+    let discoveries = fake.discoveries.load(Ordering::SeqCst);
     for _ in 0..100 {
         let data = panel.status(None).unwrap();
         assert_eq!(data["radio"]["serving"][0]["rsrp"], -81.0);
         assert_eq!(data["radio"]["pending"], true);
     }
     assert_eq!(fake.count("AT^MONSC"), 1);
-    assert_eq!(fake.discoveries.load(Ordering::SeqCst), 1);
+    assert_eq!(fake.discoveries.load(Ordering::SeqCst), discoveries);
     assert_eq!(panel.refresh("m1").unwrap()["accepted"], false);
     gate.release();
     wait(|| panel.status(None).unwrap()["radio"]["pending"] == false);
@@ -905,8 +957,10 @@ fn periodic_poller_does_not_spin_after_worker_completion() {
     let other = panel.clone();
     let poll = thread::spawn(move || other.run().unwrap());
     wait(|| fake.count("AT^MONNC") == 1);
+    wait(|| panel.status(None).unwrap()["radio"]["pending"] == false);
+    let discoveries = fake.discoveries.load(Ordering::SeqCst);
     thread::sleep(Duration::from_millis(120));
-    assert_eq!(fake.discoveries.load(Ordering::SeqCst), 1);
+    assert_eq!(fake.discoveries.load(Ordering::SeqCst), discoveries);
     assert!(panel.stop(Duration::from_secs(1)).unwrap());
     poll.join().unwrap();
     assert!(panel.set_interval(1).is_err());

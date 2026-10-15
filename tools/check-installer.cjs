@@ -5,6 +5,11 @@ const { VERSION } = require('./package-source.cjs'), { render } = require('./ins
 const files = new Map()
 for (const arch of ['aarch64', 'x86_64']) for (const ext of ['apk', 'ipk']) files.set(`wlmb-server-${VERSION}-${arch}.${ext}`, Buffer.from(arch + ':' + ext + ':仅安装器流程替身'))
 const source = render(files).toString(), key = publicKey()
+const proxySource = render(files, 'gh-proxy').toString()
+assert(source.includes("DOWNLOAD_PREFIX=''"))
+assert(proxySource.includes("DOWNLOAD_PREFIX='https://gh-proxy.com/'"))
+assert.equal(proxySource.replace("DOWNLOAD_PREFIX='https://gh-proxy.com/'", "DOWNLOAD_PREFIX=''").replace('sh install-gh-proxy.sh', 'sh install.sh'), source, '加速通道只替换固定下载入口与脚本名，不改变验证及安装行为')
+assert.throws(() => render(files, 'https://example.com/'), /固定入口/)
 assert(!/@[A-Z0-9_]+@/.test(source))
 assert(source.includes("VERSION='" + VERSION + "'") && source.includes(key.sha256))
 assert(!/--allow-untrusted|--no-check-certificate|--force-|curl[^\n]*\|\s*sh|eval\s|uci\s+(?:set|commit)|(?:^|\n)\s*(?:reboot|sysupgrade)\b/.test(source))
@@ -56,7 +61,7 @@ process.exit(1);`
   for (const name of ['apk', 'opkg', 'ubus', 'uci', 'id', 'df', 'sleep', 'curl']) write(path.join(bin, name), '#!' + process.execPath + '\n' + program, 0o755)
   const file = path.join(dir, 'install.sh')
   // 测试仅重定位系统路径及命令搜索目录，生产脚本不接受这些测试覆盖参数。
-  const script = source.replace('PATH=/usr/sbin:/usr/bin:/sbin:/bin', 'PATH=' + JSON.stringify(bin + ':/usr/sbin:/usr/bin:/sbin:/bin')).replaceAll('/etc/apk/keys', trust).replaceAll('/etc/apk/arch', path.join(dir, 'apk-arch')).replaceAll('/usr/sbin/wlmb-server', server).replaceAll('/tmp/wlmb-installer.lock', path.join(dir, 'lock'))
+  const script = (options.proxy ? proxySource : source).replace('PATH=/usr/sbin:/usr/bin:/sbin:/bin', 'PATH=' + JSON.stringify(bin + ':/usr/sbin:/usr/bin:/sbin:/bin')).replaceAll('/etc/apk/keys', trust).replaceAll('/etc/apk/arch', path.join(dir, 'apk-arch')).replaceAll('/usr/sbin/wlmb-server', server).replaceAll('/tmp/wlmb-installer.lock', path.join(dir, 'lock'))
   write(file, script)
   cp.execFileSync('sh', ['-n', file])
   const args = options.online ? [] : ['--offline', bundle]
@@ -66,6 +71,11 @@ process.exit(1);`
   assert(!result.error, name + ': ' + result.error)
   const output = result.stdout + result.stderr
   const actions = fs.existsSync(log) ? fs.readFileSync(log, 'utf8').trim().split('\n').map(row => JSON.parse(row)) : []
+  for (const row of actions.filter(row => row.name === 'curl')) {
+    const url = row.a.at(-1), prefix = options.proxy ? 'https://gh-proxy.com/' : ''
+    assert(url.startsWith(prefix + 'https://github.com/SlAlot/wlmb-server/releases/download/v' + VERSION + '/'), '只下载本通道固定版本资产')
+    assert(!url.includes('/latest/') && !url.includes('#'), '不混用动态版本或网页片段地址')
+  }
   const installs = actions.filter(row => ['apk', 'opkg'].includes(row.name) && (row.a.includes('add') || row.a.includes('install')) && !row.a.includes('--simulate') && !row.a.includes('--noaction'))
   assert.equal(fs.readFileSync(path.join(dir, 'config-kept'), 'utf8'), '已有配置不删除\n')
   assert(!fs.existsSync(path.join(dir, 'lock')), name + ': 安装锁必须释放')
@@ -119,5 +129,13 @@ try {
   fixture('configured-abi-ambiguous', { archConfig: 'aarch64_cortex-a53\nx86_64\n', fail: true })
   fixture('configured-abi-cross-family', { defaultAbi: 'x86_64', archConfig: 'aarch64_cortex-a53\n', fail: true })
   fixture('configured-x86', { defaultAbi: 'x86_64', archConfig: 'x86_64\n' })
+  fixture('proxy-apk-online', { proxy: true, online: true })
+  fixture('proxy-ipk-online', { proxy: true, online: true, manager: 'opkg' })
+  fixture('proxy-check', { proxy: true, online: true, check: true })
+  fixture('proxy-offline', { proxy: true })
+  fixture('proxy-bad-package', { proxy: true, online: true, badPackage: true, fail: true })
+  fixture('proxy-bad-key', { proxy: true, online: true, badKey: true, fail: true })
+  fixture('proxy-bad-signature', { proxy: true, online: true, badSignature: true, fail: true })
+  fixture('proxy-download-failure', { proxy: true, online: true, downloadFails: true, fail: true })
   console.log('安装器' + cases + '组POSIX流程回归通过：双包管理器／双架构、在线／离线、确认、检查、摘要、验签、空间、依赖、公钥冲突、失败回滚、版本和服务检查；替身不视为实机安装验收。')
 } finally { fs.rmSync(suite, { recursive: true, force: true }) }

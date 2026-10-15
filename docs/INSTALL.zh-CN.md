@@ -20,6 +20,18 @@ wget -O /tmp/wlmb-install.sh https://github.com/SlAlot/wlmb-server/releases/late
 
 1.0.5修正APK架构检测：优先读取/etc/apk/arch中的固件配置；apk --print-arch可能只返回aarch64等默认CPU架构，不能据此误判或强装。多架构配置需要唯一匹配，跨CPU家族或未覆盖配置拒绝。
 
+## 可选：gh-proxy.com加速安装
+
+第三方代理只负责下载公开发行文件，不是项目自营服务或永久备份。按[站点文档](https://gh-proxy.com/docs/github-accelerator)的前缀方式访问，不使用仓库主页的#片段地址：
+
+```sh
+wget -O /tmp/wlmb-install-gh-proxy.sh https://gh-proxy.com/https://github.com/SlAlot/wlmb-server/releases/latest/download/install-gh-proxy.sh && sh /tmp/wlmb-install-gh-proxy.sh
+```
+
+每次Release额外附带install-gh-proxy.sh，与官方install.sh同时生成并纳入SHA256SUMS，站点可列出这个公开资产；本项目不控制站点何时采集、缓存或刷新。脚本只从固定代理入口下载自身版本的包及公钥，保持相同的ABI、摘要、公钥与APK验签、依赖和就绪检查。支持相同的--check、--offline和--yes参数，不接受任意镜像地址，不自动切换到未知镜像。
+
+首次脚本下载依赖对渠道的信任，脚本和校验清单都从同一第三方下载不能构成独立认证。建议通过官方Release独立核对SHA256SUMS或直接取得脚本；APK随后还须通过固定公钥验签。IPK只有摘要核对，不宣称具有APK的签名保证。代理不可用时用官方或离线入口，不关闭TLS、摘要或签名检查。安装器不向代理发送管理密码、令牌或私人配置。
+
 ## 只检查，不安装
 
 下载脚本后可以先检查：
