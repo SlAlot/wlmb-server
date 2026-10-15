@@ -49,5 +49,27 @@ pub fn presets(model: &str) -> Value {
         value["supplement"] =
             json!({"NR":supplement,"scope":"unified-NR","planeSupportVerified":false});
     }
+    cell_metadata(&mut value, &key);
     value
+}
+/// 固件协商扩大或收窄频段后也需更新，避免用旧候选范围补齐新配置。
+pub fn cell_metadata(value: &mut Value, model: &str) {
+    value["cellFields"] = crate::lock_protocol::cell_fields(model);
+    // 与后端写入校验复用同一频点范围，只在候选唯一时由界面补齐频段。
+    for (rat, ranges) in [
+        ("NR", crate::radio::NR_RANGES),
+        ("LTE", crate::radio::LTE_RANGES),
+    ] {
+        value["cellRanges"][rat] = json!(
+            ranges
+                .iter()
+                .filter(|(band, _, _)| {
+                    value[rat]
+                        .as_array()
+                        .is_some_and(|bands| bands.contains(&json!(band)))
+                })
+                .map(|(band, first, last)| json!({"band":band,"first":first,"last":last}))
+                .collect::<Vec<_>>()
+        );
+    }
 }

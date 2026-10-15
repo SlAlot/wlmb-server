@@ -60,6 +60,8 @@ const context = { E, rpc, view: { extend: value => value }, poll: { add: () => {
   L: { resource: value => '/luci-static/resources' + (/^(?:[a-zA-Z0-9_.%,;-]+\/)*[a-zA-Z0-9_.%,;-]+$/.test(value) ? '/' + value : '/'), url: value => '/cgi-bin/luci/' + value, hasViewPermission: () => true },
   ui: { addNotification: (...args) => notifications.push(args), showModal: (title, nodes, ...classes) => { assert.deepEqual(classes,['np-root','np-dialog']); modal = E('div', {class:classes.join(' ')}, nodes); modals.push(title); return modal }, hideModal: () => {} }, setTimeout, Date, Promise, Number, Array, String, JSON, Error }
 const {VERSION,VIEW}=require('./package-source.cjs')
+context.window={}
+vm.runInNewContext(fs.readFileSync(path.join(root,'www/luci-static/resources/wlmb-server/webui-data-'+VERSION+'.js'),'utf8'),context)
 const source = fs.readFileSync(path.join(root, 'www/luci-static/resources/view/wlmb-server/'+VIEW+'.js'), 'utf8')
 const view = vm.runInNewContext('(function(){' + source + '\n})()', context)
 const all = node => [node, ...node.children.filter(child => child instanceof Element).flatMap(all)]
@@ -71,7 +73,7 @@ async function main() {
   const stylesheetUrl=new URL(stylesheet.attrs.href,'http://fixture.invalid')
   assert.equal(stylesheetUrl.pathname,'/luci-static/resources/wlmb-server/panel.css','Use actual LuCI resource path validation: append query outside L.resource()')
   assert.equal(stylesheetUrl.searchParams.get('v'),VERSION)
-  assert.equal(stylesheetUrl.searchParams.get('rev'),'release20261015','首版候选不能读取此前同版本的缓存资源')
+  assert.equal(stylesheetUrl.searchParams.get('rev'),'release1_0_1','首版候选不能读取此前同版本的缓存资源')
   assert.ok(fs.readFileSync(path.join(root, 'www/luci-static/resources/wlmb-server/panel.css'), 'utf8').includes('.np-card{'))
   assert.ok(dom.textContent.includes('网络面板'))
   assert.ok(dom.textContent.includes('已停止'))
@@ -97,11 +99,11 @@ async function main() {
   lockNodes.find(node=>node.attrs['aria-label']==='已读小区').listeners.change()
   assert.equal(lockNodes.find(node=>node.attrs['aria-label']==='服务频点').value,'633984')
   assert.equal(lockNodes.find(node=>node.attrs['aria-label']==='NR SCS').value,'','Never guess unreported SCS')
-  const missingScs=lockNodes.find(node=>node.attrs['aria-label']==='补充 NR SCS')
+  const missingScs=lockNodes.find(node=>node.attrs['aria-label']==='NR SCS')
   const missingScsRow=lockNodes.find(node=>node.children.includes(missingScs))
   assert.equal(missingScsRow.hidden,false,'Only the missing SCS supplement is shown')
   assert.equal(lockNodes.find(node=>node.tag==='details'&&node.attrs.class==='np-lock-advanced').open,false)
-  assert.equal(lockNodes.find(node=>node.attrs['aria-label']==='补充小区频段').value,'78')
+  assert.equal(lockNodes.find(node=>node.attrs['aria-label']==='小区频段').value,'n78')
   missingScs.value='1';missingScs.listeners.change()
   assert.equal(missingScsRow.hidden,true,'A completed supplement collapses without opening manual inputs')
   assert.ok(view.pages[5].textContent.includes('PCI 505'))

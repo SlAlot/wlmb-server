@@ -1,6 +1,49 @@
 // 网络面板自有前端；仅处理展示和已授权RPC调用，不直接操作模组。
 (function(global) {
     'use strict';
+// 小区草稿只补齐唯一且已核验的信息；不猜测 SCS，不发送网络请求。
+function resolveCellDraft(input, options = {}) {
+  const rat = input.rat, nr = rat === 'NR'
+  const empty = value => value === undefined || value === null || value === ''
+  const integer = (value, max) => !empty(value) && /^\d+$/.test(String(value)) && Number.isSafeInteger(Number(value)) && Number(value) <= max
+  const missing = { missingBand: false, missingScs: false }
+  const reply = (cell, error = '') => ({ missingBand: missing.missingBand, missingScs: missing.missingScs, cell: cell || null, error })
+  if (!['NR', 'LTE'].includes(rat)) return reply(null, '请选择 5G 或 4G')
+  if (!integer(input.pci, nr ? 1007 : 503)) return reply(null, 'PCI 应为 0–' + (nr ? 1007 : 503) + ' 的整数')
+  if (!integer(input.arfcn, nr ? 3279165 : 262143)) return reply(null, '请填写有效的 ARFCN / EARFCN')
+  const cell = { rat, pci: Number(input.pci), arfcn: Number(input.arfcn) }
+  const fields = options.fields || {}, bandRequired = fields.bandRequired !== false, scsRequired = nr && fields.scsRequired !== false
+  const rows = (options.choices || []).filter(row => row && row.rat === rat && !row.stale && (!nr || row.channelType !== 'center') && integer(row.pci, nr ? 1007 : 503) && integer(row.arfcn ?? row.channel, nr ? 3279165 : 262143) && Number(row.pci) === cell.pci && Number(row.arfcn ?? row.channel) === cell.arfcn)
+  const prefix = nr ? 'n' : 'B', normalize = value => {
+    const match = new RegExp('^' + prefix + '([1-9]\\d{0,3})$', 'i').exec(String(value || ''))
+    return match ? prefix + Number(match[1]) : ''
+  }
+  if (bandRequired) {
+    if (!empty(input.band) && !normalize(input.band)) { missing.missingBand = true; return reply(cell, '频段格式如 ' + (nr ? 'n78' : 'B3')) }
+    let band = normalize(input.band)
+    if (!band) {
+      const measured = [...new Set(rows.map(row => normalize(row.band)).filter(Boolean))]
+      if (measured.length === 1) band = measured[0]
+      else if (!measured.length) {
+        const ranges = [...new Set((options.ranges || []).filter(row => cell.arfcn >= row.first && cell.arfcn <= row.last).map(row => prefix + row.band))]
+        if (ranges.length === 1) band = ranges[0]
+      }
+    }
+    if (band) cell.band = band
+    else missing.missingBand = true
+  }
+  if (scsRequired) {
+    if (!empty(input.scsType) && !integer(input.scsType, 4)) { missing.missingScs = true; return reply(cell, '请选择有效的 SCS') }
+    let scs = empty(input.scsType) ? null : Number(input.scsType)
+    if (scs === null) {
+      const measured = [...new Set(rows.filter(row => integer(row.scsType, 4)).map(row => Number(row.scsType)))]
+      if (measured.length === 1) scs = measured[0]
+    }
+    if (scs !== null) cell.scsType = scs
+    else missing.missingScs = true
+  }
+  return reply(cell)
+}
     function known(value) { return typeof value === 'number' && Number.isFinite(value); }
     function show(value) { return value == null || value === '' ? '—' : value; }
     function band(row) { return row.band || (row.bandCandidates || []).join(' / ') + ((row.bandCandidates || []).length ? '（候选）' : '') || '未知频段'; }
@@ -84,7 +127,7 @@ function lockFeedback(receipts, radio, modem) {
   if (matched === receipts.length) return '配置回读一致，新的驻留信息符合所选条件；不代表已验证重启后保持。'
   return uncertain
 }
-    global.WLMBUIData={version:'1.0.0',band:band,known:known,lockFeedback:lockFeedback,
+    global.WLMBUIData={version:'1.0.1',band:band,known:known,lockFeedback:lockFeedback,resolveCellDraft:resolveCellDraft,
         verificationCode:verificationCode,messageTime:messageTime,recentSms:recentSms,
         rsrpQuality:function(value){return quality(value,[-80,-90,-100]);},
         rsrqQuality:function(value){return quality(value,[-10,-15,-20]);},

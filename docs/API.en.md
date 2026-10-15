@@ -14,6 +14,8 @@ Writes: refresh, lock_status, lock_prepare/execute, host_prepare/execute, at_pre
 
 Locks distinguish band preferences and cell entries. NR_NSA is band-only. NR cell frequency is serving SSB, not CA center; required SCS is protocol-specific. Saved readback, current RF conditions and reboot persistence are separate. No automatic flight mode or resets.
 
+1.0.1 adds `cellFields.NR/LTE` (`bandRequired`, `scsRequired`) to lock status/presets and `presets.cellRanges.NR/LTE` (`band`, `first`, `last`). These describe the selected modem protocol, not a transport-specific feature. Only unique band candidates and explicitly reported SCS may be filled automatically; ambiguous/missing mandatory fields need user input. Older servers without this metadata require conservative fields. Manual PCI/channel entry does not require the cell to appear in a scan.
+
 Host types: wifi_edit, wifi_unify, device_block, traffic_limit. Only verified ordinary LAN APs and plugin-owned rules are mutable. MLO/ambiguous configurations remain gated. Ethernet rateScope=port is not precise per-IP internet accounting.
 
 SMS IDs are fingerprints. Local read state is plugin-owned. The backend/deleteScope fields distinguish modem storage from QModem database records; database deletion does not guarantee SIM deletion. Sends/deletes require preparation and are not replayed. Forwarding defaults OFF, fallback 10 seconds after scan completion (minimum 5 / maximum 300), event-first with backoff. Empty token preserves credentials; clearToken requires forwarding disabled. Initial/re-enabled history is baselined, incomplete multipart messages are not forwarded. See [SMS](SMS.md).

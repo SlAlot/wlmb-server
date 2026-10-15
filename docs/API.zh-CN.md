@@ -42,7 +42,7 @@ radio.serving是服务测量；radio.carriers是已报告载波库存，两者�
 长动作返回 `{"job":"...","state":"pending"}`。只轮询control_result，可得到pending、done/result或error/error。执行连接中断时不要自动重发。
 
 - refresh：显式刷新模组，仍遵循后端限流。
-- lock_status：modem、force，读取配置。
+- lock_status：modem、force，读取配置。1.0.1追加`cellFields.NR/LTE`（`bandRequired`／`scsRequired`），`presets.cellRanges.NR/LTE`提供与写入校验一致的`band/first/last`候选范围。客户端仅在候选唯一时补齐频段，SCS只能使用明确测量或用户确认值。旧服务缺少字段时保守保留必填项，不能因此开放新写协议。
 - lock_prepare → lock_execute：modem、operation；execute附revision、confirmation。
 - host_prepare → host_execute：operation；execute附revision、confirmation。
 - at_prepare → at_execute：modem、command；execute附confirmation。

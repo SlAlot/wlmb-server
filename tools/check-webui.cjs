@@ -1,5 +1,6 @@
 // 开发校验工具；不随插件常驻，不操作供网路由器。
 'use strict'
+require('./check-cell-draft.cjs')
 const fs = require('node:fs'), path = require('node:path'), assert = require('node:assert/strict'), crypto = require('node:crypto')
 const {JSDOM,VirtualConsole} = require('./ui-tests/node_modules/jsdom')
 const {VERSION,VIEW} = require('./package-source.cjs')
@@ -467,7 +468,9 @@ async function main() {
   const readOnlyLock=page.pages[5];
   assert.ok([...readOnlyLock.querySelectorAll('button')].find(node=>node.textContent==='检查并保存').disabled)
   assert.ok(readOnlyLock.textContent.includes('仅展示型号资料'))
-  assert.ok(readOnlyLock.querySelector('.np-lock-advanced summary').textContent.includes('高级'))
+  assert.ok(readOnlyLock.querySelector('.np-lock-advanced summary').textContent.includes('补充参数'))
+  assert.ok(readOnlyLock.querySelector('.np-lock-basic [aria-label="小区 PCI"]'),'手动输入PCI不再藏在高级折叠中')
+  assert.ok(readOnlyLock.querySelector('.np-lock-basic [aria-label="服务频点"]'),'手动输入服务频点始终可见')
   goPage('网络信息')
   const originalLayout=w.WLMBUIData.network
   w.WLMBUIData.network=function(){throw new Error('fixture render failure')}

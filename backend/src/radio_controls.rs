@@ -205,6 +205,7 @@ impl RadioControls {
         }
         let value = json!({"groups":groups,"errors":errors,"observedAtMs":wall_ms(),"activation":"unverified","requiresExternalActivation":!crate::lock_protocol::immediate(model),"scsRequired":crate::lock_protocol::scs_required(model),"maxCells":crate::lock_protocol::max_cells(model),"persistent":!crate::lock_protocol::immediate(model),"note":if crate::lock_protocol::immediate(model){"此协议锁定可能立即影响供网且不持久保存，不设置开机重放，不自动重连；仅回读已确认的协议字段。"}else{"保存配置不代表当前射频已生效；本插件不会自动切飞行模式或重启。"}});
         let mut value = value;
+        value["cellFields"] = crate::lock_protocol::cell_fields(model);
         value["bandGroups"] = band_state["groups"].clone();
         value["bandWire"] = band_state["wire"].clone();
         value["bandAutoScope"] = json!(if crate::band_locks::modem_reset(model) {
@@ -245,6 +246,7 @@ impl RadioControls {
                 presets["NR"] = json!(nr);
             }
         }
+        crate::band_inventory::cell_metadata(&mut presets, model);
         value["presets"] = presets;
         self.cache
             .lock()

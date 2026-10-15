@@ -19,6 +19,13 @@ pub fn immediate(model: &str) -> bool {
 pub fn scs_required(model: &str) -> bool {
     !unisoc(model) && crate::quectel_lock::platform(model) != Some("lte")
 }
+/// 前端只请求对应协议实际使用的参数，不把其他平台的输入项套给所有模组。
+pub fn cell_fields(model: &str) -> Value {
+    json!({
+        "NR": {"bandRequired": !unisoc(model), "scsRequired": scs_required(model)},
+        "LTE": {"bandRequired": catalog::normalize(model) == "mt5700m-cn", "scsRequired": false}
+    })
+}
 pub fn max_cells(model: &str) -> usize {
     if unisoc(model) {
         6

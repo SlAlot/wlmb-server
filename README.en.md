@@ -2,7 +2,7 @@
 
 [简体中文](README.md) · [Downloads](https://github.com/SlAlot/wlmb-server/releases/latest) · [API](docs/API.en.md)
 
-**Network Panel 1.0.0**, the first public release by **SlAlot**, is a bounded Rust modem service with an independent LuCI JavaScript/CSS interface for OpenWrt. Default port: **1117**. It does not take over dialing. QModem's public identity facts, AT formats and shared interfaces inform the independently implemented adapters.
+**Network Panel 1.0.1** by **SlAlot** is a bounded Rust modem service with an independent LuCI JavaScript/CSS interface for OpenWrt. The first public release is 1.0.0. Default port: **1117**. It does not take over dialing. QModem's public identity facts, AT formats and shared interfaces inform the independently implemented adapters.
 
 Source is publicly available under a [custom non-commercial attribution license](LICENSE). **Commercial use requires separate permission**; retain author and source notices. This is source-available, not MIT/GPL or OSI-approved open source. Third-party materials retain their own licenses.
 
@@ -11,9 +11,9 @@ Source is publicly available under a [custom non-commercial attribution license]
 Download from [Releases](https://github.com/SlAlot/wlmb-server/releases/latest) and verify `SHA256SUMS`. Use the actual firmware's package manager and ABI: 24.10 normally uses IPK/opkg; 25.12 normally uses APK/apk. Currently provided: ARM64 ABI `aarch64_cortex-a53` and `x86_64`. Other architectures/ABIs are not covered. APK here is not an Android application.
 
 ```sh
-opkg install /tmp/wlmb-server-1.0.0-aarch64.ipk
+opkg install /tmp/wlmb-server-1.0.1-aarch64.ipk
 # On APK firmware, only after verifying the trusted download and checksum:
-apk add --allow-untrusted /tmp/wlmb-server-1.0.0-aarch64.apk
+apk add --allow-untrusted /tmp/wlmb-server-1.0.1-aarch64.apk
 ```
 
 Use your firmware's own feed for LuCI, rpcd, rpcd-mod-iwinfo and uci dependencies. Open **LuCI → Services → 网络面板**. Installation enables the plugin and boot startup. Packages are unsigned; do not bypass architecture checks or expose port 1117 to the Internet.
@@ -39,4 +39,4 @@ cargo clippy --locked --all-targets --all-features --manifest-path backend/Cargo
 
 Matching `vX.Y.Z` tags trigger Actions checks, ARM64/x86_64 builds and IPK/APK packaging. Verified assets, checksums, commit metadata and compatibility reports are uploaded only after required jobs pass. Existing assets are not overwritten. See [build instructions](docs/BUILD.md).
 
-[Changelog](CHANGELOG.md) · [1.0.0 notes](docs/RELEASE-1.0.0.md) · [security](docs/SECURITY.md) · [performance](docs/PERFORMANCE.md) · [QModem references](docs/QMODEM.md) · [frontend notices](docs/FRONTEND-SOURCES.md)
+[Changelog](CHANGELOG.md) · [1.0.1 notes](docs/RELEASE-1.0.1.md) · [security](docs/SECURITY.md) · [performance](docs/PERFORMANCE.md) · [QModem references](docs/QMODEM.md) · [frontend notices](docs/FRONTEND-SOURCES.md)

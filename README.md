@@ -4,7 +4,7 @@
 
 面向OpenWrt的轻量模组信息与管理插件，作者 **SlAlot**。**Rust后端＋独立LuCI WebUI**，默认端口 **1117**，不接管拨号。根据qmodem为参考开发接入，自动选择已适配的模组协议及共享／独立通道。
 
-**1.0.0首个公开版本**。源码公开，允许免费非商业使用，使用及分发须保留作者和来源；**不允许未经授权的商用**。采用[自定义非商业许可](LICENSE)，不是MIT／GPL或OSI认可的开源许可。第三方组件保留各自原有许可。
+**当前版本1.0.1，1.0.0为首个公开版本**。源码公开，允许免费非商业使用，使用及分发须保留作者和来源；**不允许未经授权的商用**。采用[自定义非商业许可](LICENSE)，不是MIT／GPL或OSI认可的开源许可。第三方组件保留各自原有许可。
 
 ## 安装
 
@@ -16,10 +16,10 @@
 
 ```sh
 # IPK固件
-opkg install /tmp/wlmb-server-1.0.0-aarch64.ipk
+opkg install /tmp/wlmb-server-1.0.1-aarch64.ipk
 
 # APK固件：独立包未签名，确认来源及摘要后才允许安装
-apk add --allow-untrusted /tmp/wlmb-server-1.0.0-aarch64.apk
+apk add --allow-untrusted /tmp/wlmb-server-1.0.1-aarch64.apk
 ```
 
 缺少依赖时使用固件自身软件源安装LuCI、rpcd、rpcd-mod-iwinfo和uci，不要混用不同固件的软件源。仅在可信局域网使用，不向公网开放1117。
@@ -28,7 +28,7 @@ apk add --allow-untrusted /tmp/wlmb-server-1.0.0-aarch64.apk
 
 - USB／PCIe模组发现及身份核验；有QModem时核验共享接口，否则使用自己的空闲AT端点，不抢占串口。
 - 信号、服务小区、载波聚合、邻区、运营商、签约速率、QCI及温度，按真实返回和有效期展示。
-- 点选锁频／锁小区、操作确认和保存回读；不自动飞行模式、拨号或重启。
+- 点选锁频／锁小区，也可直接手填PCI与服务频点；按协议自动补齐唯一频段，只有必需且未报告的参数才补填。操作确认和保存回读，不自动飞行模式、拨号或重启。
 - WiFi名称／密码／启停、制式／加密／带宽／信道、双频同名同密码；在线设备与上网限制。
 - 实时速率、今日／周期流量、起始日和限额；没有可靠计数的字段留空。
 - 短信收取／发送／删除、独立已读、PushPlus转发；事件优先、默认10秒兜底，关闭相应任务后停止后台收取／投递。
@@ -53,4 +53,4 @@ cargo clippy --locked --all-targets --all-features --manifest-path backend/Cargo
 
 推送与源码版本一致的`vX.Y.Z`标签后，Actions自动检查、交叉编译并生成两架构IPK／APK，核对清单后上传Release，同时提供SHA-256、构建提交和逐型号报告。失败不发布新资产，不覆盖同名资产。见[构建与发布](docs/BUILD.md)。
 
-[更新记录](CHANGELOG.md) · [1.0.0说明](docs/RELEASE-1.0.0.md) · [安全](docs/SECURITY.md) · [性能](docs/PERFORMANCE.md) · [QModem来源](docs/QMODEM.md) · [图标许可](docs/FRONTEND-SOURCES.md)
+[更新记录](CHANGELOG.md) · [1.0.1说明](docs/RELEASE-1.0.1.md) · [安全](docs/SECURITY.md) · [性能](docs/PERFORMANCE.md) · [QModem来源](docs/QMODEM.md) · [图标许可](docs/FRONTEND-SOURCES.md)

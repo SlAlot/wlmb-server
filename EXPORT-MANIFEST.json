@@ -5,7 +5,7 @@
   "license": "LicenseRef-WLMB-NonCommercial",
   "commercialClientSourceIncluded": false,
   "protocol": "NETWORK-PANEL-OPENWRT/1",
-  "pluginVersion": "1.0.0",
+  "pluginVersion": "1.0.1",
   "backendLanguage": "Rust",
   "files": [
     {
@@ -30,11 +30,11 @@
     },
     {
       "path": "backend/Cargo.lock",
-      "sha256": "be5ebcb886e660c019de114d99ca1b96c24cb80e91310bd9433fc597ea9aaf64"
+      "sha256": "842565c88e6406e6a40f4b72c60ee75fecf803dc74a510a30311f9d31cc1f807"
     },
     {
       "path": "backend/Cargo.toml",
-      "sha256": "ed1dac5b21caa1f56c7cadc78d42d5910d0f8ebe8c3175f578127c6a9b9a2e00"
+      "sha256": "872165532a14965c62752f9676ef3d3047e6d8059961e57ab26901885e1a457a"
     },
     {
       "path": "backend/src/actions.rs",
@@ -46,7 +46,7 @@
     },
     {
       "path": "backend/src/band_inventory.rs",
-      "sha256": "120f11d9dfe25e59d645858f1b6860e2c8faf8455250e337aa61f3c570b6ed34"
+      "sha256": "ca2d3655246e36df01dbb9ed6ae3ea79c8c2d4493e62c748516b5f9c799592e7"
     },
     {
       "path": "backend/src/band_locks.rs",
@@ -110,11 +110,11 @@
     },
     {
       "path": "backend/src/lib.rs",
-      "sha256": "18a8dec48d7b781158a338c0b8a60cc009d7ae9d530c34e09d955be2a4ece6b3"
+      "sha256": "b7783e701abaeaeab3b20a6842f97e61b658906f87f9400369e8d9111b50bd57"
     },
     {
       "path": "backend/src/lock_protocol.rs",
-      "sha256": "5828b0f99d320b95d901c567709cbc2db310bf08a8a9d832b41b6636e1f780cd"
+      "sha256": "19b819bc89ef83358234ed480368a50f26dac4f50b7dc7275e9d1782b2b3877e"
     },
     {
       "path": "backend/src/main.rs",
@@ -154,7 +154,7 @@
     },
     {
       "path": "backend/src/radio_controls.rs",
-      "sha256": "2ac879eeb8389718090ad527104477e83a4924ab432bc666dd3fd2abf6f3c4a5"
+      "sha256": "ed9010e2eff60fba9a37d584a5b6826c0a955c2859d1f764f03a6e5e1aa805c0"
     },
     {
       "path": "backend/src/radio.rs",
@@ -279,6 +279,10 @@
     {
       "path": "backend/tests/catalog.rs",
       "sha256": "d13d54ff198e048452697ca8de8bb5c19f3ed05e9f45713857deb99a04584efc"
+    },
+    {
+      "path": "backend/tests/cell_fields.rs",
+      "sha256": "1389c91347cbb763443cb56cd14d5296f577cf2794a9c183f069c0f90d6d4dc4"
     },
     {
       "path": "backend/tests/compat_sms.rs",
@@ -458,19 +462,19 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "0b9ef102b404a45ed9ddf59b9237f050d74e2e1786f26b5afec7b1b223841722"
+      "sha256": "1fdcdbc71978a8a42cea80a3533e9dd6806114f6a2105fb3b7f33b229a20ec3c"
     },
     {
       "path": "docs/api-contract.json",
-      "sha256": "9d00b64a6117873ddd2291ae48aacd4edbf64d2b2e5ad11ee3168e1456bacce8"
+      "sha256": "601e61c0168905eed1ec9a3255c6e8d4ba0f94c9c393b3554bd92a42079e3135"
     },
     {
       "path": "docs/API.en.md",
-      "sha256": "df90612abe6ad97d6861427a540929a9e26d258e778891468e65d64bb49360ee"
+      "sha256": "e491091c279bca9dadba312ab27c7dc06e5ebb672493dcc1b3f7d1c973f9fbb5"
     },
     {
       "path": "docs/API.zh-CN.md",
-      "sha256": "013974bd21be65d6688a60cc946f8400958db1926e15de432f212dcbfe7e17bb"
+      "sha256": "10a400896fb28262c856c566f4c51eb1d80d7b46a0895afc04376333ddf8bec3"
     },
     {
       "path": "docs/BUILD.md",
@@ -517,6 +521,10 @@
       "sha256": "0020cb502dafaab1c95601cc6186bfad26ac4a01a5dbb47527f20c5033400575"
     },
     {
+      "path": "docs/RELEASE-1.0.1.md",
+      "sha256": "cd7c8a35cd012988c03b714801b7cef3180db1533405d24fe563acc0e011919a"
+    },
+    {
       "path": "docs/RELEASE-AUDIT.md",
       "sha256": "819a5fec88e5944ebec07708c737b536a863d8719c0b835941a587ccf4d496b5"
     },
@@ -542,15 +550,15 @@
     },
     {
       "path": "frontend/usr/share/luci/menu.d/network-panel.json",
-      "sha256": "b7f9db26393a82ef1a116c8108ddc75a6a7703c2cbf9a287697b550533f33c15"
+      "sha256": "d620968141076f8065a9f540ebec273da6f58f6ce4ef5884722ba70cfd3673d4"
     },
     {
       "path": "frontend/usr/share/rpcd/acl.d/network-panel.json",
       "sha256": "079da3f7d880afb45f5b3954db5a7f934fd163a357637a903ba71043e9f6e4b4"
     },
     {
-      "path": "frontend/www/luci-static/resources/view/wlmb-server/index-v1_0_0_release.js",
-      "sha256": "9baf471683da116efacc7ac8655b6f39c2681aed1687ed49909121d951df05e8"
+      "path": "frontend/www/luci-static/resources/view/wlmb-server/index-v1_0_1_release.js",
+      "sha256": "49d1e105efe304d534070352f4a1f2b2d0b0d97e7e973932fab095cdd97411e6"
     },
     {
       "path": "frontend/www/luci-static/resources/wlmb-server/guide.css",
@@ -558,7 +566,7 @@
     },
     {
       "path": "frontend/www/luci-static/resources/wlmb-server/guide.html",
-      "sha256": "5c0f76be5d30b0370ea02fd1f4ea562d1eb78c0fb4bb6253c3470db2f648cb43"
+      "sha256": "3eb61a7d87a7b26bb6b8b120dddc6509c25e782e0eabec31bb23c01a898819a2"
     },
     {
       "path": "frontend/www/luci-static/resources/wlmb-server/guide.js",
@@ -566,23 +574,23 @@
     },
     {
       "path": "frontend/www/luci-static/resources/wlmb-server/panel.css",
-      "sha256": "73d929ab67a1dc72475a5a547afcda07b333034f5155fc16bd6de6ec9e92c2c5"
+      "sha256": "60029ac4a589ea545b4cca19db40987bb32991a8bb691e7bce2c86fb394293e8"
     },
     {
       "path": "frontend/www/luci-static/resources/wlmb-server/ui-notices.html",
-      "sha256": "5b59e1ca488396a0fcb6afca8f53b07c2bb620d9f16798a6b249c6e9568fe55a"
+      "sha256": "9f513345f60a65cd974dc7d968c5ccd4a3b10741c761f12ad05984b6aea938c2"
     },
     {
-      "path": "frontend/www/luci-static/resources/wlmb-server/webui-data-1.0.0.js",
-      "sha256": "7e335f67b9851b25cfbeed0824ed2d82766637852cfd877759d30c67acc403f8"
+      "path": "frontend/www/luci-static/resources/wlmb-server/webui-data-1.0.1.js",
+      "sha256": "8fad6a830652c11d17e18ff04f88c53294706d42744dcad1ff6b74998c1a5e3c"
     },
     {
-      "path": "frontend/www/luci-static/resources/wlmb-server/webui-icons-1.0.0.js",
-      "sha256": "21afa904cbb57a8a58a308fe7e13106d6b6cdc8f42f10ca6f4e8808d717e2f6e"
+      "path": "frontend/www/luci-static/resources/wlmb-server/webui-icons-1.0.1.js",
+      "sha256": "c7b50549403e06881899daaf1abf6a282553cc181faf342f04d14aea9f3f57e1"
     },
     {
-      "path": "frontend/www/luci-static/resources/wlmb-server/webui-shell-1.0.0.js",
-      "sha256": "49f6646c860ad80c6570f37987c989fc57bbb36f1f8174262bbfbfdca9570daa"
+      "path": "frontend/www/luci-static/resources/wlmb-server/webui-shell-1.0.1.js",
+      "sha256": "7b6be2d51e75ec02a825ec763eb9ad80cbb9e94d9a840c077333e9b6738cf606"
     },
     {
       "path": "LICENSE",
@@ -602,15 +610,19 @@
     },
     {
       "path": "README.en.md",
-      "sha256": "1bdc0f4dcb27f5ccbf8eed50bbfa922308a053278a5c86c8bc05bc5bd5a2a556"
+      "sha256": "e0162671f5251ef714f25f8e4283b0b28816e09e39d1031bf59136b9842a6945"
     },
     {
       "path": "README.md",
-      "sha256": "f1cf7ad91e5c11938b3252498860cfd2239a3c4319e8f439db7b80fbd0618bcb"
+      "sha256": "7392acc5cc5aea951e981ff9ee8154ff68eb851bed716dd42943e01b4846c80e"
     },
     {
       "path": "tools/audit-release-boundary.cjs",
       "sha256": "5fd2ca95d324d25437add04647aa05cc22a932bc3b8142d5542f66c7ad110944"
+    },
+    {
+      "path": "tools/check-cell-draft.cjs",
+      "sha256": "e55c2e3c66a5506b31312fd58f015346334c06c987cc7aec24b2d81ed50547ab"
     },
     {
       "path": "tools/check-comments.cjs",
@@ -622,7 +634,7 @@
     },
     {
       "path": "tools/check-luci.cjs",
-      "sha256": "f5a6fc6775a53fe4ba23068576a43215bf08cc09db5f24b47fb6f1cbe34c2697"
+      "sha256": "a43ddf415d8a7685eb9668c16f107c91e040f8052e6701ede944afda6303c7d4"
     },
     {
       "path": "tools/check-package.cjs",
@@ -654,7 +666,7 @@
     },
     {
       "path": "tools/check-webui.cjs",
-      "sha256": "63f2745b739368370e8d1d5cac6b89e1b8554d8197b28836342eaa5088257eb9"
+      "sha256": "9f91cac6e6cf237e8085511c3158d424cd9a922bc8bc25aa83f75a449236daf7"
     },
     {
       "path": "tools/compatibility-report.cjs",
@@ -674,7 +686,7 @@
     },
     {
       "path": "tools/package-source.cjs",
-      "sha256": "d824a0d4bf5315b6cbba9ffda64d1fc4369d3e464933e9ff05a5b18e6970f48b"
+      "sha256": "fc360a3e9152d26e690ff5c4baf1d8ffaa5dfe5f0ab8886e24af62f1a2ff5b46"
     },
     {
       "path": "tools/publish-release.cjs",

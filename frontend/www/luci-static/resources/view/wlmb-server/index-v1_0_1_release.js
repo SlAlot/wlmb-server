@@ -150,12 +150,12 @@ function copyCode(value) {
     if(window.isSecureContext&&navigator.clipboard&&navigator.clipboard.writeText)return navigator.clipboard.writeText(value).catch(fallback);
     try{fallback();return Promise.resolve();}catch(error){return Promise.reject(error);}
 }
-var guide = function(hash) { return L.resource('wlmb-server/guide.html') + '?v=1.0.0&rev=release20261015' + (hash || ''); };
+var guide = function(hash) { return L.resource('wlmb-server/guide.html') + '?v=1.0.1&rev=release1_0_1' + (hash || ''); };
 function webuiScript(name) {
     return new Promise(function(resolve,reject) {
         var script = document.createElement('script'), settled = false;
         var timer = setTimeout(function() { settled=true; script.remove(); reject(new Error('前端组件加载超时')); },12000);
-        script.src = L.resource('wlmb-server/' + name) + '?v=1.0.0&rev=release20261015';
+        script.src = L.resource('wlmb-server/' + name) + '?v=1.0.1&rev=release1_0_1';
         script.onload = function() { if (!settled) { settled=true; clearTimeout(timer); resolve(); } };
         script.onerror = function() { if (!settled) { settled=true; clearTimeout(timer); script.remove(); reject(new Error('前端组件加载失败')); } };
         document.head.appendChild(script);
@@ -211,7 +211,7 @@ return view.extend({
         this.draw(data[1]);
         poll.add(function() { return self.update(false); }, 3);
         var root = E('div', { id: 'wlmb-panel', 'class': 'np-root' }, [
-            E('link', { rel: 'stylesheet', href: L.resource('wlmb-server/panel.css') + '?v=1.0.0&rev=release20261015' }),
+            E('link', { rel: 'stylesheet', href: L.resource('wlmb-server/panel.css') + '?v=1.0.1&rev=release1_0_1' }),
             E('div', { 'class': 'np-head' }, [E('div', {}, [E('div', { 'class': 'np-title', role: 'heading', 'aria-level': '2' }, '网络面板'), E('p', { 'class': 'np-desc' }, 'wlmb-server · 根据qmodem为参考开发接入')]), link('新手教程', guide())]),
             E('div', { 'class': 'np-statusbar', role: 'status', 'aria-live': 'polite' }, [
                 E('span', { 'class': 'np-chip' }, [this.dot, this.state]), E('span', { 'class': 'np-chip' }, ['模组 ', this.count]),
@@ -252,10 +252,10 @@ return view.extend({
                     ui.addNotification(null,E('p',{},error.message+'；当前使用兼容界面，操作接口保持不变。'),'error');
                 }};
             self.webuiBridge = bridge;
-            (window.WLMBIcons && window.WLMBIcons.version==='1.0.0' ? Promise.resolve() : webuiScript('webui-icons-1.0.0.js')).then(function() {
-                return window.WLMBUIData && window.WLMBUIData.version==='1.0.0' ? null : webuiScript('webui-data-1.0.0.js');
+            (window.WLMBIcons && window.WLMBIcons.version==='1.0.1' ? Promise.resolve() : webuiScript('webui-icons-1.0.1.js')).then(function() {
+                return window.WLMBUIData && window.WLMBUIData.version==='1.0.1' ? null : webuiScript('webui-data-1.0.1.js');
             }).then(function() {
-                return window.WLMBWebUI && window.WLMBWebUI.version==='1.0.0' ? null : webuiScript('webui-shell-1.0.0.js');
+                return window.WLMBWebUI && window.WLMBWebUI.version==='1.0.1' ? null : webuiScript('webui-shell-1.0.1.js');
             }).then(function() {
                 if (!root.isConnected) return;
                 self.pages.forEach(function(page) { pageContainer.appendChild(page); });
@@ -657,49 +657,61 @@ return view.extend({
         var mode = E('select', { 'class': 'np-input', 'aria-label': '锁定类型' }, [E('option', { value: 'band' }, '选频段'), E('option', { value: 'cell' }, '选小区'), E('option', { value: 'auto' }, '恢复自动')]);
         rat.value = 'NR'; mode.value = 'band'; var lastLockType = 'band';
         var bandGrid = E('div', { 'class': 'np-band-grid' });
-        var cellBand = E('select', { 'class': 'np-input', 'aria-label': '小区频段' });
+        var cellBand = E('input', { 'class': 'np-input', 'aria-label': '小区频段', placeholder:'例如 n78 或 B3' });
         var cellChoice = E('select', { 'class': 'np-input', 'aria-label': '已读小区' });
         var channel = E('input', { 'class': 'np-input', type: 'number', min: 0, 'aria-label': '服务频点', placeholder: 'ARFCN / EARFCN' });
         var pci = E('input', { 'class': 'np-input', type: 'number', min: 0, 'aria-label': '小区 PCI', placeholder: 'PCI' });
         var scs = E('select', { 'class': 'np-input', 'aria-label': 'NR SCS' }, [E('option', { value: '' }, '选择已确认 SCS')].concat([15,30,60,120,240].map(function(v,i){return E('option',{value:String(i)},v+' kHz');})));
         scs.value = '';
-        var missingBand = E('select', { 'class':'np-input', 'aria-label':'补充小区频段' });
-        var missingScs = E('select', { 'class':'np-input', 'aria-label':'补充 NR SCS' }, [E('option',{value:''},'选择已确认 SCS')].concat([15,30,60,120,240].map(function(v,i){return E('option',{value:String(i)},v+' kHz');})));
-        var bandRequired = row('补充频段', '设备未报告明确频段', missingBand), scsRequired = row('补充 SCS', '仅需补充设备没有报告的参数', missingScs);
+        var bandRequired = row('频段', '仅此协议需要，唯一候选会自动填入', cellBand), scsRequired = row('SCS', '仅在模组要求且未报告时补充', scs);
         var selectionInfo = E('p', { 'class':'np-lock-selection', role:'status' });
         bandRequired.hidden=scsRequired.hidden=selectionInfo.hidden=true;
         var drafts = [], bands = [], choices = [], chosen = null, context = '', cellRows = E('div'), hint = E('p', { 'class': 'np-hint' });
         function paintCells() {
             cellRows.replaceChildren.apply(cellRows, drafts.map(function(item,index) {
-                return row((rat.value === 'NR' ? 'n' : 'B') + item.band + ' · PCI ' + item.pci, '频点 ' + item.arfcn, button('移除',function(){ drafts.splice(index,1); paintCells(); return Promise.resolve(); },'outline'));
+                return row((item.band ? (rat.value==='NR'?'n':'B')+item.band : (rat.value==='NR'?'5G NR':'4G LTE')) + ' · PCI ' + item.pci, '频点 ' + item.arfcn, button('移除',function(){ drafts.splice(index,1); paintCells(); return Promise.resolve(); },'outline'));
             }));
         }
         var add = button('加入待保存', function() {
-            if (!bands.some(function(v){return String(v) === cellBand.value;})) throw new Error('请选择模组支持的频段');
-            if (!/^\d+$/.test(String(channel.value)) || !/^\d+$/.test(String(pci.value))) throw new Error('请选择已读小区或填写频点、PCI');
-            var item = { band: Number(cellBand.value), arfcn: Number(channel.value), pci: Number(pci.value) };
-            if (rat.value === 'NR' && self.lockSnapshot?.lockPresets?.scsRequired!==false) { if (scs.value === '') throw new Error('模组未报告 SCS 时，请确认后选择'); item.scsType = Number(scs.value); }
+            var item = draftItem();
             var maxCells = self.lockSnapshot?.lockPresets?.maxCells || 4;
             if (maxCells === 1) drafts=[];
             if (drafts.length >= maxCells) throw new Error('此协议最多保存 ' + maxCells + ' 个小区');
-            if (drafts.some(function(v){return JSON.stringify(v) === JSON.stringify(item);})) throw new Error('此小区已加入');
+            if (drafts.some(function(v){return v.arfcn===item.arfcn&&v.pci===item.pci;})) throw new Error('此小区已加入');
             drafts.push(item); paintCells(); return Promise.resolve();
         }, 'outline');
-        var advanced = E('details', { 'class': 'np-lock-advanced' }, [E('summary', {}, '手动输入（高级）'), E('div', { 'class': 'np-toolbar' }, [cellBand, channel, pci, scs]), E('div',{'class':'np-actions'},[add])]);
-        var cellForm = E('div', {}, [row('选择当前小区 / 邻区', '自动填入设备已报告的参数', cellChoice), selectionInfo, bandRequired, scsRequired, cellRows, advanced]);
+        var advanced = E('details', { 'class': 'np-lock-advanced' }, [E('summary', {}, '补充参数'), E('p',{'class':'np-hint'},'PCI 与服务频点始终可手动填写。频段唯一时自动补齐；SCS 不使用猜测值，只有模组协议需要时才显示。')]);
+        var cellForm = E('div', {}, [row('快捷选择（可选）', '从当前小区或邻区填入，也可以直接手动输入', cellChoice), E('div',{'class':'np-lock-basic'},[E('label',{'class':'np-lock-field'},[E('span',{},'PCI'),pci]),E('label',{'class':'np-lock-field'},[E('span',{},'ARFCN / EARFCN'),channel])]), selectionInfo, bandRequired, scsRequired, E('div',{'class':'np-actions'},[add]), cellRows, advanced]);
         function showMode() { bandGrid.hidden = mode.value !== 'band'; cellForm.hidden = mode.value !== 'cell'; scs.hidden = rat.value !== 'NR'||self.lockSnapshot?.lockPresets?.scsRequired===false; }
         mode.addEventListener('change', function(){if(mode.value!=='auto')lastLockType=mode.value; self.refreshLock(true);showMode();});
+        function resolveDraft() {
+            var presets=self.lockSnapshot?.lockPresets||{},control=self.lockSnapshot?.controls||{};
+            var fields=control.cellFields?.[rat.value]||presets.cellFields?.[rat.value]||{scsRequired:presets.scsRequired!==false};
+            var result=window.WLMBUIData.resolveCellDraft({rat:rat.value,pci:pci.value,arfcn:channel.value,band:cellBand.value,scsType:scs.value},{fields:fields,ranges:presets.cellRanges?.[rat.value],choices:choices});
+            if(result.cell?.band)cellBand.value=result.cell.band;
+            if(result.cell?.scsType!==undefined)scs.value=String(result.cell.scsType);
+            bandRequired.hidden=fields.bandRequired===false||!result.missingBand&&!advanced.open;
+            scsRequired.hidden=rat.value!=='NR'||fields.scsRequired===false||!result.missingScs&&!advanced.open;
+            return result;
+        }
+        function draftItem() {
+            var result=resolveDraft();
+            if(result.error||result.missingBand||result.missingScs)throw new Error(result.error||(result.missingBand?'请补充模组需要的频段':'请补充模组需要的 SCS'));
+            var item={arfcn:result.cell.arfcn,pci:result.cell.pci};
+            if(result.cell.band)item.band=Number(result.cell.band.slice(1));
+            if(result.cell.scsType!==undefined)item.scsType=result.cell.scsType;
+            return item;
+        }
         function stageSelection() {
             if(!chosen)return;
-            bandRequired.hidden=!!cellBand.value;
-            scsRequired.hidden=rat.value!=='NR'||self.lockSnapshot?.lockPresets?.scsRequired===false||scs.value!=='';
-            missingBand.value=cellBand.value;missingScs.value=scs.value;
-            selectionInfo.hidden=false;selectionInfo.textContent='PCI '+pci.value+' · 频点 '+channel.value+(cellBand.value?' · '+(rat.value==='NR'?'n':'B')+cellBand.value:'');
-            if (cellBand.value && (rat.value !== 'NR' || self.lockSnapshot?.lockPresets?.scsRequired === false || scs.value !== '')) {
+            var resolved=resolveDraft();
+            selectionInfo.hidden=false;selectionInfo.textContent='已填入 PCI '+pci.value+' · 频点 '+channel.value;
+            if (!resolved.error&&!resolved.missingBand&&!resolved.missingScs) {
                 drafts = self.lockSnapshot?.lockPresets?.maxCells === 1 ? [] : drafts;
-                var draft = {band:Number(cellBand.value),arfcn:Number(channel.value),pci:Number(pci.value)};
-                if (rat.value === 'NR' && self.lockSnapshot?.lockPresets?.scsRequired !== false) draft.scsType=Number(scs.value);
-                if (!drafts.some(function(row){return JSON.stringify(row)===JSON.stringify(draft);}) && drafts.length < (self.lockSnapshot?.lockPresets?.maxCells || 4)) drafts.push(draft);
+                var draft = draftItem();
+                var existing=drafts.findIndex(function(row){return row.arfcn===draft.arfcn&&row.pci===draft.pci;});
+                if(existing>=0)drafts[existing]=draft;
+                else if(drafts.length < (self.lockSnapshot?.lockPresets?.maxCells || 4))drafts.push(draft);
                 paintCells(); advanced.open=false;
                 hint.textContent='已加入待保存；确认后才会提交，不会自动执行锁定。';
             } else { hint.textContent='仅补充上方缺少的参数即可，其他已读值无需重填。不会猜测 SCS。'; }
@@ -712,12 +724,14 @@ return view.extend({
             if(self.lockSnapshot?.lockPresets?.maxCells===1){drafts=[];paintCells();}
             chosen=item;channel.value = String(item.channel); pci.value = String(item.pci);
             var match = /^(?:n|B)(\d+)$/i.exec(item.band || '');
-            cellBand.value = match && bands.includes(Number(match[1])) ? match[1] : '';
+            cellBand.value = match ? (rat.value==='NR'?'n':'B')+match[1] : '';
             scs.value = Number.isInteger(item.scsType) && item.scsType >= 0 && item.scsType <= 4 ? String(item.scsType) : '';
             stageSelection();
         });
-        missingBand.addEventListener('change',function(){cellBand.value=missingBand.value;stageSelection();});
-        missingScs.addEventListener('change',function(){scs.value=missingScs.value;stageSelection();});
+        [channel,pci].forEach(function(node){node.addEventListener('input',function(){chosen=null;cellChoice.value='';cellBand.value=scs.value='';selectionInfo.hidden=true;resolveDraft();});});
+        cellBand.addEventListener('input',function(){resolveDraft();});
+        advanced.addEventListener('toggle',function(){resolveDraft();});
+        scs.addEventListener('change',function(){if(chosen)stageSelection();else resolveDraft();});
         this.fillLockCandidate=function(item){
             if (!item || item.stale || (self.lockSnapshot || {}).stale || self.readonly || !self.runtime.running || !self.capabilities.lockCell) throw new Error('当前小区不可用于锁定');
             rat.value=item.rat; mode.value='cell'; lastLockType='cell'; self.refreshLock(true); showMode();
@@ -750,8 +764,7 @@ return view.extend({
                 input.checked = !!group[bandRat] && group[bandRat].mode === 3 && group[bandRat].entries.some(function(e){return e.band === v;});
                 return E('label', { 'class': 'np-band-chip' }, [input, E('span', {}, (rat.value === 'NR' ? 'n' : 'B') + v)]);
             }));
-            cellBand.replaceChildren.apply(cellBand, [E('option',{value:''},'选择频段')].concat(bands.map(function(v){return E('option',{value:String(v)},(rat.value === 'NR'?'n':'B')+v);}))); cellBand.value = '';
-            missingBand.replaceChildren.apply(missingBand, [E('option',{value:''},'选择频段')].concat(bands.map(function(v){return E('option',{value:String(v)},(rat.value === 'NR'?'n':'B')+v);}))); missingBand.value=missingScs.value='';
+            cellBand.value = '';
             choices = (radio.stale ? [] : (radio.serving || []).concat(radio.neighbors || [])).filter(function(v){return v.rat === rat.value && !v.stale && Number.isInteger(v.channel) && Number.isInteger(v.pci) && (v.rat === 'LTE' || v.channelType !== 'center');});
             cellChoice.replaceChildren.apply(cellChoice, [E('option',{value:''},'选择当前小区 / 邻区')].concat(choices.map(function(v,i){return E('option',{value:String(i)},band(v)+' · PCI '+v.pci+' · '+v.channel);})));
             cellChoice.value = ''; channel.value = pci.value = scs.value = '';
@@ -772,8 +785,15 @@ return view.extend({
             if (self.readonly || !self.runtime.running || self.runtime.failure || self.snapshot.failure || !self.selected || !(self.capabilities.lockBand||self.capabilities.lockCell)) throw new Error('请先确认服务状态并选择支持锁定协议的模组');
             var selectedRat = rat.value, selectedMode = mode.value, modem = self.selected, items = [];
             if (selectedMode === 'band') items = Array.from(bandGrid.children).filter(function(label){return label.children[0].checked;}).map(function(label){return {band:Number(label.children[0].value)};});
-            if (selectedMode === 'cell') items = drafts.slice();
-            if(selectedMode==='cell' && chosen && (!cellBand.value || rat.value==='NR' && self.lockSnapshot?.lockPresets?.scsRequired!==false && scs.value===''))throw new Error('请先补充所选小区缺少的频段或 SCS');
+            if (selectedMode === 'cell') {
+                items = drafts.slice();
+                if(pci.value!==''||channel.value!==''){
+                    var entry=draftItem();
+                    var same=items.findIndex(function(row){return row.arfcn===entry.arfcn&&row.pci===entry.pci;});
+                    if(same>=0)items[same]=entry;
+                    else items=self.lockSnapshot?.lockPresets?.maxCells===1?[entry]:items.concat([entry]);
+                }
+            }
             if (selectedMode !== 'auto' && !items.length) throw new Error('请先选择频段或加入小区');
             var bandGroups=(self.lockSnapshot?.controls || {}).bandGroups;
             var bandTarget=selectedMode==='band' || selectedMode==='auto' && lastLockType==='band';

@@ -117,3 +117,5 @@ body.np-luci-surface,body .np-luci-surface{background:var(--np-page-surface)!imp
 @media(max-width:760px){.np-carriers .np-native-card-head{padding:12px 14px}.np-carriers .np-native-card-body{padding:10px 14px 12px}.np-carrier-card{padding:12px}.np-carrier-grid{gap:10px}}
 @media(prefers-reduced-motion:reduce){.np-root *,.np-root *:before,.np-root *:after{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
 .np-root .np-lock-layout .np-lock-advanced .np-toolbar:has(select[hidden]){display:flex}
+.np-lock-basic{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin:18px 0}.np-lock-basic .np-lock-field{min-width:0}.np-lock-basic .np-input{width:100%;box-sizing:border-box}.np-lock-basic~.np-actions{margin:18px 0}
+@media(max-width:560px){.np-lock-basic{grid-template-columns:1fr;gap:12px}}
