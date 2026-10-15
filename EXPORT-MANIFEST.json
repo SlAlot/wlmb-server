@@ -710,7 +710,7 @@
     },
     {
       "path": "tools/install-template.sh",
-      "sha256": "522c157e383b728b421373d5f2cf8a0cc678aa132a1284267e002d6228604085"
+      "sha256": "af482bff49b057b1edfaf3a3536c8b7db132b440fca796043820c5bb45ed1d84"
     },
     {
       "path": "tools/installer.cjs",

@@ -69,8 +69,8 @@ space() {
   [ "$available" -ge "$2" ] || fail "$1 可用空间不足，需要至少 $2 KiB"
 }
 CURRENT=''
-if [ -x /usr/sbin/wlmb-server ]; then
-  CURRENT=$(/usr/sbin/wlmb-server --version 2>/dev/null | sed -n 's/^WLMB_BUILD=\([^;]*\);.*/\1/p')
+if [ -x "/usr/sbin/wlmb-server" ]; then
+  CURRENT=$("/usr/sbin/wlmb-server" --version 2>/dev/null | sed -n 's/^WLMB_BUILD=\([^;]*\);.*/\1/p')
   if [ -n "$CURRENT" ] && awk -v a="$CURRENT" -v b="$VERSION" 'BEGIN {split(a,x,"."); split(b,y,"."); for(i=1;i<=3;i++){if(x[i]+0>y[i]+0)exit 0; if(x[i]+0<y[i]+0)exit 1}exit 1}'; then
     fail "当前版本 $CURRENT 高于安装器版本 $VERSION，请使用新版安装器"
   fi
@@ -126,7 +126,7 @@ if [ "$MANAGER" = apk ]; then
   mkdir "$TEMP/keys"
   cp "$TEMP/wlmb-server-signing.pem" "$TEMP/keys/wlmb-server-signing.pem"
   apk --keys-dir "$TEMP/keys" verify "$TEMP/$PACKAGE" || fail 'APK签名验证失败；不跳过校验'
-  [ ! -L /etc/apk/keys ] && [ ! -L "$TRUST" ] || fail '系统公钥路径是符号链接，请手动检查'
+  [ ! -L "/etc/apk/keys" ] && [ ! -L "$TRUST" ] || fail '系统公钥路径是符号链接，请手动检查'
   if [ -e "$TRUST" ]; then verify "$TRUST" "$KEY_SHA" || fail '已存在不同的同名公钥，拒绝自动替换'; fi
 fi
 if [ "$CHECK" = 1 ]; then
@@ -134,7 +134,7 @@ if [ "$CHECK" = 1 ]; then
   exit 0
 fi
 if [ "$MANAGER" = apk ] && [ ! -e "$TRUST" ]; then
-  mkdir -p /etc/apk/keys
+  mkdir -p "/etc/apk/keys"
   cp "$TEMP/wlmb-server-signing.pem" "$TRUST" || fail '公钥导入失败'
   NEW_KEY=1
   chmod 644 "$TRUST"
@@ -164,7 +164,7 @@ if [ "$MANAGER" = apk ]; then
 else
   opkg install "$TEMP/$PACKAGE" || fail '包管理器安装失败；可能已写入部分文件，请查看上方提示，不自动强制回滚'
 fi
-marker=$(/usr/sbin/wlmb-server --version 2>/dev/null || true)
+marker=$("/usr/sbin/wlmb-server" --version 2>/dev/null || true)
 case "$marker" in "WLMB_BUILD=$VERSION;"*) ;; *) fail '安装后版本未匹配；请检查包管理器输出' ;; esac
 ready=0
 for attempt in 1 2 3 4 5 6 7 8 9 10; do
