@@ -508,11 +508,11 @@ impl Broker {
     }
     pub fn modems(&self) -> Result<Vec<Value>> {
         let mut rows = self.discovery.modems()?;
-        // 部分QModem固件省略共享配置；仅使用已打开且归属明确的服务端口，不打开或接管串口。
+        // 部分QModem固件省略共享配置；按已打开的唯一服务端口识别通道，每次发送前仍核验真实归属。
         if rows.iter().any(|r| r["sharedPolicy"] == "automatic") {
             let listed = self
                 .bus
-                .call("at-daemon", "list", json!({}), Duration::from_secs(1));
+                .call("at-daemon", "list", json!({}), Duration::from_secs(3));
             for index in 0..rows.len() {
                 if rows[index]["sharedPolicy"] != "automatic" {
                     continue;
@@ -528,13 +528,9 @@ impl Broker {
                             && a.iter()
                                 .any(|r| r["port"] == port && r["is_open"].as_u64() == Some(1))
                     });
-                let owned = unique
-                    && open
-                    && self.discovery.owners(port).is_ok_and(|owners| {
-                        !owners.is_empty() && owners.iter().all(|owner| owner == "ubus-at-daemon")
-                    });
-                rows[index]["shared"] = json!(owned);
-                rows[index]["sharedDetectedBy"] = json!(if owned {
+                let shared = unique && open;
+                rows[index]["shared"] = json!(shared);
+                rows[index]["sharedDetectedBy"] = json!(if shared {
                     "open-daemon-port"
                 } else {
                     "unavailable"

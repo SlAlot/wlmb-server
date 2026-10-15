@@ -5,7 +5,7 @@
   "license": "LicenseRef-WLMB-NonCommercial",
   "commercialClientSourceIncluded": false,
   "protocol": "NETWORK-PANEL-OPENWRT/1",
-  "pluginVersion": "1.0.7",
+  "pluginVersion": "1.0.7-r1",
   "backendLanguage": "Rust",
   "files": [
     {
@@ -30,11 +30,11 @@
     },
     {
       "path": "backend/Cargo.lock",
-      "sha256": "f28c22efb80864ef57e39d82f999e44837ae96f4b7f3ad5eaa5136aef1dda7bc"
+      "sha256": "55c0a778bb37c111edbe6b5654f702db4d9cf1860279597f4a45084f7bcbc7ef"
     },
     {
       "path": "backend/Cargo.toml",
-      "sha256": "5d2c007a7cb6964074562b112baad56d24fdae942749935872e562ecc267039e"
+      "sha256": "bb6d68b3e0048ea7ea68aba2d17fd4358b0f34ea6946a6a8e531a364a1b7a982"
     },
     {
       "path": "backend/src/actions.rs",
@@ -110,7 +110,7 @@
     },
     {
       "path": "backend/src/lib.rs",
-      "sha256": "03c1a57ad6687b72902ec43e6b29d6852ce5c4b931f5ccb6bf3d4ee9ab0bfb55"
+      "sha256": "d9fae5e989badd59d564bb447bd0c8f580b135fba0d4735bea8dac99a60334db"
     },
     {
       "path": "backend/src/lock_protocol.rs",
@@ -194,7 +194,7 @@
     },
     {
       "path": "backend/src/sampling.rs",
-      "sha256": "f475b011a0dfe90fb833b93f4b9e662848f73d03184575105d1b24c0b8ca54ec"
+      "sha256": "a801e3901b78346c6a433cad7c2035dad73e3f9e5529fab844527ffa06df17b1"
     },
     {
       "path": "backend/src/security.rs",
@@ -266,7 +266,7 @@
     },
     {
       "path": "backend/src/transport.rs",
-      "sha256": "761975ebe544292dbefa2fe49a26a73c04b842dcd41e135f38e65c5c769afa6b"
+      "sha256": "a06ced9b60647f014a24394bd010e0130b78f5e3186f3c1d4913b25557bd88be"
     },
     {
       "path": "backend/src/vendor_cell_lock.rs",
@@ -378,7 +378,7 @@
     },
     {
       "path": "backend/tests/runtime.rs",
-      "sha256": "d06767fe8d5a94ecaf81024cfd5748885189fe0b8b2c9f98a5653a88781c0801"
+      "sha256": "35bf584920c29f40d83e16c9dcad9256c2da3f431afd3530e8d4be8b3bc9a70f"
     },
     {
       "path": "backend/tests/session_qos.rs",
@@ -386,7 +386,7 @@
     },
     {
       "path": "backend/tests/shared_discovery.rs",
-      "sha256": "559d799b3ac577303b17f8e74bff96eaffbf630bfd0679c296ad378c50e0cb89"
+      "sha256": "7c94932de082dada0f9c6984ab593b86d6541915e7a93f4224da2c9403256feb"
     },
     {
       "path": "backend/tests/shared_sms.rs",
@@ -466,11 +466,11 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "8161b82ed8442b9863732a8586b5ab7286a77cd9a1211c8d15ad6ab6b9cedfe1"
+      "sha256": "98db00ab990caa5e398dd7adc793c70e4cbc1a9f81c2fabc60b864d4e2607c59"
     },
     {
       "path": "docs/api-contract.json",
-      "sha256": "aabaf698cf49b75acc365d96996fa487185697f9d2b9e8f6882f91b93a329546"
+      "sha256": "53e3770153ee21a52bd835b007896b52fb511397a9535267c5b3eb9b108c93ca"
     },
     {
       "path": "docs/API.en.md",
@@ -578,7 +578,7 @@
     },
     {
       "path": "docs/SYSTEM-INTERFACES.md",
-      "sha256": "84680793f9b89cfad7183aea9ea45f8388e1ad9f1615972c761a3d099aebad17"
+      "sha256": "35add777bf4b17e4b63c8048e714e735765a78d978e45e7dffac517a739a7eb9"
     },
     {
       "path": "docs/UPSTREAM-PARITY.md",
@@ -586,15 +586,15 @@
     },
     {
       "path": "frontend/usr/share/luci/menu.d/network-panel.json",
-      "sha256": "e8907255e40a7f3d057153b1f41f6b7f6099a8583045e480599197f0964c9e75"
+      "sha256": "987133ba84f57880b4edff5de8c3e034211dd76410e3e839c8a2b9610e284ae9"
     },
     {
       "path": "frontend/usr/share/rpcd/acl.d/network-panel.json",
       "sha256": "079da3f7d880afb45f5b3954db5a7f934fd163a357637a903ba71043e9f6e4b4"
     },
     {
-      "path": "frontend/www/luci-static/resources/view/wlmb-server/index-v1_0_7_release.js",
-      "sha256": "d8283ec79f81c86b9fd87dd63664ea420153d45c3b530d7a6033e929917af979"
+      "path": "frontend/www/luci-static/resources/view/wlmb-server/index-v1_0_7_r1_release.js",
+      "sha256": "34c753038130aa808a40729bbbb250e62d5c3beca9a9c26c7db30155c55da16a"
     },
     {
       "path": "frontend/www/luci-static/resources/wlmb-server/guide.css",
@@ -602,7 +602,7 @@
     },
     {
       "path": "frontend/www/luci-static/resources/wlmb-server/guide.html",
-      "sha256": "8c53caa6c60c15c03fbce153c96623bee86e400e5568c2665181c134b821c295"
+      "sha256": "f1a31806f8efb62ea7c2832af92155c1ffa183a692b384f6747b68cde8c88d9d"
     },
     {
       "path": "frontend/www/luci-static/resources/wlmb-server/guide.js",
@@ -614,19 +614,19 @@
     },
     {
       "path": "frontend/www/luci-static/resources/wlmb-server/ui-notices.html",
-      "sha256": "25a8b266349cb2b989795501939e38978cfff18bbc661e4a221746be53aee494"
+      "sha256": "1ba3be3a8bd4e5aff52943b7ed56c6133a7f0f6c1681cba097c84c7bd83eee29"
     },
     {
-      "path": "frontend/www/luci-static/resources/wlmb-server/webui-data-1.0.7.js",
-      "sha256": "686389efda74d0d6d49c77dc39674e73006e7b9b8394b55ef0558982d51338e9"
+      "path": "frontend/www/luci-static/resources/wlmb-server/webui-data-1.0.7-r1.js",
+      "sha256": "21b5e4fbe34cdbc005fc6d176493a0fc65ded485ee81add57f1cd973d62b3d13"
     },
     {
-      "path": "frontend/www/luci-static/resources/wlmb-server/webui-icons-1.0.7.js",
-      "sha256": "da299db74546bf43fd7babb31384ed7d3d5ba1ce994d36e619991958dd879c10"
+      "path": "frontend/www/luci-static/resources/wlmb-server/webui-icons-1.0.7-r1.js",
+      "sha256": "07a18514bf4835ac4de6e145d8248daa91a310e88b70574ff631e8f4f0b57c04"
     },
     {
-      "path": "frontend/www/luci-static/resources/wlmb-server/webui-shell-1.0.7.js",
-      "sha256": "e597b89863c183261e0aca955dc8643d83fcf3c1ec198832682653936df1c778"
+      "path": "frontend/www/luci-static/resources/wlmb-server/webui-shell-1.0.7-r1.js",
+      "sha256": "eaf552632bea5d7cee587eedb8fed5345af53f4cdbc7595ae13aa92d6b1c39aa"
     },
     {
       "path": "LICENSE",
@@ -678,7 +678,7 @@
     },
     {
       "path": "tools/check-luci.cjs",
-      "sha256": "f6db32f8c68286c3c2eecb6e586e8f64617354ae85b5979fa06a74fa587c63e6"
+      "sha256": "fa536db54a2ab3d35a7e4b50f11f6db904cef54b04d1cc6525eb8eb251c8e66b"
     },
     {
       "path": "tools/check-package.cjs",
@@ -738,7 +738,7 @@
     },
     {
       "path": "tools/package-source.cjs",
-      "sha256": "b49bed1af1254004861012d416ae6f70b3a0be17eb8e503a4623620bb7c92493"
+      "sha256": "28bb429a8a7454342d3ad41ccedd929958e24eb2ebba4b5f23dc297143db3fe0"
     },
     {
       "path": "tools/publish-release.cjs",

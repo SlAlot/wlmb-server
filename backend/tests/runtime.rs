@@ -29,7 +29,13 @@ fn transient_busy_keeps_only_unexpired_primary_measurements_without_renewing_the
             mono: Instant::now(),
         },
     )]);
-    for code in ["AT_BUSY", "SYSTEM_BUSY", "AT_COOLDOWN"] {
+    for code in [
+        "AT_BUSY",
+        "SYSTEM_BUSY",
+        "AT_COOLDOWN",
+        "AT_PORT_CONFLICT",
+        "AT_OWNERSHIP_UNKNOWN",
+    ] {
         let errors = vec![json!({"command":commands[0],"code":code})];
         let fresh = sampling::publish(&row, &commands, &samples, &errors, 5000).unwrap();
         assert_eq!(fresh["stale"], false);

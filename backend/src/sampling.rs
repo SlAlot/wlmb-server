@@ -164,7 +164,13 @@ pub fn publish(
         && primary_errors.iter().all(|e| {
             matches!(
                 e["code"].as_str(),
-                Some("AT_BUSY" | "SYSTEM_BUSY" | "AT_COOLDOWN")
+                Some(
+                    "AT_BUSY"
+                        | "SYSTEM_BUSY"
+                        | "AT_COOLDOWN"
+                        | "AT_PORT_CONFLICT"
+                        | "AT_OWNERSHIP_UNKNOWN"
+                )
             )
         });
     let primary_failed = !primary_errors.is_empty() && !deferred;

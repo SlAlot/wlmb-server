@@ -113,7 +113,7 @@ fn explicit_disable_or_alternative_tool_is_not_overridden_by_detection() {
 }
 
 #[test]
-fn unavailable_ambiguous_closed_and_conflicting_ports_never_become_shared() {
+fn unavailable_ambiguous_and_closed_service_ports_never_become_shared() {
     for (ports, owners) in [
         (Err(PanelError::new("UBUS_OBJECT_NOT_FOUND", 503)), owner()),
         (Ok(json!({"ports":[]})), owner()),
@@ -127,12 +127,6 @@ fn unavailable_ambiguous_closed_and_conflicting_ports_never_become_shared() {
             ),
             owner(),
         ),
-        (open(), Ok(vec![])),
-        (
-            open(),
-            Ok(vec!["ubus-at-daemon".into(), "other-plugin".into()]),
-        ),
-        (open(), Err(PanelError::new("AT_OWNERSHIP_UNKNOWN", 409))),
     ] {
         let (broker, bus, _) = setup(config("fm160-cn", ""), ports, owners);
         assert_eq!(broker.modems().unwrap()[0]["shared"], false);
@@ -152,6 +146,21 @@ fn unavailable_ambiguous_closed_and_conflicting_ports_never_become_shared() {
             .all(|r| r["shared"] == false)
     );
     assert!(bus.commands.lock().unwrap().is_empty());
+}
+
+#[test]
+fn transient_port_contention_does_not_erase_capabilities_but_always_blocks_dispatch() {
+    for owners in [
+        Ok(vec![]),
+        Ok(vec!["ubus-at-daemon".into(), "other-plugin".into()]),
+        Err(PanelError::new("AT_OWNERSHIP_UNKNOWN", 409)),
+    ] {
+        let (broker, bus, _) = setup(config("fm160-cn", ""), open(), owners);
+        let row = broker.modems().unwrap().remove(0);
+        assert_eq!(row["shared"], true);
+        assert!(broker.query_bound(&row, "AT", 3).is_err());
+        assert!(bus.commands.lock().unwrap().is_empty());
+    }
 }
 
 #[test]
