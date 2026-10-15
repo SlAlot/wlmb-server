@@ -638,6 +638,19 @@ fn system_open_networks_keep_readable_profiles_and_verified_edit_options() {
 }
 
 #[test]
+fn editing_existing_driver_reported_wifi7_width_does_not_force_a_security_change() {
+    let mut s = open_wireless();
+    s["wireless"]["values"]["ap1"]["encryption"] = json!("psk2");
+    s["wireless"]["values"]["ap1"]["key"] = json!("private-existing-key");
+    let changed = host_controls::wifi_changes(
+        &s,
+        &json!({"kind":"wifi_edit","band":"5g","changes":{"bandwidth":"EHT80"}}),
+    )
+    .unwrap();
+    assert_eq!(changed["changes"], json!({".radioHtmode":"EHT80"}));
+}
+
+#[test]
 fn open_network_unification_does_not_require_or_invent_a_password_and_restores_exactly() {
     let (io, h) = setup();
     *io.s.lock().unwrap() = open_wireless();

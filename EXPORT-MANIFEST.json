@@ -90,7 +90,7 @@
     },
     {
       "path": "backend/src/host_controls.rs",
-      "sha256": "8ef1db1d3df9fa57aebbf239215a9935dadc9325cd1884f0fd6306ec3509b0ce"
+      "sha256": "e3ab16039b3d12414af191c9852bab7ee93c69faadc8e6eda61bef53143165a2"
     },
     {
       "path": "backend/src/http.rs",
@@ -306,7 +306,7 @@
     },
     {
       "path": "backend/tests/host_controls.rs",
-      "sha256": "abc176d50478f4f25193a4c261b649c505bc9312536635ca5f9dbb1d2a81570f"
+      "sha256": "c99c1c60c31ee96da7e581c4ef1ef95c329f4788e1d2e42a25c8428d97f019aa"
     },
     {
       "path": "backend/tests/host_service.rs",

@@ -214,7 +214,7 @@ pub fn wifi_changes(snapshot: &Value, op: &Value) -> Result<Value> {
         || changes.contains_key("authMode"))
         && mode == "EHT"
         && !["sae", "sae-mixed"].contains(&encryption)
-        && !(encryption == "none" && profile["authMode"] == "none" && profile["mode"] == mode)
+        && !(profile["authMode"] == encryption && profile["mode"] == mode)
     {
         return Err(PanelError::new("WIFI7_SECURITY_REQUIRED", 422));
     }
