@@ -8,6 +8,72 @@ pub struct Sample {
     pub wall_ms: u64,
     pub mono: Instant,
 }
+// 核对已知查询标签及回显，避免共享通道串线；未知厂商格式仍交给原解析器，不借此声称完整归属证明。
+pub fn reply_matches_query(command: &str, raw: &str) -> bool {
+    let upper = command.to_ascii_uppercase();
+    let expected = upper
+        .strip_prefix("AT")
+        .unwrap_or("")
+        .split(['?', '=', ','])
+        .next()
+        .unwrap_or("");
+    let known = [
+        "+CSQ",
+        "+CESQ",
+        "+COPS",
+        "^MONSC",
+        "^MONNC",
+        "^HFREQINFO",
+        "^CSERSSI",
+        "^CHIPTEMP",
+        "^DSAMBR",
+        "+CGEQOSRDP",
+        "+CGCONTRDP",
+        "^IMSSWITCH",
+        "+QENG",
+        "+QCAINFO",
+        "+QNWCFG",
+        "+QTEMP",
+        "+GTCCINFO",
+        "+GTCAINFO",
+        "^CELLINFO",
+        "+DEBUG",
+        "^DEBUG",
+        "+NETDMSGEX",
+        "!GSTATUS",
+        "!LTEINFO",
+        "!NRINFO",
+        "#CAINFOEXT",
+        "+CPSI",
+        "+ZCELLINFO",
+        "+CCED",
+        "+MTSM",
+        "+GTLADC",
+        "+GTSENRDTEMP",
+        "+TEMP",
+        "^TEMP",
+        "!PCTEMP",
+        "+CPMUTEMP",
+        "#TEMPSENS",
+    ];
+    let (mut matched, mut other) = (false, false);
+    for line in raw
+        .split(['\r', '\n'])
+        .map(str::trim)
+        .filter(|line| !line.is_empty())
+    {
+        let line = line.to_ascii_uppercase();
+        if line.starts_with("AT") && crate::security::read_only(&line) && line != upper {
+            return false;
+        }
+        if let Some((tag, _)) = line.split_once(':') {
+            let tag = tag.trim();
+            matched |= tag == expected;
+            other |= known.contains(&tag) && tag != expected;
+        }
+    }
+    matched || !other
+}
 pub fn primary_query<'a>(
     modem: &Value,
     commands: &'a [String],
@@ -170,6 +236,7 @@ pub fn publish(
                         | "AT_COOLDOWN"
                         | "AT_PORT_CONFLICT"
                         | "AT_OWNERSHIP_UNKNOWN"
+                        | "AT_RESPONSE_MISMATCH"
                 )
             )
         });

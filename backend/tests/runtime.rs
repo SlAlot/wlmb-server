@@ -35,6 +35,7 @@ fn transient_busy_keeps_only_unexpired_primary_measurements_without_renewing_the
         "AT_COOLDOWN",
         "AT_PORT_CONFLICT",
         "AT_OWNERSHIP_UNKNOWN",
+        "AT_RESPONSE_MISMATCH",
     ] {
         let errors = vec![json!({"command":commands[0],"code":code})];
         let fresh = sampling::publish(&row, &commands, &samples, &errors, 5000).unwrap();
@@ -464,6 +465,80 @@ fn modem(key: &str) -> Value {
 const MONSC: &str = "^MONSC: NR,460,01,627264,1,ABC,1E8,ABCD,-81,-5,16\n";
 const HFREQ: &str = "^HFREQINFO: 0,7,78,630000,3450000,100000,630000,3450000,100000,78,636664,3549960,100000,636664,3549960,100000\n";
 #[test]
+fn query_reply_tags_reject_crossed_frames_without_rejecting_vendor_plaintext_or_urcs() {
+    for (command, raw, valid) in [
+        (
+            "AT^MONSC",
+            "^MONNC: NR,627264,001,-80,-10,16\r\nOK\r\n",
+            false,
+        ),
+        ("AT^HFREQINFO?", MONSC, false),
+        (
+            "AT+QCAINFO",
+            "+QENG: \"servingcell\",\"NR5G-SA\"\nOK\n",
+            false,
+        ),
+        ("AT^MONSC", "AT^MONNC\r\nOK\r\n", false),
+        ("AT^MONSC", MONSC, true),
+        (
+            "AT^MONSC",
+            "+CMTI: \"SM\",1\n^MONSC: NR,460,01,627264,1,ABC,1E8,ABCD,-81,-5,16\nOK\n",
+            true,
+        ),
+        ("AT!GSTATUS?", "!GSTATUS:\nCurrent Time: 10\nOK\n", true),
+        (
+            "AT+GTCCINFO?",
+            "+GTCCINFO:\n1,9,460,01,ABC,12345\nOK\n",
+            true,
+        ),
+        ("AT+QTEMP", "47\nOK\n", true),
+        ("ATI", "HUAWEI\nOK\n", true),
+        ("ATI", "ATTACHED MODEM\nOK\n", true),
+    ] {
+        assert_eq!(
+            sampling::reply_matches_query(command, raw),
+            valid,
+            "{command}"
+        );
+    }
+}
+#[test]
+fn a_crossed_read_is_recovered_once_but_optional_crossed_data_is_never_cached() {
+    struct Crossed(AtomicUsize);
+    impl Source for Crossed {
+        fn modems(&self) -> Result<Vec<Value>> {
+            Ok(vec![modem("m1")])
+        }
+        fn query(&self, _: &str, command: &str, _: &str, _: &str) -> Result<String> {
+            match command {
+                "AT^MONSC" if self.0.fetch_add(1, Ordering::SeqCst) == 0 => {
+                    Ok("^MONNC: NR,627264,001,-80,-10,16\nOK\n".into())
+                }
+                "AT^MONSC" => Ok(MONSC.into()),
+                "AT^HFREQINFO?" => Ok(MONSC.into()),
+                _ => panic!("串线后不能继续执行后续查询"),
+            }
+        }
+    }
+    let source = Arc::new(Crossed(AtomicUsize::new(0)));
+    let panel = Sampler::new(source.clone());
+    panel.tick().unwrap();
+    wait(|| panel.status(None).unwrap()["radio"]["pending"] == false);
+    let state = panel.status(None).unwrap();
+    assert_eq!(source.0.load(Ordering::SeqCst), 2);
+    assert_eq!(state["radio"]["stale"], false);
+    assert_eq!(state["radio"]["serving"][0]["rsrp"], -81.);
+    assert_eq!(state["radio"]["errors"][0]["code"], "AT_RESPONSE_MISMATCH");
+    assert!(
+        state["radio"]["observations"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .all(|row| row["command"] != "AT^HFREQINFO?")
+    );
+    assert!(panel.stop(Duration::from_secs(1)).unwrap());
+}
+#[test]
 fn invalid_primary_reports_only_shape_and_never_publishes_measurements() {
     for (raw, kind) in [
         ("\r\n", "empty"),
@@ -486,8 +561,37 @@ fn invalid_primary_reports_only_shape_and_never_publishes_measurements() {
         assert_eq!(state["radio"]["errors"][0]["responseBytes"], raw.len());
         assert!(!state.to_string().contains("private-message"));
         assert_eq!(fake.count("AT^HFREQINFO?"), 0);
+        assert_eq!(fake.count("AT^MONSC"), 2, "无效只读回复至多补查一次");
+        thread::sleep(Duration::from_millis(810));
+        panel.tick().unwrap();
+        wait(|| panel.status(None).unwrap()["radio"]["pending"] == false);
+        assert_eq!(fake.count("AT^MONSC"), 3, "三十秒内不反复补查");
         assert!(panel.stop(Duration::from_secs(1)).unwrap());
     }
+}
+#[test]
+fn read_recovery_never_repeats_timeouts_or_dispatches_after_shutdown() {
+    let fake = Fake::new();
+    fake.responses
+        .lock()
+        .unwrap()
+        .insert("AT^MONSC".into(), Err(PanelError::new("AT_TIMEOUT", 503)));
+    let panel = Sampler::new(fake.clone());
+    panel.tick().unwrap();
+    wait(|| panel.status(None).unwrap()["radio"]["pending"] == false);
+    assert_eq!(fake.count("AT^MONSC"), 1);
+    assert!(panel.stop(Duration::from_secs(1)).unwrap());
+
+    let fake = Fake::new();
+    fake.responses
+        .lock()
+        .unwrap()
+        .insert("AT^MONSC".into(), Ok("OK\n".into()));
+    let panel = Sampler::new(fake.clone());
+    panel.tick().unwrap();
+    wait(|| fake.count("AT^MONSC") == 1);
+    assert!(panel.stop(Duration::from_secs(1)).unwrap());
+    assert_eq!(fake.count("AT^MONSC"), 1);
 }
 #[test]
 fn sampling_binds_each_query_to_the_discovered_instance() {

@@ -61,6 +61,7 @@ struct Queries {
     generation: u64,
     samples: BTreeMap<String, Sample>,
     identity: Value,
+    last_read_recovery: Option<Instant>,
 }
 struct Cached {
     generation: u64,
@@ -298,6 +299,7 @@ impl Sampler {
                 generation: entry.generation,
                 samples: BTreeMap::new(),
                 identity: Value::Null,
+                last_read_recovery: None,
             });
         let mut errors = vec![];
         for (index, command) in commands.iter().enumerate() {
@@ -345,7 +347,43 @@ impl Sampler {
                     continue;
                 }
             }
-            match self.source.query_bound(&entry.modem, command) {
+            let query = || {
+                let raw = self.source.query_bound(&entry.modem, command)?;
+                if !sampling::reply_matches_query(command, &raw) {
+                    return Err(PanelError::new("AT_RESPONSE_MISMATCH", 503));
+                }
+                Ok(raw)
+            };
+            let mut reply = query();
+            // 只读主测量遇到无效回复时至多补查一次，每模组三十秒最多一次；写操作和超时不重放。
+            if index == 0
+                && parser != "generic"
+                && !matches!(parser, "sierra-em91" | "sierra-em92")
+                && crate::security::read_only(command)
+                && previous
+                    .last_read_recovery
+                    .is_none_or(|at| at.elapsed() >= Duration::from_secs(30))
+                && (reply
+                    .as_ref()
+                    .is_err_and(|e| e.code == "AT_RESPONSE_MISMATCH")
+                    || reply.as_ref().ok().is_some_and(|raw| {
+                        radio::parse(parser, raw).ok().is_some_and(|value| {
+                            value["serving"].as_array().is_some_and(Vec::is_empty)
+                        })
+                    }))
+            {
+                previous.last_read_recovery = Some(Instant::now());
+                self.events.record("sampler", "AT_READ_RECOVERY");
+                std::thread::sleep(Duration::from_millis(150));
+                {
+                    let state = self.state.lock().map_err(|_| failed())?;
+                    if state.stopping || !current(&state, key, entry.generation) {
+                        return Ok(());
+                    }
+                }
+                reply = query();
+            }
+            match reply {
                 Ok(raw) => {
                     let alternate = matches!(parser, "sierra-em91" | "sierra-em92");
                     if index == 0

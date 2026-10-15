@@ -30,6 +30,7 @@ const boundary = fs.readFileSync(path.join(root, 'backend/src/boundary.rs'), 'ut
 assert.deepEqual([...new Set([...boundary.matchAll(/"(\/api\/[a-z_]+)"/g)].map(row => row[1]))].sort(), Object.values(contract.endpoints).filter(row => row.verb === 'POST').map(row => row.path).sort())
 assert.ok(!contract.reservedFeatures.includes('simSlot'))
 assert.equal(contract.pluginVersion,VERSION)
+assert.equal(contract.releaseStatus, VERSION.includes('-') ? 'prerelease' : 'stable', '接口文档发布状态必须与版本一致，不能遗留私有版标记')
 const menu=JSON.parse(fs.readFileSync(path.join(root,'frontend/usr/share/luci/menu.d/network-panel.json'),'utf8'))
 assert.equal(menu['admin/services/wlmb-server'].action.path,'wlmb-server/'+VIEW,'Version the JS entrypoint to bypass old heuristic cache')
 const view = fs.readFileSync(path.join(root, 'frontend/www/luci-static/resources/view/wlmb-server/'+VIEW+'.js'), 'utf8')

@@ -190,11 +190,11 @@
     },
     {
       "path": "backend/src/sampler.rs",
-      "sha256": "9294b00d71e82d068fcdb95411a45d180e99ff1d7b76cc80e960df4ccae65951"
+      "sha256": "80b2b5e0cee744d51b9001c5b39a9825da472868b36655729e13e5517654ceed"
     },
     {
       "path": "backend/src/sampling.rs",
-      "sha256": "a801e3901b78346c6a433cad7c2035dad73e3f9e5529fab844527ffa06df17b1"
+      "sha256": "627536e00819679a9a199d94b6a42ce74e5e9d5d30585f82d364ae7505f2002d"
     },
     {
       "path": "backend/src/security.rs",
@@ -378,7 +378,7 @@
     },
     {
       "path": "backend/tests/runtime.rs",
-      "sha256": "73e6562552598576b04c41d5c7f6b05fa29e9d6fca3bec63ea0285216994604c"
+      "sha256": "55d2eb1030ef4b107a9cf43c0c49cf3cbda10ccf2206aa69cfb9794eadeb3539"
     },
     {
       "path": "backend/tests/session_qos.rs",
@@ -466,11 +466,11 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "e5fa0949bd79155d17c150a65c35d0f7f2afa394ecbe6096eb2ecdf299f8cc01"
+      "sha256": "be19683661f41dd59c1e01923157b56a14193b4995b6e15dc1dca2d4527de111"
     },
     {
       "path": "docs/api-contract.json",
-      "sha256": "3d7d166fe7938f941094878eecc97a9562df49d737b67b5babf49a84a6648bda"
+      "sha256": "016c7daf3ccf4910f5be82089917c4b924da2ad2d940d938e130288549c6f8cc"
     },
     {
       "path": "docs/API.en.md",
@@ -558,7 +558,7 @@
     },
     {
       "path": "docs/RELEASE-1.0.8.md",
-      "sha256": "871c489c0ffc04a5d80924b643b657914588a4a4e841cac914a6e366ac12d030"
+      "sha256": "4731e5c46742524283e418775c2ed7e7185e57db5d3bed6bd2504e23ad37fd3f"
     },
     {
       "path": "docs/RELEASE-AUDIT.md",
@@ -582,7 +582,7 @@
     },
     {
       "path": "docs/SYSTEM-INTERFACES.md",
-      "sha256": "74a97e2ea835558fb585078adbecae731c7edb78deb8d2b994af243e33b9ef12"
+      "sha256": "f875306793b932da81a043dc40473249e21df4b6e86e6869ec5df481b23338e4"
     },
     {
       "path": "docs/UPSTREAM-PARITY.md",
@@ -690,7 +690,7 @@
     },
     {
       "path": "tools/check-project.cjs",
-      "sha256": "9d34c45171b087433ae12507583dc5127a3fba9ad2502a9860e268e06edee3d2"
+      "sha256": "2470c5ecdbffec1269d4590f79d0d013a6ecb577248d52fbf2c09c7114d38e2e"
     },
     {
       "path": "tools/check-qmodem-audit.cjs",

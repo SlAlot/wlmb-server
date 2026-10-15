@@ -5,7 +5,7 @@
   "port": 1117,
   "pluginVersion": "1.0.8",
   "backendLanguage": "Rust",
-  "releaseStatus": "stable-private",
+  "releaseStatus": "stable",
   "hardwareValidation": "capability-gated-not-universal-firmware-certification",
   "maxRequestBytes": 16384,
   "sessionSeconds": 1800,
