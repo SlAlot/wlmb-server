@@ -710,7 +710,7 @@
     },
     {
       "path": "tools/check-webui.cjs",
-      "sha256": "9f91cac6e6cf237e8085511c3158d424cd9a922bc8bc25aa83f75a449236daf7"
+      "sha256": "569cd00f1cd2186f366dbfbc47a952aa5455b0d63efc4c09f455aad7e3b98f77"
     },
     {
       "path": "tools/compatibility-report.cjs",

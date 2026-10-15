@@ -5,7 +5,8 @@ const fs = require('node:fs'), path = require('node:path'), assert = require('no
 const {JSDOM,VirtualConsole} = require('./ui-tests/node_modules/jsdom')
 const {VERSION,VIEW} = require('./package-source.cjs')
 const resources = path.join(__dirname,'../frontend/www/luci-static/resources')
-const revision=VERSION.includes('-')?VERSION.split('-')[1]:VERSION
+// 资源使用完整语义版本命名，保留测试修订后缀。
+const revision=VERSION
 const shell = fs.readFileSync(path.join(resources,'wlmb-server/webui-shell-'+revision+'.js'),'utf8')
 const adapter = fs.readFileSync(path.join(resources,'wlmb-server/webui-data-'+revision+'.js'),'utf8')
 const icons = fs.readFileSync(path.join(resources,'wlmb-server/webui-icons-'+revision+'.js'),'utf8')
