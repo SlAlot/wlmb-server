@@ -18,6 +18,8 @@ wget -O /tmp/wlmb-install.sh https://github.com/SlAlot/wlmb-server/releases/late
 
 当前支持ABI `aarch64_cortex-a53`、`x86_64`。不是所有ARM64固件都使用同一ABI，不匹配会停止，不强制安装。
 
+1.0.5修正APK架构检测：优先读取/etc/apk/arch中的固件配置；apk --print-arch可能只返回aarch64等默认CPU架构，不能据此误判或强装。多架构配置需要唯一匹配，跨CPU家族或未覆盖配置拒绝。
+
 ## 只检查，不安装
 
 下载脚本后可以先检查：

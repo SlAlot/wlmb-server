@@ -29,6 +29,7 @@ function fixture(name, options = {}) {
   if (options.current) write(server, marker(options.current), 0o755)
   if (options.conflictingKey) write(path.join(trust, key.fileName), '另一个公钥')
   if (options.existingKey) write(path.join(trust, key.fileName), key.publicKeyPem)
+  if (options.archConfig !== undefined) write(path.join(dir, 'apk-arch'), options.archConfig)
   if (options.badPackage) fs.appendFileSync(path.join(bundle, `wlmb-server-${VERSION}-aarch64.apk`), '损坏')
   if (options.badKey) fs.appendFileSync(path.join(bundle, key.fileName), '损坏')
   if (options.linkedPackage) {
@@ -43,7 +44,7 @@ if(name==='df'){console.log('Filesystem 1024-blocks Used Available Capacity Moun
 if(name==='uci'){console.log('192.168.66.1');process.exit(0)}
 if(name==='ubus'){console.log(JSON.stringify({data:{running:!c.notReady}}));process.exit(0)}
 if(name==='curl'){if(c.downloadFails)process.exit(22);const out=a[a.indexOf('--output')+1],file=path.basename(a[a.length-1]);fs.copyFileSync(path.join(c.bundle,file),out);process.exit(0)}
-if(name==='apk'&&a.includes('--print-arch')){if(c.manager!=='apk')process.exit(1);console.log(c.abi);process.exit(0)}
+if(name==='apk'&&a.includes('--print-arch')){if(c.manager!=='apk')process.exit(1);console.log(c.defaultAbi||c.abi);process.exit(0)}
 if(name==='opkg'&&a.includes('print-architecture')){if(c.manager!=='opkg')process.exit(1);console.log('arch all 1\\narch '+c.abi+' 10');process.exit(0)}
 if(a.includes('verify')){if(c.badSignature)process.exit(1);console.log('fixture signature: OK');process.exit(0)}
 if(a.includes('status')){if(c.missingDependency)process.exit(1);console.log('Status: install ok installed');process.exit(0)}
@@ -54,7 +55,7 @@ process.exit(1);`
   for (const name of ['apk', 'opkg', 'ubus', 'uci', 'id', 'df', 'sleep', 'curl']) write(path.join(bin, name), '#!' + process.execPath + '\n' + program, 0o755)
   const file = path.join(dir, 'install.sh')
   // 测试仅重定位系统路径及命令搜索目录，生产脚本不接受这些测试覆盖参数。
-  const script = source.replace('PATH=/usr/sbin:/usr/bin:/sbin:/bin', 'PATH=' + JSON.stringify(bin + ':/usr/sbin:/usr/bin:/sbin:/bin')).replaceAll('/etc/apk/keys', trust).replaceAll('/usr/sbin/wlmb-server', server).replaceAll('/tmp/wlmb-installer.lock', path.join(dir, 'lock'))
+  const script = source.replace('PATH=/usr/sbin:/usr/bin:/sbin:/bin', 'PATH=' + JSON.stringify(bin + ':/usr/sbin:/usr/bin:/sbin:/bin')).replaceAll('/etc/apk/keys', trust).replaceAll('/etc/apk/arch', path.join(dir, 'apk-arch')).replaceAll('/usr/sbin/wlmb-server', server).replaceAll('/tmp/wlmb-installer.lock', path.join(dir, 'lock'))
   write(file, script)
   cp.execFileSync('sh', ['-n', file])
   const args = options.online ? [] : ['--offline', bundle]
@@ -101,5 +102,13 @@ try {
   fixture('non-root-check', { nonRoot: true, check: true })
   fixture('existing-key', { existingKey: true });fixture('existing-key-preflight', { existingKey: true, preflightFails: true, fail: true })
   fixture('feed-refresh-failure', { online: true, preflightFails: true, fail: true })
+  fixture('openwrt-configured-abi', { defaultAbi: 'aarch64', archConfig: 'aarch64_cortex-a53\n' })
+  fixture('openwrt-abi-check', { defaultAbi: 'aarch64', archConfig: 'aarch64_cortex-a53\n', check: true })
+  fixture('openwrt-abi-list', { defaultAbi: 'aarch64', archConfig: 'aarch64\naarch64_cortex-a53\n' })
+  fixture('generic-abi-not-assumed', { defaultAbi: 'aarch64', archConfig: 'aarch64\n', fail: true })
+  fixture('configured-abi-unknown', { archConfig: 'aarch64_generic\n', fail: true })
+  fixture('configured-abi-ambiguous', { archConfig: 'aarch64_cortex-a53\nx86_64\n', fail: true })
+  fixture('configured-abi-cross-family', { defaultAbi: 'x86_64', archConfig: 'aarch64_cortex-a53\n', fail: true })
+  fixture('configured-x86', { defaultAbi: 'x86_64', archConfig: 'x86_64\n' })
   console.log('安装器' + cases + '组POSIX流程回归通过：双包管理器／双架构、在线／离线、确认、检查、摘要、验签、空间、依赖、公钥冲突、失败回滚、版本和服务检查；替身不视为实机安装验收。')
 } finally { fs.rmSync(suite, { recursive: true, force: true }) }

@@ -89,7 +89,10 @@ fn global_contention_releases_partial_port_lock_without_wait_or_unlink() {
     assert_eq!(q.acquire("/dev/ttyUSB1").err().unwrap().code, "AT_BUSY");
     let port = fs::File::open(f.root.join("qmodem-at-ttyUSB1.lock")).unwrap();
     flock(port.as_raw_fd(), FlockArg::LockExclusiveNonblock).unwrap();
+    // 显式释放夹具持有的锁，避免并行测试的短暂子进程继承延长测试锁寿命。
+    flock(port.as_raw_fd(), FlockArg::Unlock).unwrap();
     drop(port);
+    flock(global.as_raw_fd(), FlockArg::Unlock).unwrap();
     drop(global);
     assert!(q.acquire("/dev/ttyUSB1").is_ok());
 }

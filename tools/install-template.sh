@@ -43,7 +43,20 @@ MANAGER=''
 ABI=''
 if command -v apk >/dev/null 2>&1; then
   ABI=$(apk --print-arch 2>/dev/null || true)
-  [ -z "$ABI" ] || MANAGER=apk
+  if [ -n "$ABI" ]; then
+    MANAGER=apk
+    DEFAULT_ARCH=$ABI
+    # 默认CPU架构不等于固件包ABI；和APK自身一样优先读取持久架构配置。
+    if [ -f "/etc/apk/arch" ]; then
+      configured=$(awk 'NF==1 {print $1}' "/etc/apk/arch") || fail '读取APK架构配置失败'
+      ABI=$(printf '%s\n' "$configured" | awk '($1=="aarch64_cortex-a53" || $1=="x86_64") && !seen[$1]++ {print $1}')
+      [ -n "$ABI" ] || ABI=$configured
+    fi
+    case "$DEFAULT_ARCH:$ABI" in
+      aarch64:aarch64_cortex-a53|aarch64_cortex-a53:aarch64_cortex-a53|x86_64:x86_64) ;;
+      *) fail "APK默认架构与可用包ABI尚未覆盖或不一致：$DEFAULT_ARCH / $ABI" ;;
+    esac
+  fi
 fi
 if [ -z "$MANAGER" ] && command -v opkg >/dev/null 2>&1; then
   ABI=$(opkg print-architecture | awk '$1=="arch" && ($2=="aarch64_cortex-a53" || $2=="x86_64") {print $2}')
