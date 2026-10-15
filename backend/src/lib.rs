@@ -64,11 +64,11 @@ pub const API_PORT: u16 = 1117;
 pub const MAX_BODY: usize = 16_384;
 pub const MAX_AT_RESPONSE: usize = 65_536;
 pub const MAX_SAMPLE_QUERIES: usize = 10;
-pub const VERSION: &str = "1.0.3";
+pub const VERSION: &str = "1.0.4";
 pub const BUILD_MARKER: &str = if cfg!(feature = "pushplus-https") {
-    "WLMB_BUILD=1.0.3;pushplus-https=1"
+    "WLMB_BUILD=1.0.4;pushplus-https=1"
 } else {
-    "WLMB_BUILD=1.0.3;pushplus-https=0"
+    "WLMB_BUILD=1.0.4;pushplus-https=0"
 };
 
 #[derive(Clone, Debug, PartialEq, Eq)]

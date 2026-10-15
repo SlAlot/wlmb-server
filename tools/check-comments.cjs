@@ -24,6 +24,7 @@ for(const file of walk(root)){
  else if(extension==='.rs')values=rust(text)
  else if(extension==='.css')values=[...text.matchAll(/\/\*([\s\S]*?)\*\//g)].map(x=>x[1])
  else if(extension==='.html')values=[...text.matchAll(/<!--([\s\S]*?)-->/g)].map(x=>x[1])
+ else if(extension==='.sh')values=text.split('\n').filter(line=>/^\s*#(?!\!)/.test(line)).map(line=>line.replace(/^\s*#/,''))
  else continue
  files++;comments+=values.length
  for(const value of values)if(value.trim()&&!/[\u3400-\u9fff]/.test(value))issues.push(path.relative(root,file))

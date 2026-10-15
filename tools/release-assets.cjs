@@ -3,6 +3,7 @@
 const fs = require('node:fs'), path = require('node:path'), cp = require('node:child_process'), crypto = require('node:crypto'), assert = require('node:assert/strict')
 const { build, VERSION } = require('./package-source.cjs')
 const { publicKey } = require('./sign-release.cjs')
+const { render } = require('./installer.cjs')
 const hash = bytes => crypto.createHash('sha256').update(bytes).digest('hex')
 function prepare(directory, output, commit, tag) {
   assert.equal(tag, 'v' + VERSION, '标签必须和前后端版本一致')
@@ -36,6 +37,7 @@ function prepare(directory, output, commit, tag) {
   for (const name of ['wlmb-compatibility.json', 'wlmb-release-readiness.json']) files.set(name, fs.readFileSync(path.join(reports, name)))
   files.set(key.fileName, Buffer.from(key.publicKeyPem))
   files.set('INSTALL-APK.md', fs.readFileSync(path.resolve(__dirname, '../docs/APK-INSTALL.zh-CN.md')))
+  files.set('install.sh', render(files))
   files.set('release.json', Buffer.from(JSON.stringify({
     schema: 'WLMB-RELEASE/1', version: VERSION, tag, commit, license: 'LicenseRef-WLMB-NonCommercial',
     platforms: ['aarch64_cortex-a53', 'x86_64'],

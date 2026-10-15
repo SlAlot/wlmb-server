@@ -73,7 +73,7 @@ async function main() {
   const stylesheetUrl=new URL(stylesheet.attrs.href,'http://fixture.invalid')
   assert.equal(stylesheetUrl.pathname,'/luci-static/resources/wlmb-server/panel.css','Use actual LuCI resource path validation: append query outside L.resource()')
   assert.equal(stylesheetUrl.searchParams.get('v'),VERSION)
-  assert.equal(stylesheetUrl.searchParams.get('rev'),'release1_0_3','首版候选不能读取此前同版本的缓存资源')
+  assert.equal(stylesheetUrl.searchParams.get('rev'),'release1_0_4','首版候选不能读取此前同版本的缓存资源')
   assert.ok(fs.readFileSync(path.join(root, 'www/luci-static/resources/wlmb-server/panel.css'), 'utf8').includes('.np-card{'))
   assert.ok(dom.textContent.includes('网络面板'))
   assert.ok(dom.textContent.includes('已停止'))

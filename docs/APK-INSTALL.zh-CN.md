@@ -1,15 +1,17 @@
 # APK首次安装
 
+**推荐使用[一键安装器](INSTALL.zh-CN.md)**：确认一次后自动选择包、核对公钥并验签安装。以下保留完全手动安装流程。
+
 适用于使用apk的OpenWrt／ImmortalWrt，APK不是安卓应用。IPK用户使用README中的opkg流程。
 
 ## 1. 下载
 
-从[1.0.3正式发布页](https://github.com/SlAlot/wlmb-server/releases/tag/v1.0.3)下载APK、`SHA256SUMS`及`wlmb-server-signing.pem`。运行`apk --print-arch`确认架构：ARM64包ABI为`aarch64_cortex-a53`，x86_64为`x86_64`，其他ABI不可强装。
+从[1.0.4正式发布页](https://github.com/SlAlot/wlmb-server/releases/tag/v1.0.4)下载APK、`SHA256SUMS`及`wlmb-server-signing.pem`。运行`apk --print-arch`确认架构：ARM64包ABI为`aarch64_cortex-a53`，x86_64为`x86_64`，其他ABI不可强装。
 
 用自己的文件传输工具将公钥上传到`/tmp/wlmb-server-signing.pem`，或SSH下载固定版本：
 
 ```sh
-wget -O /tmp/wlmb-server-signing.pem https://github.com/SlAlot/wlmb-server/releases/download/v1.0.3/wlmb-server-signing.pem
+wget -O /tmp/wlmb-server-signing.pem https://github.com/SlAlot/wlmb-server/releases/download/v1.0.4/wlmb-server-signing.pem
 ```
 
 ## 2. 首次信任公钥
@@ -45,8 +47,8 @@ chmod 644 /etc/apk/keys/wlmb-server-signing.pem
 SSH也可以正常验证和安装，文件名按实际下载内容替换：
 
 ```sh
-apk verify /tmp/wlmb-server-1.0.3-aarch64.apk
-apk add /tmp/wlmb-server-1.0.3-aarch64.apk
+apk verify /tmp/wlmb-server-1.0.4-aarch64.apk
+apk add /tmp/wlmb-server-1.0.4-aarch64.apk
 ```
 
 安装默认启动服务和开机自启，不接管拨号。缺少依赖时使用固件自己的软件源，不混用不同固件的软件源。
@@ -59,6 +61,6 @@ apk add /tmp/wlmb-server-1.0.3-aarch64.apk
 - 恢复出厂后：公钥可能丢失，需要重新导入。
 - 卸载插件不会自动删除系统信任公钥。不再信任此项目时可手动删除`/etc/apk/keys/wlmb-server-signing.pem`，不要删除其他公钥。
 
-1.0.3提供独立安装包，不包含供`apk update`查询的网络面板软件源。
+本项目提供独立安装包，不包含供`apk update`查询的网络面板软件源。
 
 [APK公钥机制](https://github.com/alpinelinux/apk-tools/blob/master/doc/apk-keys.5.scd) · [OpenWrt APK说明](https://openwrt.org/docs/guide-user/additional-software/apk)

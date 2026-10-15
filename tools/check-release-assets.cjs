@@ -26,7 +26,8 @@ try {
   write(path.join(report, 'wlmb-compatibility.json'), JSON.stringify({ schema: 'WLMB-COMPATIBILITY-AUDIT/1', version: VERSION, referenceRevision: ref, summary: { models: 91, identityGaps: 0, protocolComplete: false, hardwareComplete: false } }))
   write(path.join(report, 'wlmb-release-readiness.json'), JSON.stringify({ schema: 'WLMB-RELEASE-READINESS/1', referenceRevision: ref, identifiedModels: 91, missingIdentity: [] }))
   const output = path.join(directory, 'release'), files = prepare(directory, output, 'b'.repeat(40), 'v' + VERSION)
-  assert.equal(files.length, 12)
+  assert.equal(files.length, 13)
+  assert(fs.readFileSync(path.join(output, 'install.sh'), 'utf8').includes("VERSION='" + VERSION + "'"))
   const key = publicKey()
   assert.equal(hash(fs.readFileSync(path.join(output, key.fileName))), key.sha256)
   assert.equal(JSON.parse(fs.readFileSync(path.join(output, 'release.json'))).protocolComplete, false, '不能为了发布改成全模组通过')
@@ -52,12 +53,12 @@ try {
       const name = path.basename(args[3]);assert(!remote.assets.some(item => item.name === name))
       remote.assets.push({ name, digest: 'sha256:' + hash(fs.readFileSync(args[3])) });return ''
     }
-    assert.equal(args[1], 'edit');assert.equal(remote.assets.length, 12);remote.draft = false;return ''
+    assert.equal(args[1], 'edit');assert.equal(remote.assets.length, 13);remote.draft = false;return ''
   }
   assert.throws(() => publish(output, 'v' + VERSION, 'SlAlot/wlmb-server', execute), /模拟上传中断/)
   assert.equal(remote.assets.length, 3);assert.equal(remote.draft, true, '资产未齐不能发布草稿')
   failUpload = false
-  assert.equal(publish(output, 'v' + VERSION, 'SlAlot/wlmb-server', execute).assets, 12)
+  assert.equal(publish(output, 'v' + VERSION, 'SlAlot/wlmb-server', execute).assets, 13)
   const completed = uploadCalls
   publish(output, 'v' + VERSION, 'SlAlot/wlmb-server', execute)
   assert.equal(uploadCalls, completed, '相同制品重跑不重复上传')
