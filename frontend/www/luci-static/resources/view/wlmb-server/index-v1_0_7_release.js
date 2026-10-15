@@ -150,12 +150,12 @@ function copyCode(value) {
     if(window.isSecureContext&&navigator.clipboard&&navigator.clipboard.writeText)return navigator.clipboard.writeText(value).catch(fallback);
     try{fallback();return Promise.resolve();}catch(error){return Promise.reject(error);}
 }
-var guide = function(hash) { return L.resource('wlmb-server/guide.html') + '?v=1.0.6&rev=release1_0_6' + (hash || ''); };
+var guide = function(hash) { return L.resource('wlmb-server/guide.html') + '?v=1.0.7&rev=release1_0_7' + (hash || ''); };
 function webuiScript(name) {
     return new Promise(function(resolve,reject) {
         var script = document.createElement('script'), settled = false;
         var timer = setTimeout(function() { settled=true; script.remove(); reject(new Error('前端组件加载超时')); },12000);
-        script.src = L.resource('wlmb-server/' + name) + '?v=1.0.6&rev=release1_0_6';
+        script.src = L.resource('wlmb-server/' + name) + '?v=1.0.7&rev=release1_0_7';
         script.onload = function() { if (!settled) { settled=true; clearTimeout(timer); resolve(); } };
         script.onerror = function() { if (!settled) { settled=true; clearTimeout(timer); script.remove(); reject(new Error('前端组件加载失败')); } };
         document.head.appendChild(script);
@@ -211,7 +211,7 @@ return view.extend({
         this.draw(data[1]);
         poll.add(function() { return self.update(false); }, 3);
         var root = E('div', { id: 'wlmb-panel', 'class': 'np-root' }, [
-            E('link', { rel: 'stylesheet', href: L.resource('wlmb-server/panel.css') + '?v=1.0.6&rev=release1_0_6' }),
+            E('link', { rel: 'stylesheet', href: L.resource('wlmb-server/panel.css') + '?v=1.0.7&rev=release1_0_7' }),
             E('div', { 'class': 'np-head' }, [E('div', {}, [E('div', { 'class': 'np-title', role: 'heading', 'aria-level': '2' }, '网络面板'), E('p', { 'class': 'np-desc' }, 'wlmb-server · 根据qmodem为参考开发接入')]), link('新手教程', guide())]),
             E('div', { 'class': 'np-statusbar', role: 'status', 'aria-live': 'polite' }, [
                 E('span', { 'class': 'np-chip' }, [this.dot, this.state]), E('span', { 'class': 'np-chip' }, ['模组 ', this.count]),
@@ -252,10 +252,10 @@ return view.extend({
                     ui.addNotification(null,E('p',{},error.message+'；当前使用兼容界面，操作接口保持不变。'),'error');
                 }};
             self.webuiBridge = bridge;
-            (window.WLMBIcons && window.WLMBIcons.version==='1.0.6' ? Promise.resolve() : webuiScript('webui-icons-1.0.6.js')).then(function() {
-                return window.WLMBUIData && window.WLMBUIData.version==='1.0.6' ? null : webuiScript('webui-data-1.0.6.js');
+            (window.WLMBIcons && window.WLMBIcons.version==='1.0.7' ? Promise.resolve() : webuiScript('webui-icons-1.0.7.js')).then(function() {
+                return window.WLMBUIData && window.WLMBUIData.version==='1.0.7' ? null : webuiScript('webui-data-1.0.7.js');
             }).then(function() {
-                return window.WLMBWebUI && window.WLMBWebUI.version==='1.0.6' ? null : webuiScript('webui-shell-1.0.6.js');
+                return window.WLMBWebUI && window.WLMBWebUI.version==='1.0.7' ? null : webuiScript('webui-shell-1.0.7.js');
             }).then(function() {
                 if (!root.isConnected) return;
                 self.pages.forEach(function(page) { pageContainer.appendChild(page); });
@@ -589,10 +589,11 @@ return view.extend({
             width.replaceChildren.apply(width,options.map(function(o){return E('option',{value:o.value},o.label);}));
             width.value=selected?selected.value:'';
         });
-        panelModal('编辑无线网络', [row('WiFi 名称', '最多 32 字节', ssid), row('新密码', '8–63 位英文字符；不显示已有密码', key), row('启用 WiFi', stateNote, enabledSwitch),
+        panelModal('编辑无线网络', [row('WiFi 名称', '最多 32 字节', ssid), row('新密码', item.authMode==='none'?'当前为开放网络；设置密码前请选择加密方式':'8–63 位英文字符；不显示已有密码', key), row('启用 WiFi', stateNote, enabledSwitch),
             item.modeSupported?row('无线代际','',mode):E('span'),item.securitySupported?row('加密方式','WiFi 7 请使用 WPA3 或 WPA2 / WPA3',security):E('span'),
             item.channelSupported?row('信道','',channel):E('span'),item.bandwidthSupported?row('带宽','',width):E('span'),E('p',{'class':'np-hint'},'保存后 WiFi 可能短暂断开，请准备网线或恢复方式。'),
             E('div', {'class':'np-actions right'}, [E('button', {'class':'np-btn outline',click:function(){ui.hideModal();key.value='';}}, '取消'), button('下一步', function() {
+                if(key.value&&security.value==='none')throw new Error('当前为开放网络，请先选择加密方式再设置密码');
                 var changes = {}; if (ssid.value !== item.ssid) changes.ssid = ssid.value; if (key.value) changes.password = key.value; if (enabledKnown&&enabled.checked !== item.enabled) changes.enabled = enabled.checked;
                 if(item.channelSupported&&channel.value!==String(item.channel==null?'':item.channel))changes.channel=channel.value;
                 if(item.modeSupported&&mode.value!==String(item.mode||''))changes.mode=mode.value;

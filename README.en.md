@@ -4,6 +4,8 @@
 
 **Network Panel 1.0.6** by **SlAlot** is a bounded Rust modem service with an independent LuCI JavaScript/CSS interface for OpenWrt. The first public release is 1.0.0. Default port: **1117**. It does not take over dialing. QModem's public identity facts, AT formats and shared interfaces inform the independently implemented adapters.
 
+The main branch is validating the 1.0.7 system-interface compatibility fixes. It is not a published release; the one-command installer continues to use the latest official Release.
+
 Source is publicly available under a [custom non-commercial attribution license](LICENSE). **Commercial use requires separate permission**; retain author and source notices. This is source-available, not MIT/GPL or OSI-approved open source. Third-party materials retain their own licenses.
 
 ## One-command installation

@@ -583,3 +583,113 @@ fn active_mlo_is_not_mistaken_for_exclusive_editable_radios() {
     assert!(host_controls::editable_profiles(&s).is_empty());
     assert_eq!(host_controls::wifi_unified(&s), None);
 }
+
+fn open_wireless() -> Value {
+    let mut s = snapshot();
+    for (radio, mode) in [("radio0", "EHT40"), ("radio1", "EHT160")] {
+        s["wireless"]["values"][radio]["type"] = json!("mtwifi");
+        s["wireless"]["values"][radio]["htmode"] = json!(mode);
+    }
+    for ap in ["ap0", "ap1"] {
+        s["wireless"]["values"][ap]["encryption"] = json!("none");
+        s["wireless"]["values"][ap]
+            .as_object_mut()
+            .unwrap()
+            .remove("key");
+    }
+    s["radioCapabilities"] = json!({"radio1":{"saeSupported":false,"info":{"htmodes":["HE160","EHT160","EHT80"]},"frequencies":{"results":[{"band":5,"channel":149,"restricted":false}]}}});
+    s
+}
+
+#[test]
+fn system_open_networks_keep_readable_profiles_and_verified_edit_options() {
+    let s = open_wireless();
+    let p = host_controls::editable_profiles(&s);
+    assert_eq!(p.len(), 2);
+    let five = p.iter().find(|p| p["band"] == "5g").unwrap();
+    assert_eq!(five["enabled"], true);
+    assert_eq!(five["authMode"], "none");
+    assert_eq!(five["modeOptions"][0]["label"], "WiFi 7");
+    assert!(
+        five["securityOptions"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|o| o["value"] == "none" && o["label"] == "开放网络（无密码）")
+    );
+    assert!(
+        !five["securityOptions"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|o| o["value"] == "sae")
+    );
+    assert!(host_controls::wifi_changes(&s, &json!({"kind":"wifi_edit","band":"5g","changes":{"ssid":"New","channel":"149","bandwidth":"EHT80"}})).is_ok());
+    assert_eq!(
+        host_controls::wifi_changes(
+            &s,
+            &json!({"kind":"wifi_edit","band":"5g","changes":{"password":"private-new-pass"}})
+        )
+        .unwrap_err()
+        .code,
+        "WIFI_PASSWORD_REQUIRES_SECURITY"
+    );
+    assert!(host_controls::wifi_changes(&s, &json!({"kind":"wifi_edit","band":"5g","changes":{"mode":"HE","bandwidth":"HE160","authMode":"psk2","password":"private-new-pass"}})).is_ok());
+}
+
+#[test]
+fn open_network_unification_does_not_require_or_invent_a_password_and_restores_exactly() {
+    let (io, h) = setup();
+    *io.s.lock().unwrap() = open_wireless();
+    h.sample(None, None).unwrap();
+    assert_eq!(
+        h.public().unwrap()["wifiControls"]["bandUnifyStateKnown"],
+        true
+    );
+    assert_eq!(
+        h.public().unwrap()["wifiControls"]["bandUnifySupported"],
+        true
+    );
+    let before = io.s.lock().unwrap()["wireless"].clone();
+    let on = json!({"kind":"wifi_unify","enabled":true});
+    let prepared = h.prepare(&on, "owner").unwrap();
+    execute(&h, &on, &prepared, "owner").unwrap();
+    assert_eq!(
+        host_controls::wifi_unified(&io.s.lock().unwrap()),
+        Some(true)
+    );
+    assert!(
+        io.s.lock().unwrap()["wireless"]["values"]["ap1"]
+            .get("key")
+            .is_none()
+    );
+    h.sample(None, None).unwrap();
+    let off = json!({"kind":"wifi_unify","enabled":false});
+    let prepared = h.prepare(&off, "owner").unwrap();
+    execute(&h, &off, &prepared, "owner").unwrap();
+    assert_eq!(io.s.lock().unwrap()["wireless"], before);
+}
+
+#[test]
+fn mixed_open_and_encrypted_unification_never_silently_downgrades_security() {
+    let (io, h) = setup();
+    let mut s = open_wireless();
+    s["wireless"]["values"]["ap1"]["encryption"] = json!("psk2");
+    s["wireless"]["values"]["ap1"]["key"] = json!("private-existing-key");
+    *io.s.lock().unwrap() = s;
+    h.sample(None, None).unwrap();
+    let before_calls = io.calls.lock().unwrap().clone();
+    let before_files = io.files.lock().unwrap().clone();
+    assert_eq!(
+        h.public().unwrap()["wifiControls"]["bandUnifySupported"],
+        false
+    );
+    assert_eq!(
+        h.prepare(&json!({"kind":"wifi_unify","enabled":true}), "owner")
+            .unwrap_err()
+            .code,
+        "WIFI_UNIFY_SECURITY_REQUIRED"
+    );
+    assert_eq!(*io.calls.lock().unwrap(), before_calls);
+    assert_eq!(*io.files.lock().unwrap(), before_files);
+}

@@ -28,7 +28,9 @@ struct RadioCache {
     ttl: Duration,
 }
 fn wifi_features(fresh: Value, cache: &mut Option<(Instant, Value)>) -> (Value, bool) {
-    if fresh["hostapd"]["sae"].is_boolean() {
+    if fresh["hostapd"]["sae"].is_boolean()
+        || fresh["wifi"].is_boolean() && fresh.get("hostapd").is_none()
+    {
         *cache = Some((Instant::now(), fresh.clone()));
         return (fresh, true);
     }
@@ -476,6 +478,15 @@ impl HostIo for NativeHost {
 #[cfg(test)]
 mod capability_tests {
     use super::*;
+    #[test]
+    fn system_wifi_without_hostapd_keeps_basic_capabilities_without_guessing_sae() {
+        let mut cache = None;
+        let features = json!({"wifi":true,"opkg":true});
+        let (actual, fresh) = wifi_features(features.clone(), &mut cache);
+        assert!(fresh);
+        assert_eq!(actual, features);
+        assert_ne!(actual["hostapd"]["sae"], true);
+    }
     #[test]
     fn transient_feature_failure_preserves_recent_success_without_renewing_it() {
         let mut old = None;

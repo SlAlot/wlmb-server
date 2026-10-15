@@ -145,6 +145,7 @@ impl Channel {
         params: Value,
         deadline: Instant,
     ) -> Result<Value> {
+        let wireless_status = object == "network.wireless" && method == "status";
         let mut path = object.as_bytes().to_vec();
         path.push(0);
         let lookup = self.request(4, 0, blob::attr(2, false, &path)?, deadline)?;
@@ -182,7 +183,11 @@ impl Channel {
         if data.len() != 1 {
             return Err(fail());
         }
-        blob::decode_object(&data[0].1)
+        if wireless_status {
+            blob::decode_wireless_status(&data[0].1)
+        } else {
+            blob::decode_object(&data[0].1)
+        }
     }
 }
 struct SmsEventChannel {

@@ -96,13 +96,16 @@ impl NativeService {
                         .flatten()
                     {
                         if let Some(row) = wireless.iter_mut().find(|r| r["id"] == profile["id"]) {
-                            for field in ["ssid", "band", "encryption"] {
+                            for field in ["ssid", "band"] {
                                 row[field] = profile[field].clone();
                             }
+                            row["encryption"] = profile["authMode"].clone();
+                            row["authMode"] = profile["authMode"].clone();
                             row["configuredEnabled"] = profile["enabled"].clone();
                         } else {
                             let mut row = profile.clone();
                             row["source"] = json!("uci-configuration");
+                            row["encryption"] = profile["authMode"].clone();
                             wireless.push(row);
                         }
                     }

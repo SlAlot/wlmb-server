@@ -64,11 +64,11 @@ pub const API_PORT: u16 = 1117;
 pub const MAX_BODY: usize = 16_384;
 pub const MAX_AT_RESPONSE: usize = 65_536;
 pub const MAX_SAMPLE_QUERIES: usize = 10;
-pub const VERSION: &str = "1.0.6";
+pub const VERSION: &str = "1.0.7";
 pub const BUILD_MARKER: &str = if cfg!(feature = "pushplus-https") {
-    "WLMB_BUILD=1.0.6;pushplus-https=1"
+    "WLMB_BUILD=1.0.7;pushplus-https=1"
 } else {
-    "WLMB_BUILD=1.0.6;pushplus-https=0"
+    "WLMB_BUILD=1.0.7;pushplus-https=0"
 };
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -182,6 +182,7 @@ impl PanelError {
             "WIFI_MODE_UNSUPPORTED" => "设备未开放该 WiFi 代际，请重新读取可选模式",
             "WIFI_SECURITY_UNSUPPORTED" => "系统未确认支持此加密方式，请重新读取选项",
             "WIFI_PASSWORD_REQUIRED" => "切换加密方式需要重新填写 8–63 位密码",
+            "WIFI_PASSWORD_REQUIRES_SECURITY" => "当前为开放网络，请先选择加密方式再设置密码",
             "WIFI7_SECURITY_REQUIRED" => "WiFi 7 请搭配 WPA3 或 WPA2 / WPA3，或先选择 WiFi 6",
             "WIFI_UNIFY_SECURITY_REQUIRED" => "请先将两个频段设置为一致的加密方式，再开启双频合一",
             "AT_PORT_CONFLICT" => "AT 端点被其他程序占用；插件不会抢占，请选择已确认空闲的 AT 口",

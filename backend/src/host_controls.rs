@@ -81,7 +81,7 @@ pub fn profiles(config: &Value) -> Vec<Value> {
             || !lan
             || row["mode"] != "ap"
             || device[".type"] != "wifi-device"
-            || !["psk2", "psk2+ccmp", "sae", "sae-mixed"]
+            || !["none", "psk2", "psk2+ccmp", "sae", "sae-mixed"]
                 .contains(&row["encryption"].as_str().unwrap_or(""))
             || ["mld", "mld_id", "mlo", "mesh_id", "auth_server", "wds"]
                 .iter()
@@ -108,6 +108,17 @@ pub fn wifi_unified(snapshot: &Value) -> Option<bool> {
     let b = p.iter().find(|r| r["band"] == "5g")?;
     let row = |r: &Value| &snapshot["wireless"]["values"][r["id"].as_str().unwrap_or("")];
     let (a_row, b_row) = (row(a), row(b));
+    if a["authMode"] != b["authMode"] {
+        return Some(false);
+    }
+    if a["authMode"] == "none" {
+        return Some(
+            a["enabled"] == true
+                && b["enabled"] == true
+                && a["ssid"].as_str().is_some_and(|s| !s.is_empty())
+                && a["ssid"] == b["ssid"],
+        );
+    }
     let (a_key, b_key) = (a_row["key"].as_str()?, b_row["key"].as_str()?);
     Some(
         a["enabled"] == true
@@ -154,7 +165,11 @@ pub fn wifi_changes(snapshot: &Value, op: &Value) -> Result<Value> {
     {
         return Err(PanelError::new("WIFI_SECURITY_UNSUPPORTED", 422));
     }
-    if changes.contains_key("authMode") && !changes.contains_key("password") {
+    if encryption == "none" && changes.contains_key("password") {
+        return Err(PanelError::new("WIFI_PASSWORD_REQUIRES_SECURITY", 422));
+    }
+    if encryption != "none" && changes.contains_key("authMode") && !changes.contains_key("password")
+    {
         let key = snapshot["wireless"]["values"][id]["key"]
             .as_str()
             .unwrap_or("");
@@ -199,6 +214,7 @@ pub fn wifi_changes(snapshot: &Value, op: &Value) -> Result<Value> {
         || changes.contains_key("authMode"))
         && mode == "EHT"
         && !["sae", "sae-mixed"].contains(&encryption)
+        && !(encryption == "none" && profile["authMode"] == "none" && profile["mode"] == mode)
     {
         return Err(PanelError::new("WIFI7_SECURITY_REQUIRED", 422));
     }
@@ -372,7 +388,7 @@ pub fn editable_profiles(snapshot: &Value) -> Vec<Value> {
         let current = row["authMode"].as_str().unwrap_or("");
         if !security.iter().any(|v| v["value"] == current) {
             security.push(
-                json!({"value":current,"label":if current=="sae" {"WPA3"} else {"WPA2 / WPA3"}}),
+                json!({"value":current,"label":match current {"sae"=>"WPA3","none"=>"开放网络（无密码）",_=>"WPA2 / WPA3"}}),
             );
         }
         row["securitySupported"] = json!(true);
@@ -516,7 +532,10 @@ impl HostControls {
         } else {
             editable_profiles(&s.snapshot)
         };
-        let unify = p.iter().any(|r| r["band"] == "2g") && p.iter().any(|r| r["band"] == "5g");
+        let unify = p.iter().any(|r| r["band"] == "2g")
+            && p.iter().any(|r| r["band"] == "5g")
+            && (p.iter().all(|r| r["authMode"] == "none")
+                || p.iter().all(|r| r["authMode"] != "none"));
         let mut limit = s.account.limit();
         let mut traffic = s.account.public();
         traffic["stale"] = json!(stale);
@@ -634,17 +653,27 @@ impl HostControls {
                     let primary = p.iter().find(|r| r["band"] == "2g").ok_or_else(bad)?;
                     let row =
                         &snapshot["wireless"]["values"][primary["id"].as_str().ok_or_else(bad)?];
-                    wifi_changes(
-                        snapshot,
-                        &json!({"kind":"wifi_edit","band":"2g","changes":{"ssid":row["ssid"],"password":row["key"]}}),
-                    )?;
-                    wifi_changes(
-                        snapshot,
-                        &json!({"kind":"wifi_edit","band":"5g","changes":{"ssid":row["ssid"],"password":row["key"],"authMode":row["encryption"]}}),
-                    )?;
                     let secondary = p.iter().find(|r| r["band"] == "5g").ok_or_else(bad)?;
                     let dst = &snapshot["wireless"]["values"]
                         [secondary["id"].as_str().ok_or_else(bad)?];
+                    if (row["encryption"] == "none") != (dst["encryption"] == "none") {
+                        return Err(PanelError::new("WIFI_UNIFY_SECURITY_REQUIRED", 422));
+                    }
+                    if row["encryption"] == "none" {
+                        wifi_changes(
+                            snapshot,
+                            &json!({"kind":"wifi_edit","band":"5g","changes":{"ssid":row["ssid"]}}),
+                        )?;
+                    } else {
+                        wifi_changes(
+                            snapshot,
+                            &json!({"kind":"wifi_edit","band":"2g","changes":{"ssid":row["ssid"],"password":row["key"]}}),
+                        )?;
+                        wifi_changes(
+                            snapshot,
+                            &json!({"kind":"wifi_edit","band":"5g","changes":{"ssid":row["ssid"],"password":row["key"],"authMode":row["encryption"]}}),
+                        )?;
+                    }
                     if row["encryption"] != dst["encryption"]
                         && ["sae", "sae-mixed"].iter().any(|v| row["encryption"] == *v)
                         && dst["ieee80211w"] == "0"
@@ -776,10 +805,13 @@ impl HostControls {
                     }
                     let src =
                         &snapshot["wireless"]["values"][primary["id"].as_str().ok_or_else(bad)?];
-                    let changes =
-                        json!({"ssid":src["ssid"],"key":src["key"],"encryption":src["encryption"]});
+                    let changes = if src["encryption"] == "none" {
+                        json!({"ssid":src["ssid"]})
+                    } else {
+                        json!({"ssid":src["ssid"],"key":src["key"],"encryption":src["encryption"]})
+                    };
                     let mut after = snapshot["wireless"].clone();
-                    for k in ["ssid", "key", "encryption"] {
+                    for k in changes.as_object().ok_or_else(bad)?.keys() {
                         after["values"][secondary["id"].as_str().ok_or_else(bad)?][k] =
                             changes[k].clone();
                     }
@@ -803,7 +835,13 @@ impl HostControls {
                         for profile in p {
                             let before = &backup["before"]["values"]
                                 [profile["id"].as_str().ok_or_else(bad)?];
-                            rows.push(json!({"profile":profile,"changes":{"ssid":before["ssid"],"key":before["key"],"encryption":before["encryption"]}}));
+                            let mut restore = serde_json::Map::new();
+                            for key in ["ssid", "key", "encryption"] {
+                                if before[key].is_string() {
+                                    restore.insert(key.to_owned(), before[key].clone());
+                                }
+                            }
+                            rows.push(json!({"profile":profile,"changes":restore}));
                         }
                     } else {
                         rows.push(wifi_changes(&snapshot,&json!({"kind":"wifi_edit","band":"5g","changes":{"ssid":separated_ssid(primary["ssid"].as_str().ok_or_else(bad)?)}}))?);

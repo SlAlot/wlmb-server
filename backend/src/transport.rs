@@ -347,7 +347,13 @@ pub fn parse_config(raw: &str) -> Vec<Value> {
             .or_else(|| s.get("sms_at_port").filter(|v| !v.is_empty()))
             .map(String::as_str)
             .unwrap_or(port);
-        rows.push(json!({"id":name,"port":port,"smsPort":sms_port,"model":model,"manufacturer":s.get("manufacturer").cloned().unwrap_or_default(),"platform":s.get("platform").cloned().unwrap_or_default(),"shared":s.get("use_ubus").is_some_and(|v|v=="1")&&tool!="1","discoveredBy":"qmodem-config","profile":crate::catalog::identify(model)}));
+        let shared_policy = match (tool, s.get("use_ubus").map(String::as_str)) {
+            ("1", _) => "disabled",
+            (_, Some("1")) => "enabled",
+            (_, None | Some("")) => "automatic",
+            _ => "disabled",
+        };
+        rows.push(json!({"id":name,"port":port,"smsPort":sms_port,"model":model,"manufacturer":s.get("manufacturer").cloned().unwrap_or_default(),"platform":s.get("platform").cloned().unwrap_or_default(),"shared":shared_policy=="enabled","sharedPolicy":shared_policy,"discoveredBy":"qmodem-config","profile":crate::catalog::identify(model)}));
     }
     rows
 }
@@ -502,6 +508,39 @@ impl Broker {
     }
     pub fn modems(&self) -> Result<Vec<Value>> {
         let mut rows = self.discovery.modems()?;
+        // 部分QModem固件省略共享配置；仅使用已打开且归属明确的服务端口，不打开或接管串口。
+        if rows.iter().any(|r| r["sharedPolicy"] == "automatic") {
+            let listed = self
+                .bus
+                .call("at-daemon", "list", json!({}), Duration::from_secs(1));
+            for index in 0..rows.len() {
+                if rows[index]["sharedPolicy"] != "automatic" {
+                    continue;
+                }
+                let port = rows[index]["port"].as_str().unwrap_or("");
+                let unique = rows.iter().filter(|r| r["port"] == port).count() == 1;
+                let open = listed
+                    .as_ref()
+                    .ok()
+                    .and_then(|v| v["ports"].as_array())
+                    .is_some_and(|a| {
+                        a.iter().filter(|r| r["port"] == port).count() == 1
+                            && a.iter()
+                                .any(|r| r["port"] == port && r["is_open"].as_u64() == Some(1))
+                    });
+                let owned = unique
+                    && open
+                    && self.discovery.owners(port).is_ok_and(|owners| {
+                        !owners.is_empty() && owners.iter().all(|owner| owner == "ubus-at-daemon")
+                    });
+                rows[index]["shared"] = json!(owned);
+                rows[index]["sharedDetectedBy"] = json!(if owned {
+                    "open-daemon-port"
+                } else {
+                    "unavailable"
+                });
+            }
+        }
         let mut ports = self.ports.lock().map_err(|_| unavailable())?;
         let now = Instant::now();
         ports.quarantined.retain(|port, instance| {
@@ -725,7 +764,7 @@ impl Broker {
                 held.validate()?;
             }
             if instance.is_some()
-                && !self.discovery.modems()?.iter().any(|r| {
+                && !self.modems()?.iter().any(|r| {
                     r["id"] == id
                         && r["port"] == port
                         && r["model"] == model

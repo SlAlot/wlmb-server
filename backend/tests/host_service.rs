@@ -194,6 +194,7 @@ fn disabled_configured_ap_remains_visible_without_claiming_live_devices() {
         {
             assert_eq!(v["system"]["lan"]["wireless"][0]["enabled"], false);
             assert_eq!(v["system"]["lan"]["wireless"][0]["ssid"], "Disabled AP");
+            assert_eq!(v["system"]["lan"]["wireless"][0]["encryption"], "psk2");
             assert_eq!(v["capabilities"]["wifi"], true);
             assert_ne!(v["capabilities"]["deviceList"], true);
             break;
