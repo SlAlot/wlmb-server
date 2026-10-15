@@ -30,6 +30,10 @@ while [ "$#" -gt 0 ]; do
     *) fail "未知参数：$1" ;;
   esac
 done
+if [ -n "$OFFLINE" ]; then
+  [ -d "$OFFLINE" ] || fail '离线目录不存在'
+  OFFLINE=$(cd "$OFFLINE" && pwd -P) || fail '无法读取离线目录'
+fi
 if [ "$CHECK" = 0 ]; then [ "$(id -u)" = 0 ] || fail '请使用路由器root账户运行'; fi
 for tool in sha256sum awk sed grep df mktemp ubus uci; do
   command -v "$tool" >/dev/null 2>&1 || fail "缺少OpenWrt工具：$tool"

@@ -658,7 +658,7 @@
     },
     {
       "path": "tools/check-installer.cjs",
-      "sha256": "853b7150a63381f7c0c3e5962bd52a17f36b1db4f347d8045c297d209f4094b3"
+      "sha256": "6833569532bdcfb9c7de42d129c536930929f1786a2e88fead48c6f53ea63fc3"
     },
     {
       "path": "tools/check-luci.cjs",
@@ -710,7 +710,7 @@
     },
     {
       "path": "tools/install-template.sh",
-      "sha256": "ef23d64a35e954eb4c9876bf5831953b0ba84c81a536133b75a6842b16500e81"
+      "sha256": "522c157e383b728b421373d5f2cf8a0cc678aa132a1284267e002d6228604085"
     },
     {
       "path": "tools/installer.cjs",

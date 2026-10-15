@@ -15,8 +15,10 @@ if (process.platform !== 'linux') {
   process.exit(0)
 }
 const suite = fs.mkdtempSync(path.join(os.tmpdir(), 'wlmb-installer-suite-'))
+let cases = 0
 function write(file, value, mode) { fs.mkdirSync(path.dirname(file), { recursive: true });fs.writeFileSync(file, value, mode ? { mode } : undefined) }
 function fixture(name, options = {}) {
+  cases++
   const dir = path.join(suite, name), bin = path.join(dir, 'bin'), bundle = path.join(dir, 'bundle'), trust = path.join(dir, 'keys'), server = path.join(dir, 'server'), log = path.join(dir, 'actions.jsonl')
   fs.mkdirSync(bin, { recursive: true });fs.mkdirSync(bundle);fs.mkdirSync(trust)
   for (const [file, bytes] of files) write(path.join(bundle, file), bytes)
@@ -26,6 +28,7 @@ function fixture(name, options = {}) {
   const marker = version => '#!/bin/sh\nprintf "%s\\n" "WLMB_BUILD=' + version + ';pushplus-https=1"\n'
   if (options.current) write(server, marker(options.current), 0o755)
   if (options.conflictingKey) write(path.join(trust, key.fileName), '另一个公钥')
+  if (options.existingKey) write(path.join(trust, key.fileName), key.publicKeyPem)
   if (options.badPackage) fs.appendFileSync(path.join(bundle, `wlmb-server-${VERSION}-aarch64.apk`), '损坏')
   if (options.badKey) fs.appendFileSync(path.join(bundle, key.fileName), '损坏')
   if (options.linkedPackage) {
@@ -51,13 +54,13 @@ process.exit(1);`
   for (const name of ['apk', 'opkg', 'ubus', 'uci', 'id', 'df', 'sleep', 'curl']) write(path.join(bin, name), '#!' + process.execPath + '\n' + program, 0o755)
   const file = path.join(dir, 'install.sh')
   // 测试仅重定位系统路径及命令搜索目录，生产脚本不接受这些测试覆盖参数。
-  const script = source.replace('PATH=/usr/sbin:/usr/bin:/sbin:/bin', 'PATH=' + bin + ':/usr/sbin:/usr/bin:/sbin:/bin').replaceAll('/etc/apk/keys', trust).replaceAll('/usr/sbin/wlmb-server', server).replaceAll('/tmp/wlmb-installer.lock', path.join(dir, 'lock'))
+  const script = source.replace('PATH=/usr/sbin:/usr/bin:/sbin:/bin', 'PATH=' + JSON.stringify(bin + ':/usr/sbin:/usr/bin:/sbin:/bin')).replaceAll('/etc/apk/keys', trust).replaceAll('/usr/sbin/wlmb-server', server).replaceAll('/tmp/wlmb-installer.lock', path.join(dir, 'lock'))
   write(file, script)
   cp.execFileSync('sh', ['-n', file])
   const args = options.online ? [] : ['--offline', bundle]
   if (options.check) args.push('--check')
-  if (!options.cancel && !options.noConfirm) args.push('--yes')
-  const result = cp.spawnSync('sh', [file, ...args], { input: options.cancel ? 'n\n' : '', encoding: 'utf8', timeout: 20000 })
+  if (!options.cancel && !options.noConfirm && !options.confirm) args.push('--yes')
+  const result = cp.spawnSync('sh', [file, ...args], { input: options.cancel ? 'n\n' : options.confirm ? 'y\n' : '', encoding: 'utf8', timeout: 20000 })
   assert(!result.error, name + ': ' + result.error)
   const output = result.stdout + result.stderr
   const actions = fs.existsSync(log) ? fs.readFileSync(log, 'utf8').trim().split('\n').map(row => JSON.parse(row)) : []
@@ -72,7 +75,7 @@ process.exit(1);`
   assert.equal(installs.length, expectedInstalls, name)
   const keyPath = path.join(trust, key.fileName)
   if (options.conflictingKey) assert.equal(fs.readFileSync(keyPath, 'utf8'), '另一个公钥')
-  else if (config.manager === 'apk' && (installs.length || !options.fail && !options.check && !options.cancel)) assert.equal(fs.readFileSync(keyPath, 'utf8'), key.publicKeyPem)
+  else if (options.existingKey || config.manager === 'apk' && (installs.length || !options.fail && !options.check && !options.cancel)) assert.equal(fs.readFileSync(keyPath, 'utf8'), key.publicKeyPem)
   else assert(!fs.existsSync(keyPath), name + ': 取消、检查或预检失败不能残留新公钥')
   if (options.check) assert(!actions.some(row => row.a.includes('update') || row.a.includes('--simulate') || row.a.includes('--noaction')))
   if (!options.fail && !options.check && !options.cancel) assert(output.includes('192.168.66.1:1117'))
@@ -94,5 +97,9 @@ try {
   fixture('symlink', { linkedPackage: true, fail: true })
   fixture('ipk-offline-dependency', { manager: 'opkg', missingDependency: true, fail: true })
   fixture('online', { online: true });fixture('download-failure', { online: true, downloadFails: true, fail: true })
-  console.log('安装器23组POSIX流程回归通过：双包管理器／双架构、在线／离线、确认、检查、摘要、验签、空间、依赖、公钥冲突、失败回滚、版本和服务检查；替身不视为实机安装验收。')
+  fixture('directory with spaces');fixture('explicit-confirm', { confirm: true })
+  fixture('non-root-check', { nonRoot: true, check: true })
+  fixture('existing-key', { existingKey: true });fixture('existing-key-preflight', { existingKey: true, preflightFails: true, fail: true })
+  fixture('feed-refresh-failure', { online: true, preflightFails: true, fail: true })
+  console.log('安装器' + cases + '组POSIX流程回归通过：双包管理器／双架构、在线／离线、确认、检查、摘要、验签、空间、依赖、公钥冲突、失败回滚、版本和服务检查；替身不视为实机安装验收。')
 } finally { fs.rmSync(suite, { recursive: true, force: true }) }
