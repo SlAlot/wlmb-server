@@ -47,8 +47,14 @@ function sign(directory, compilerPackage, key = publicKey()) {
       run(['adbsign', '--allow-untrusted', '--sign-key', privateFile, file])
       run(['verify', '--keys-dir', trusted, file])
       reject(file)
-      const signed = fs.readFileSync(file), tampered = Buffer.from(signed), bad = path.join(stage, 'tampered.apk')
-      tampered[tampered.length - 1] ^= 1;fs.writeFileSync(bad, tampered)
+      const signed = fs.readFileSync(file), bad = path.join(stage, 'tampered.apk')
+      fs.writeFileSync(bad, signed)
+      // 保留原签名解压容器，修改已认证的包名，不把压缩尾部填充变化当成篡改样本。
+      run(['adbsign', '--allow-untrusted', '--compression', 'none', bad])
+      run(['verify', '--keys-dir', trusted, bad])
+      const tampered = fs.readFileSync(bad), at = tampered.indexOf(Buffer.from('wlmb-server'))
+      assert(at >= 8, '必须定位受签名保护的包名')
+      tampered[at] ^= 1;fs.writeFileSync(bad, tampered)
       let failed = false
       try { run(['verify', '--keys-dir', trusted, bad]) } catch { failed = true }
       assert(failed, '篡改后的安装包必须无法验签')
