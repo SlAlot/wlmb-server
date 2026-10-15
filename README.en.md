@@ -52,6 +52,8 @@ Automatic shared/standalone selection; modem signal, serving cells, carriers, ne
 
 The catalog maps 91 identities and 131 bus profiles. Implemented paths cover temperature for 89 identities, band locks for 81, cell locks for 63, neighbors for 64 and carrier aggregation for 71. **These are code coverage counts, not blanket hardware/firmware certification.** Unknown data stays unknown, uncertain writes are not replayed, and RF resets are never automatic. See [compatibility](docs/MODEM-COMPATIBILITY.md) and [audit](docs/RELEASE-AUDIT.md).
 
+Shared mode reuses existing QModem interfaces; it does not take over, patch, upgrade or reconfigure QModem. Older/custom firmware mixing direct and shared AT access can still cause contention or delays. The plugin preserves bounded cache validity and rejects recognized crossed replies, but does not add special adaptations or promise to eliminate other clients' blocking.
+
 ## WeChat and other clients
 
 Open “网络面板助手” in WeChat, join the router WiFi, select **openwrt**, and enter your management address with port 1117. The mini-program is a separate closed-source commercial client. Its paid features do not restrict the plugin WebUI.

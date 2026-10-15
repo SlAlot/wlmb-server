@@ -466,7 +466,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "be19683661f41dd59c1e01923157b56a14193b4995b6e15dc1dca2d4527de111"
+      "sha256": "5b3cfe4c57eed2f5248473122375d7020e93782271f2cb5f7333fc4990b85dad"
     },
     {
       "path": "docs/api-contract.json",
@@ -558,7 +558,7 @@
     },
     {
       "path": "docs/RELEASE-1.0.8.md",
-      "sha256": "4731e5c46742524283e418775c2ed7e7185e57db5d3bed6bd2504e23ad37fd3f"
+      "sha256": "65b8ef8741a09aac0f51f6892134469010cd34caaa14972cb898512c599cde67"
     },
     {
       "path": "docs/RELEASE-AUDIT.md",
@@ -582,7 +582,7 @@
     },
     {
       "path": "docs/SYSTEM-INTERFACES.md",
-      "sha256": "f875306793b932da81a043dc40473249e21df4b6e86e6869ec5df481b23338e4"
+      "sha256": "00930bc11f0f506f64e64f2106e4fc7d848c1f09dd0907b9f0fbbff64052e9a8"
     },
     {
       "path": "docs/UPSTREAM-PARITY.md",
@@ -650,11 +650,11 @@
     },
     {
       "path": "README.en.md",
-      "sha256": "512dd7ef978dbd6cfdf53cd7e4ad8a7295127a7dc4e08fc1eddb70af25ebab93"
+      "sha256": "60797233050ecceaeb261a427449a0e31c9d80488c35baf8ffb6ba8f5c4b323f"
     },
     {
       "path": "README.md",
-      "sha256": "8d37d021411fc5a9acb0049d56c11ebef7060fef6ae7d6c80ef9ee5fa73a6cb9"
+      "sha256": "7e43ba3aca352726c61e67400e5ecaad9169cb972d3663933b285eb6f2c1af82"
     },
     {
       "path": "tools/audit-release-boundary.cjs",

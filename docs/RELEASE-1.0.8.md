@@ -19,4 +19,6 @@ wget -O /tmp/wlmb-install-gh-proxy.sh https://gh-proxy.com/https://github.com/Sl
 
 本次不扩大模组协议或硬件验收承诺。旧版共享服务缺少事务或已审查队列时，短信发送／删除继续受保护，不因识别到模组而强行开放。当前设备只读验证不能代替全型号、真实短信发送或长期负载验收。源码及制品仅包含OpenWrt插件，小程序与商业授权仍闭源。
 
+兼容边界：旧版或定制QModem同时使用直连与共享AT通道时，可能发生争用、错帧或采集延迟。本插件仅复用现有共享服务，不接管、修补或自动升级QModem，不替用户修改其配置；外部阻塞时保留有效缓存，超期明确标记，不承诺消除其他客户端造成的阻塞。本版保留通用错帧防护，不新增此类旧实现的专用适配。
+
 [项目说明](https://github.com/SlAlot/wlmb-server/blob/v1.0.8/README.md) · [安装教程](https://github.com/SlAlot/wlmb-server/blob/v1.0.8/docs/INSTALL.zh-CN.md) · [兼容范围](https://github.com/SlAlot/wlmb-server/blob/v1.0.8/docs/MODEM-COMPATIBILITY.md)
