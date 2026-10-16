@@ -4,6 +4,44 @@ use wlmb_server::radio;
 
 const SERVING: &str = "+QENG: \"servingcell\",\"NOCONN\",\"LTE\",\"FDD\",460,01,5F1EA15,12,1650,3,5,5,DE10,-100,-12,-68,11\n";
 #[test]
+fn rg650_compact_carriers_use_their_own_power_and_never_guess_the_tail_unit() {
+    let raw = "+QENG: \"servingcell\",\"NOCONN\",\"NR5G-SA\",\"TDD\",460,01,ABC001,8,DEF001,627264,78,12,-85,-10,19,1,-\n+QCAINFO: \"PCC\",627264,12,\"NR5G BAND 78\",8,-86,-11,866\nOK";
+    let p = wlmb_server::catalog::identify("RG650V-EU");
+    assert_eq!(p["parser"], "quectel-rg650");
+    let v = radio::parse(p["parser"].as_str().unwrap(), raw).unwrap();
+    let rows = v["carriers"].as_array().unwrap();
+    assert_eq!(rows.len(), 1);
+    assert_eq!(rows[0]["source"], "AT+QCAINFO");
+    assert_eq!(rows[0]["pci"], 8.);
+    assert_eq!(rows[0]["dlBandwidthMHz"], 100.);
+    assert_eq!(rows[0]["rsrp"], -86.);
+    assert_eq!(rows[0]["rsrq"], -11.);
+    assert_eq!(rows[0]["sinr"], 19.);
+    assert!(rows[0]["active"].is_null());
+    let ca = "+QCAINFO: \"SCC\",636664,12,\"NR5G BAND 78\",88,-90,-13,866\nOK";
+    let v = radio::parse("quectel-rg650", ca).unwrap();
+    assert!(v["carriers"][0]["sinr"].is_null());
+    assert_eq!(v["carriers"][0]["rsrp"], -90.);
+    assert!(
+        radio::parse("quectel", ca).unwrap()["carriers"]
+            .as_array()
+            .unwrap()
+            .is_empty()
+    );
+    for bad in [
+        ca.replace(",88,", ",88.5,"),
+        ca.replace(",-90,", ",99,"),
+        ca.replace(",12,", ",99,"),
+    ] {
+        assert!(
+            radio::parse("quectel-rg650", &bad).unwrap()["carriers"]
+                .as_array()
+                .unwrap()
+                .is_empty()
+        );
+    }
+}
+#[test]
 fn lte_secondary_keeps_its_measurements_and_snr_is_not_sinr() {
     let raw = format!(
         "{SERVING}+QCAINFO: \"PCC\",1650,100,\"LTE BAND 3\",1,12,-99,-11,-66,21\n+QCAINFO: \"SCC\",2850,100,\"LTE BAND 7\",2,88,-105,-13,-73,9\n+QCAINFO: \"SCC\",2850,100,\"LTE BAND 7\",2,88,-105,-13,-73,9\nOK"

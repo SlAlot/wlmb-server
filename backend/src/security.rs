@@ -193,6 +193,8 @@ pub fn read_only(command: &str) -> bool {
         "AT+CPMS?",
         "AT+CSCS?",
         "AT+CSDH?",
+        "AT+CNMI?",
+        "AT+CSMS?",
         "AT+CEREG?",
         "AT+CREG?",
         "AT+CGATT?",

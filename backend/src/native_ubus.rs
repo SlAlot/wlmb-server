@@ -56,6 +56,30 @@ struct Channel {
     events: Vec<Vec<u8>>,
 }
 type Replies = Vec<Vec<(u8, Vec<u8>)>>;
+fn modem_objects(replies: Replies) -> Result<Vec<Value>> {
+    let mut found = std::collections::BTreeSet::new();
+    let mut objects = Vec::new();
+    if replies.len() > 8 {
+        return Err(fail());
+    }
+    for reply in replies {
+        let one = |key| -> Result<&[u8]> {
+            let values: Vec<_> = reply.iter().filter(|(id, _)| *id == key).collect();
+            if values.len() != 1 {
+                return Err(fail());
+            }
+            Ok(&values[0].1)
+        };
+        let name = one(2)?.strip_suffix(&[0]).ok_or_else(fail)?;
+        let name = std::str::from_utf8(name).map_err(|_| fail())?;
+        let id = u32_attr(one(3)?)?;
+        if !crate::glinet::object_name(name) || id == 0 || !found.insert(name.to_owned()) {
+            return Err(fail());
+        }
+        objects.push(json!({"name":name,"objectId":id,"signature":blob::decode_object(one(6)?)?}));
+    }
+    Ok(objects)
+}
 impl Channel {
     fn connect(deadline: Instant) -> Result<Self> {
         let mut socket = UnixStream::connect("/var/run/ubus/ubus.sock").map_err(|_| fail())?;
@@ -325,6 +349,32 @@ impl NativeBus {
     }
 }
 impl Bus for NativeBus {
+    fn objects(&self, pattern: &str, timeout: Duration) -> Result<Vec<Value>> {
+        if pattern != "modem.*.AT" || timeout.is_zero() || timeout > Duration::from_secs(3) {
+            return Err(fail());
+        }
+        let deadline = Instant::now() + timeout;
+        let mut state = self.state.try_lock().map_err(|_| fail())?;
+        if state.closed {
+            return Err(fail());
+        }
+        if state.channel.is_none() {
+            state.channel = Some(Channel::connect(deadline)?);
+        }
+        let result = (|| {
+            let replies = state.channel.as_mut().ok_or_else(fail)?.request(
+                4,
+                0,
+                blob::attr(2, false, b"modem.*.AT\0")?,
+                deadline,
+            )?;
+            modem_objects(replies)
+        })();
+        if result.is_err() {
+            state.channel.take();
+        }
+        result
+    }
     fn sms_events(&self) -> Result<Box<dyn crate::transport::SmsEvents>> {
         SmsEventChannel::connect("qmodem.at.line")
             .map(|v| Box::new(v) as Box<dyn crate::transport::SmsEvents>)
@@ -389,6 +439,7 @@ impl Bus for NativeBus {
             || timeout > Duration::from_secs(30)
             || !params.is_object()
             || !crate::transport::allowed(object, method)
+            || crate::glinet::object_name(object) && !crate::glinet::request_valid(&params)
         {
             return Err(fail());
         }
@@ -424,6 +475,35 @@ impl Bus for NativeBus {
 #[cfg(test)]
 mod event_tests {
     #![allow(clippy::unwrap_used)]
+    #[test]
+    fn modem_lookup_requires_unique_paths_ids_and_real_method_signatures() {
+        use super::{blob, json, modem_objects};
+        let schema = blob::encode_object(&json!({"get_result_AT":{"cmd":3,"timeout":5}})).unwrap();
+        let row = vec![
+            (2, b"modem.USB1.AT\0".to_vec()),
+            (3, 1234u32.to_be_bytes().to_vec()),
+            (6, schema),
+        ];
+        let objects = modem_objects(vec![row.clone()]).unwrap();
+        assert_eq!(objects[0]["signature"]["get_result_AT"]["cmd"], 3);
+        assert_eq!(objects[0]["objectId"], 1234);
+        assert!(modem_objects(vec![row.clone(), row.clone()]).is_err());
+        assert!(modem_objects(vec![row.clone(); 9]).is_err());
+        for key in [2, 3, 6] {
+            let mut bad = row.clone();
+            bad.retain(|(id, _)| *id != key);
+            assert!(modem_objects(vec![bad]).is_err());
+            let mut bad = row.clone();
+            bad.push(row.iter().find(|(id, _)| *id == key).unwrap().clone());
+            assert!(modem_objects(vec![bad]).is_err());
+        }
+        let mut bad = row.clone();
+        bad[0].1 = b"modem.*.AT\0".to_vec();
+        assert!(modem_objects(vec![bad]).is_err());
+        let mut bad = row;
+        bad[1].1 = 0u32.to_be_bytes().to_vec();
+        assert!(modem_objects(vec![bad]).is_err());
+    }
     use super::*;
     use crate::transport::SmsEvents;
     fn attrs(object: u32, method: &[u8], value: Value) -> Vec<u8> {

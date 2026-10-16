@@ -73,7 +73,8 @@ impl RadioControls {
         Ok(row)
     }
     pub fn supported(row: &Value) -> bool {
-        row["channelState"] != "sms-input-unknown"
+        row["controlReadOnly"] != true
+            && row["channelState"] != "sms-input-unknown"
             && (crate::lock_protocol::cell_supported(row["model"].as_str().unwrap_or(""))
                 || crate::lock_protocol::band_supported(row["model"].as_str().unwrap_or("")))
             && (row["shared"] == true

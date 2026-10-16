@@ -42,6 +42,23 @@ fn exact(v: &Value, keys: &[&str]) -> bool {
 pub fn wifi_disabled(value: &Value) -> bool {
     value == true || value == 1 || value == "1" || value == "true"
 }
+pub fn display_profiles(config: &Value) -> Vec<Value> {
+    let Some(rows) = config["values"].as_object().filter(|m| m.len() <= 64) else {
+        return vec![];
+    };
+    rows.iter().filter_map(|(id,row)| {
+        let radio = row["device"].as_str()?;
+        let device = &config["values"][radio];
+        let band = match device["band"].as_str().or(device["hwmode"].as_str()) {
+            Some("2g"|"11g"|"11beg") => "2g", Some("5g"|"11a"|"11bea") => "5g", Some("6g") => "6g", _ => return None,
+        };
+        let net = &row["network"];
+        let lan = net == "lan" || net.as_array().is_some_and(|a| a.len()==1 && a[0]=="lan");
+        if row[".type"] != "wifi-iface" || device[".type"] != "wifi-device" || !identifier(id) || !identifier(radio) || row["mode"] != "ap" || !lan { return None; }
+        Some(json!({"id":id,"radio":radio,"band":band,"ssid":row["ssid"],"enabled":!wifi_disabled(&row["disabled"])&&!wifi_disabled(&device["disabled"]),
+            "channel":device["channel"],"channelWidth":device["htmode"],"authMode":row["encryption"]}))
+    }).collect()
+}
 pub fn profiles(config: &Value) -> Vec<Value> {
     let Some(rows) = config["values"].as_object() else {
         return vec![];
@@ -53,14 +70,14 @@ pub fn profiles(config: &Value) -> Vec<Value> {
     for (id, row) in rows {
         let radio = row["device"].as_str().unwrap_or("");
         let interfaces = rows
-            .values()
-            .filter(|r| {
+            .iter()
+            .filter(|(other_id, r)| {
                 r[".type"] == "wifi-iface"
+                    && (*other_id == id || !wifi_disabled(&r["disabled"]))
                     && (r["device"] == radio
-                        || r["disabled"] != "1"
-                            && r["device"]
-                                .as_array()
-                                .is_some_and(|a| a.iter().any(|v| v == radio)))
+                        || r["device"]
+                            .as_array()
+                            .is_some_and(|a| a.iter().any(|v| v == radio)))
             })
             .count();
         let device = &config["values"][radio];
@@ -290,6 +307,9 @@ pub fn wifi_changes(snapshot: &Value, op: &Value) -> Result<Value> {
     Ok(json!({"profile":profile,"changes":out}))
 }
 pub fn editable_profiles(snapshot: &Value) -> Vec<Value> {
+    if snapshot["radioCapabilities"]["__runtimeManaged"] == false {
+        return vec![];
+    }
     let mut rows = profiles(&snapshot["wireless"]);
     for row in &mut rows {
         let cap = &snapshot["radioCapabilities"][row["radio"].as_str().unwrap_or("")];
@@ -548,7 +568,7 @@ impl HostControls {
         limit["applyError"] = json!(s.apply_error || stale);
         Ok(
             json!({"traffic":traffic,"trafficLimit":limit,"blocked":s.blocked,"blockApplyError":s.apply_error||stale,"deviceBlockSupported":!stale&&guard_supported(&s.snapshot),
-            "wifiControls":{"profiles":p,"editableBands":p.iter().map(|p|p["band"].clone()).collect::<Vec<_>>(),"bandUnifySupported":unify,
+            "wifiControls":{"profiles":p,"displayProfiles":if stale{vec![]}else{display_profiles(&s.snapshot["wireless"])},"editableBands":p.iter().map(|p|p["band"].clone()).collect::<Vec<_>>(),"bandUnifySupported":unify,
                 "bandUnifyEnabled":s.unify_enabled&&!stale,"bandUnifyStateKnown":!stale&&wifi_unified(&s.snapshot).is_some(),"bandUnifyManaged":s.unify_managed&&!stale,"bandUnifySource":if s.unify_managed{"plugin"}else{"system-config"},"stale":stale}}),
         )
     }
@@ -629,7 +649,7 @@ impl HostControls {
                 if !exact(op, &["kind", "enabled"]) || op["enabled"].as_bool().is_none() {
                     return Err(bad());
                 }
-                let p = profiles(&snapshot["wireless"]);
+                let p = editable_profiles(snapshot);
                 if !p.iter().any(|r| r["band"] == "2g") || !p.iter().any(|r| r["band"] == "5g") {
                     return Err(PanelError::new("WIFI_UNIFY_UNSUPPORTED", 422));
                 }

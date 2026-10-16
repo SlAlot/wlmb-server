@@ -524,14 +524,17 @@ return view.extend({
         this.flow.replaceChildren(host, trafficCard);
         var lan = system.lan || {}, lanStale = !!system.stale || !!lan.stale;
         var wifiControls = lan.controls || {};
-        var wifi = lanStale ? (wifiControls.profiles || []).map(function(item) { return Object.assign({}, item, { enabled: undefined }); }) : lan.wireless || [];
-        if(!lanStale&&!wifiControls.stale)wifi=wifi.concat((wifiControls.profiles||[]).filter(function(profile){return !wifi.some(function(item){return item.id===profile.id;});}).map(function(profile){return Object.assign({},profile,{enabled:undefined});}));
+        var displayWifi=wifiControls.displayProfiles||wifiControls.profiles||[];
+        var wifi = lanStale ? displayWifi.map(function(item) { return Object.assign({}, item, { enabled: undefined, configuredEnabled:item.enabled, source:'uci-configuration' }); }) : lan.wireless || [];
+        if(!lanStale&&!wifiControls.stale)wifi=wifi.concat(displayWifi.filter(function(profile){return !wifi.some(function(item){return item.id===profile.id;});}).map(function(profile){return Object.assign({},profile,{enabled:undefined,configuredEnabled:profile.enabled,source:'uci-configuration'});}));
         var devices = lanStale ? [] : lan.devices || [];
         this.networks.replaceChildren(card('无线网络', wifi.map(function(item) {
             var ht=String(item.channelWidth||''),generation={HT:'WiFi 4',VHT:'WiFi 5',HE:'WiFi 6',EHT:'WiFi 7'}[ht.replace(/\d+$/,'')];
             var wirelessText=generation?generation+' · '+ht.replace(/^[A-Z]+/,'')+' MHz':text(item.channelWidth);
+            if(item.source==='uci-configuration')wirelessText='配置 '+wirelessText;
+            else if(item.configuredChannelWidth&&item.configuredChannelWidth!==item.channelWidth)wirelessText+='（配置 '+text(item.configuredChannelWidth)+'）';
             return row((item.band === '2g' ? '2.4 GHz' : item.band === '5g' ? '5 GHz' : item.band === '6g' ? '6 GHz' : 'WiFi') + ' · ' + item.ssid,
-                (lanStale||typeof item.enabled!=='boolean'?'运行状态未确认':item.enabled?'实际运行中':'当前未运行')+' · 信道 ' + text(item.channel) + ' · ' + wirelessText, (wifiControls.profiles || []).some(function(row) { return row.id === item.id; }) && !wifiControls.stale ? button('编辑', function() { self.editWifi(Object.assign({},item,(wifiControls.profiles || []).find(function(row){return row.id===item.id;}),{runtimeEnabled:!lanStale?item.enabled:undefined})); }, 'outline') : lanStale||typeof item.enabled!=='boolean' ? '运行状态待更新' : item.enabled ? '已开启 · 只读' : '已关闭 · 只读');
+                (lanStale||typeof item.enabled!=='boolean'?(typeof item.configuredEnabled==='boolean'?(item.configuredEnabled?'配置已启用':'配置已停用')+'，运行状态未确认':'运行状态未确认'):item.enabled?'实际运行中':'当前未运行')+' · 信道 ' + text(item.channel) + ' · ' + wirelessText, (wifiControls.profiles || []).some(function(row) { return row.id === item.id; }) && !wifiControls.stale ? button('编辑', function() { self.editWifi(Object.assign({},item,(wifiControls.profiles || []).find(function(row){return row.id===item.id;}),{runtimeEnabled:!lanStale?item.enabled:undefined})); }, 'outline') : lanStale||typeof item.enabled!=='boolean' ? '运行状态待更新' : item.enabled ? '已开启 · 只读' : '已关闭 · 只读');
         }).concat([wifiControls.bandUnifySupported && !wifiControls.stale ? row('双频合一', wifiControls.bandUnifyStateKnown===false?'状态尚未确认，请刷新后重试':'2.4G / 5G 同名同密码，不等同 MLO 或强制漫游', wifiControls.bandUnifyStateKnown===false?E('span',{'class':'np-hint'},'未确认'):button(wifiControls.bandUnifyEnabled ? '关闭合一' : '开启合一', function() { return self.hostAction({kind:'wifi_unify',enabled:!wifiControls.bandUnifyEnabled}); }, 'outline')) : E('span'), E('p', { 'class': 'np-hint' }, lan.stale ? '无线运行/设备快照已过期；仍可编辑经过独立核验的 AP 配置。' : '编辑后系统读取新无线配置；多 AP、访客、企业和 MLO 配置不冒充可编辑。') ])),
         card('已连接设备 · ' + (lanStale ? '待更新' : lan.deviceListSupported ? devices.length : '未读取'), [E('div', { 'class': 'np-scroll' }, E('table', { 'class': 'np-table' }, [
             E('thead', {}, E('tr', {}, ['设备', 'IPv4 / MAC', '连接', '下行 / 上行', '上网控制'].map(function(label) { return E('th', {}, label); }))),

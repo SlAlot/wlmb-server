@@ -20,6 +20,9 @@ use std::{
 
 pub trait Bus: Send + Sync {
     fn call(&self, object: &str, method: &str, params: Value, timeout: Duration) -> Result<Value>;
+    fn objects(&self, _pattern: &str, _timeout: Duration) -> Result<Vec<Value>> {
+        Err(PanelError::new("UBUS_OBJECT_NOT_FOUND", 503))
+    }
     fn describe(&self, _object: &str, _timeout: Duration) -> Result<Value> {
         Err(PanelError::new("SHARED_TRANSACTIONS_UNAVAILABLE", 422))
     }
@@ -133,8 +136,8 @@ pub(crate) fn allowed(object: &str, method: &str) -> bool {
         "network" => method == "reload",
         "network.interface.lan" => method == "status",
         "uci" => method == "get",
-        "iwinfo" => ["info", "assoclist", "freqlist"].contains(&method),
-        _ => false,
+        "iwinfo" => ["devices", "info", "assoclist", "freqlist"].contains(&method),
+        _ => crate::glinet::object_name(object) && method == "get_result_AT",
     }
 }
 

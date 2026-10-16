@@ -66,7 +66,7 @@
     },
     {
       "path": "backend/src/catalog.rs",
-      "sha256": "77bf6d28c22e4460b293e8d1efed1a41a7b792b0439c0b6465d293270061c19b"
+      "sha256": "ac688feffc2534115415ccfb3777fb867ab7f8f3eaded46670140d5a1ee3967c"
     },
     {
       "path": "backend/src/compat_sms.rs",
@@ -78,7 +78,7 @@
     },
     {
       "path": "backend/src/control_runtime.rs",
-      "sha256": "d5ac22a026a3611c953bd5889bbf0c720c7141d1166fa102f8d42244e7abc343"
+      "sha256": "2c2ffe22058befe992e9bd5cc9c5e018f31c79cdb2e2409aed0e63949deb3f37"
     },
     {
       "path": "backend/src/controls.rs",
@@ -89,8 +89,12 @@
       "sha256": "029c4539b859e9d8e4ca4ac8e27f5a978431736f07fae84437aad824a1f88e82"
     },
     {
+      "path": "backend/src/glinet.rs",
+      "sha256": "c2101935160da80eab704c27650398e38bf967bec24819c346bbd19b356387a5"
+    },
+    {
       "path": "backend/src/host_controls.rs",
-      "sha256": "e3ab16039b3d12414af191c9852bab7ee93c69faadc8e6eda61bef53143165a2"
+      "sha256": "818d05f1eb9d91812ea58f64c8cc336e37c14040c40bf6bf94a494a54eb4fc10"
     },
     {
       "path": "backend/src/http.rs",
@@ -106,11 +110,11 @@
     },
     {
       "path": "backend/src/lan.rs",
-      "sha256": "315f9c1b952ab6ac553d6ae70c188f16843e0245b754114069a4e62b026aefbc"
+      "sha256": "e35bc1c9b3e19aaeb19889d3330c5167e9b36b1e56df8c9e98ae8ec90b46bffc"
     },
     {
       "path": "backend/src/lib.rs",
-      "sha256": "7677baae824a9cbad9af4141bc5b4e0a81d5b561a6501d378803e9f72dd1ed94"
+      "sha256": "77132902e4ab993cb1b8acffdeba6f24b81408c955e28df2c6ac4d46181bc793"
     },
     {
       "path": "backend/src/lock_protocol.rs",
@@ -126,11 +130,11 @@
     },
     {
       "path": "backend/src/native_host.rs",
-      "sha256": "20d5282fcfe1adfd30c69b17e87381066d23ed88ca582853fce47d68f151c689"
+      "sha256": "819175d87b6ef615a276950bb8856385abe1945fa376dcc1af7573a34efc16d1"
     },
     {
       "path": "backend/src/native_ubus.rs",
-      "sha256": "10b7b6130856e6f370c35e39d1961a8a0acc1a6b20d055720d14bbcadd5dd6da"
+      "sha256": "8e1064662795970af46646c1adce069ebc72523336a8556fc1fb0564a32a39b0"
     },
     {
       "path": "backend/src/network_operator.rs",
@@ -154,11 +158,11 @@
     },
     {
       "path": "backend/src/radio_controls.rs",
-      "sha256": "ed9010e2eff60fba9a37d584a5b6826c0a955c2859d1f764f03a6e5e1aa805c0"
+      "sha256": "3e45cf3c3c804bbcd40baeb339e0251d9d503bb8f9591f6d964ef986f76194f4"
     },
     {
       "path": "backend/src/radio.rs",
-      "sha256": "1d6e5419db9fb2f3ed6190acea443a7b9ee42aadfcd097dd85ebb851ae264362"
+      "sha256": "1695c674a7d45a213518a0121d7bbc396a04a8d271ada96ab30c2626a770a540"
     },
     {
       "path": "backend/src/radio/fibocom_lte.rs",
@@ -198,15 +202,15 @@
     },
     {
       "path": "backend/src/security.rs",
-      "sha256": "795d893d791d8c2a7647b1865957a71dd6b5f09ff9c7d351c7aacd896be77f86"
+      "sha256": "96672efe04bd4da9d779b87eb15b608383c44fd6040e6bef862387174f987062"
     },
     {
       "path": "backend/src/service.rs",
-      "sha256": "5312fb6dbe6042bafadd36de43764cb2708f74e50cb6bdbeaf408c25c1ceb48a"
+      "sha256": "86dfb638e2b110246459e3d71e124004748198b2930fd5c92e54ad4060bf7f91"
     },
     {
       "path": "backend/src/session_qos.rs",
-      "sha256": "d9d1491db4ccd7319090c57e5bdcfdb82d0165b8fb01a6257dea28b996fa7ca8"
+      "sha256": "250f6d3949c530403670db87839a1a193f58506d5454e6d3ff655a852a8f6fed"
     },
     {
       "path": "backend/src/shared_sms.rs",
@@ -266,7 +270,7 @@
     },
     {
       "path": "backend/src/transport.rs",
-      "sha256": "a06ced9b60647f014a24394bd010e0130b78f5e3186f3c1d4913b25557bd88be"
+      "sha256": "fa9cff316ef4320f7d9e0ab7edae813220bf80aaa6b890fdf99b1260901886e4"
     },
     {
       "path": "backend/src/vendor_cell_lock.rs",
@@ -290,7 +294,7 @@
     },
     {
       "path": "backend/tests/control_runtime.rs",
-      "sha256": "ee4070f24bc0013396e08b4e6c6e4a3dde2cba22f6335171506965a070b6770e"
+      "sha256": "2cc3ba17b0a137ea0a85cd977192a1ae0a673a224bd3598df76b006a7426008d"
     },
     {
       "path": "backend/tests/core.rs",
@@ -305,8 +309,16 @@
       "sha256": "19877ee52c9f0225a86499c8a3603d542df4f4ce14745ea671dd9a05912f78e9"
     },
     {
+      "path": "backend/tests/glinet_wifi.rs",
+      "sha256": "9a9f4af4f3143284df5a77a8b4495f9642043b329f341510dd83e5f5364df9cc"
+    },
+    {
+      "path": "backend/tests/glinet.rs",
+      "sha256": "0db181ba1272bc06b1f7726d6ef5567dc14a1d89dbff27d41c156c105f343bf1"
+    },
+    {
       "path": "backend/tests/host_controls.rs",
-      "sha256": "c99c1c60c31ee96da7e581c4ef1ef95c329f4788e1d2e42a25c8428d97f019aa"
+      "sha256": "ff922fe693c6d5b87c00e2cb0f3aa7bc4fadb8af3f91af59a633c79fde29223a"
     },
     {
       "path": "backend/tests/host_service.rs",
@@ -370,7 +382,7 @@
     },
     {
       "path": "backend/tests/quectel.rs",
-      "sha256": "a136ab43c450d81cf4f3052d2f36a25f616b04dd72afe9bbb92501c7306ccb1a"
+      "sha256": "c99e9be0a9d78e23e23dab573ef73465877be241e4a510a7cc3713c1c7468021"
     },
     {
       "path": "backend/tests/rpc.rs",
@@ -466,7 +478,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "eeb8b049f3d42c1cf509a73ddb1ff3253bbaa8a6fd06fa63787e1e38bb3721a0"
+      "sha256": "c13d6fb66bfbf4938997f0957d174d684cb59dc19c602685818d742f907a58c5"
     },
     {
       "path": "docs/api-contract.json",
@@ -499,6 +511,10 @@
     {
       "path": "docs/FRONTEND-SOURCES.md",
       "sha256": "de7fa974405411e182c6824537f056d2dba5274c329b9f036bcc4194f3e22a23"
+    },
+    {
+      "path": "docs/GLINET.md",
+      "sha256": "5c503a5fe8c6fbb82f9f3a66031e998ac635529696ce379f9f8863513e06bbef"
     },
     {
       "path": "docs/ICON-SOURCES.md",
@@ -578,7 +594,7 @@
     },
     {
       "path": "docs/SMS.md",
-      "sha256": "0e78a98db001246fc9c28a27e8fc7179216743f48d284e8db0ee82e8037d775f"
+      "sha256": "8fe8f19755663e1144e6bf878ee3da8ae5370894b10eeec711036ca16aa4eff5"
     },
     {
       "path": "docs/STATUS.md",
@@ -586,7 +602,7 @@
     },
     {
       "path": "docs/SYSTEM-INTERFACES.md",
-      "sha256": "00930bc11f0f506f64e64f2106e4fc7d848c1f09dd0907b9f0fbbff64052e9a8"
+      "sha256": "e9a7fdbe9977d1c17894c48c5ecec2ffab1b4a400517cab0aa71b0873bd6f89b"
     },
     {
       "path": "docs/UPSTREAM-PARITY.md",
@@ -602,7 +618,7 @@
     },
     {
       "path": "frontend/www/luci-static/resources/view/wlmb-server/index-v1_0_9_release.js",
-      "sha256": "856963281c0d2c1439c5e095e6e3d90e36e4fc75d4e7d96fcace8b5c1c0c52ea"
+      "sha256": "a0c690bb179fe7e1c6c3b749ebd5f7bd69e8b70deb6989b639ded757276d9f06"
     },
     {
       "path": "frontend/www/luci-static/resources/wlmb-server/guide.css",
@@ -686,7 +702,7 @@
     },
     {
       "path": "tools/check-luci.cjs",
-      "sha256": "1e09053d4f7568a6cab45b487d134f634cdf3066ec8aa431aca76d5daefccd79"
+      "sha256": "cf890a75ecf842d1bfd143b5aad4f0887bff5dd2018d96b29ba6bcc6850f4c97"
     },
     {
       "path": "tools/check-package.cjs",

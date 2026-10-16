@@ -255,6 +255,11 @@ async function main() {
   view.draw({...status,backend:'rust',system:{...status.system,lan:{...oldLan,stale:false,complete:false,devices:[],wireless:[]}}})
   assert.ok(view.networks.textContent.includes('设备列表尚未完整读取'))
   assert.ok(!view.networks.textContent.includes('暂未发现在线设备'))
+  view.draw({...status,backend:'rust',system:{...status.system,lan:{stale:false,wireless:[{id:'gl5g',band:'5g',ssid:'Runtime AP',enabled:true,channel:36,channelWidth:'HE160',configuredChannelWidth:'EHT160',source:'iwinfo-fallback'}],controls:{stale:false,profiles:[],displayProfiles:[{id:'gl2g',band:'2g',ssid:'Configured 2G',enabled:false,channelWidth:'EHT40'},{id:'gl6g',band:'6g',ssid:'Configured 6G',enabled:false,channelWidth:'EHT160'}]}}}})
+  assert.ok(view.networks.textContent.includes('实际运行中'))
+  assert.ok(view.networks.textContent.includes('WiFi 6')&&view.networks.textContent.includes('配置 EHT160'))
+  assert.ok(view.networks.textContent.includes('6 GHz')&&view.networks.textContent.includes('配置已停用，运行状态未确认'))
+  assert.ok(!all(view.networks).some(node=>node.tag==='button'&&node.textContent==='编辑'),'原厂运行态回退不能冒充可编辑')
   running=true
   status.backend='rust';status.capabilities={sms:true,smsSend:true,smsDelete:true,smsForward:true}
   await view.update(true)

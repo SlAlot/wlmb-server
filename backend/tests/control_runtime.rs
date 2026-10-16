@@ -44,6 +44,16 @@ fn standalone_radio_support_is_not_gated_by_shared() {
     assert!(!RadioControls::supported(&d.row.lock().unwrap()));
 }
 #[test]
+fn a_read_only_provider_cannot_be_enabled_for_writes_by_the_console_switch() {
+    let (d, c) = setup();
+    d.row.lock().unwrap()["controlReadOnly"] = json!(true);
+    c.unsafe_at.store(true, Ordering::Release);
+    assert!(!RadioControls::supported(&d.row.lock().unwrap()));
+    assert!(c.prepare("m1", "AT+CFUN=1", "owner").is_err());
+    assert!(c.prepare("m1", "AT+CSQ", "owner").is_ok());
+    assert!(d.calls.lock().unwrap().is_empty());
+}
+#[test]
 fn console_read_confirmation_binds_instance_and_is_one_use() {
     let (d, c) = setup();
     let p = c.prepare("m1", "AT+CSQ", "owner").unwrap();

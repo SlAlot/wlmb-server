@@ -17,6 +17,82 @@ fn name(value: &str) -> bool {
 fn mac(value: &str) -> Option<String> {
     crate::host_controls::mac(value).then(|| value.to_ascii_lowercase())
 }
+// 原厂未向 netifd 报告无线时，只从实际 AP 信息回退展示；不按接口或 phy 编号猜频段。
+fn fallback_wireless(
+    call: impl Fn(&str, &str, Value) -> Option<Value>,
+) -> (Value, BTreeMap<String, Value>) {
+    let mut status = json!({});
+    let mut infos = BTreeMap::new();
+    let devices = call("iwinfo", "devices", json!({})).unwrap_or(Value::Null);
+    let Some(devices) = devices["devices"].as_array().filter(|v| v.len() <= 8) else {
+        return (status, infos);
+    };
+    let config = call("uci", "get", json!({"config":"wireless"})).unwrap_or(Value::Null);
+    let mut seen = std::collections::BTreeSet::new();
+    for device in devices {
+        let Some(ifname) = device.as_str().filter(|s| name(s)) else {
+            continue;
+        };
+        if !seen.insert(ifname) {
+            continue;
+        }
+        infos.insert(ifname.to_owned(), Value::Null);
+        let Some(info) = call("iwinfo", "info", json!({"device":ifname})) else {
+            continue;
+        };
+        infos.insert(ifname.to_owned(), info.clone());
+        let band = match info["frequency"].as_u64() {
+            Some(2400..=2500) => "2g",
+            Some(4900..=5900) => "5g",
+            Some(5925..=7125) => "6g",
+            _ => continue,
+        };
+        let Some(ssid) = info["ssid"]
+            .as_str()
+            .filter(|s| !s.is_empty() && s.len() <= 32)
+        else {
+            continue;
+        };
+        if info["mode"] != "Master" || info["channel"].as_u64().is_none_or(|n| n == 0 || n > 233) {
+            continue;
+        }
+        let candidates: Vec<_> = config["values"]
+            .as_object()
+            .filter(|m| m.len() <= 64)
+            .into_iter()
+            .flat_map(|m| m.iter())
+            .filter(|(_, row)| {
+                let radio = row["device"].as_str().unwrap_or("");
+                row[".type"] == "wifi-iface"
+                    && row["mode"] == "ap"
+                    && config["values"][radio]["band"] == band
+                    && if let Some(explicit) = row["ifname"].as_str() {
+                        explicit == ifname
+                    } else {
+                        row["ssid"] == ssid
+                    }
+            })
+            .collect();
+        let bound = candidates
+            .first()
+            .filter(|_| candidates.len() == 1)
+            .filter(|(id, row)| {
+                crate::host_controls::identifier(id)
+                    && (row["network"] == "lan"
+                        || row["network"]
+                            .as_array()
+                            .is_some_and(|v| v.len() == 1 && v[0] == "lan"))
+            });
+        let section = bound
+            .map(|(id, _)| id.to_string())
+            .unwrap_or_else(|| format!("iwinfo-{ifname}"));
+        // 未核实 LAN 归属的 AP 仅展示运行状态，不采集为主网络终端或允许控制。
+        let network = if bound.is_some() { "lan" } else { "unverified" };
+        status[ifname] = json!({"up":true,"source":"iwinfo-fallback","interfaces":[{"section":section,"ifname":ifname,"config":{"mode":"ap","network":network,"ssid":ssid}}]});
+        infos.insert(ifname.to_owned(), info);
+    }
+    (status, infos)
+}
 pub fn disabled(value: &Value) -> bool {
     crate::host_controls::wifi_disabled(value)
 }
@@ -91,7 +167,7 @@ impl LanCache {
     }
     pub fn sample_with_clock(&mut self, bus: &dyn Bus, mut clock: impl FnMut() -> f64) -> Value {
         let deadline = Instant::now() + Duration::from_secs(4);
-        let call = |object, method, params| {
+        let call = |object: &str, method: &str, params: Value| {
             let left = deadline.checked_duration_since(Instant::now())?;
             bus.call(object, method, params, left.min(Duration::from_secs(1)))
                 .ok()
@@ -107,9 +183,21 @@ impl LanCache {
         let arp = bounded_read(Path::new("/proc/net/arp"), 65536).unwrap_or_default();
         let leases = bounded_read(Path::new("/tmp/dhcp.leases"), 65536).unwrap_or_default();
         let mut devices = peers(&arp, &leases, &lan_devices);
-        let status = call("network.wireless", "status", json!({}));
+        let mut status = call("network.wireless", "status", json!({}));
+        let mut prefetched = BTreeMap::new();
+        if status.as_ref().and_then(Value::as_object).is_none_or(|m| {
+            m.values()
+                .all(|r| r["interfaces"].as_array().is_none_or(Vec::is_empty))
+        }) {
+            let (fallback, infos) = fallback_wireless(call);
+            prefetched = infos;
+            if fallback.as_object().is_some_and(|m| !m.is_empty()) {
+                status = Some(fallback);
+            }
+        }
         let mut wireless = vec![];
-        let mut wireless_names = std::collections::BTreeSet::new();
+        let mut wireless_names: std::collections::BTreeSet<_> =
+            prefetched.keys().cloned().collect();
         for radio in status
             .as_ref()
             .and_then(Value::as_object)
@@ -148,7 +236,8 @@ impl LanCache {
                     || cfg["network"]
                         .as_array()
                         .is_some_and(|v| v.iter().any(|n| n == "lan"));
-                if cfg["mode"] != "ap" || !is_lan {
+                let fallback = radio["source"] == "iwinfo-fallback";
+                if cfg["mode"] != "ap" || !is_lan && !fallback {
                     continue;
                 }
                 let Some(ifname) = iface["ifname"].as_str().filter(|n| name(n)) else {
@@ -157,7 +246,10 @@ impl LanCache {
                 let state = ap_state(radio, cfg);
                 let enabled = state == Some(true);
                 let info = if enabled {
-                    call("iwinfo", "info", json!({"device":ifname})).unwrap_or(Value::Null)
+                    prefetched
+                        .remove(ifname)
+                        .or_else(|| call("iwinfo", "info", json!({"device":ifname})))
+                        .unwrap_or(Value::Null)
                 } else {
                     Value::Null
                 };
@@ -168,8 +260,11 @@ impl LanCache {
                     Some(5925..=7125) => "6g",
                     _ => "unknown",
                 };
-                wireless.push(json!({"id":iface["section"],"interface":ifname,"band":band,"ssid":cfg["ssid"].as_str().unwrap_or("").chars().take(32).collect::<String>(),"enabled":state,"stateKnown":state.is_some(),"channel":info["channel"],"channelWidth":info["htmode"],"editable":false}));
-                if !enabled {
+                wireless.push(json!({"id":iface["section"],"interface":ifname,"band":band,"ssid":cfg["ssid"].as_str().unwrap_or("").chars().take(32).collect::<String>(),"enabled":state,"stateKnown":state.is_some(),"channel":info["channel"],"channelWidth":info["htmode"],"editable":false,"source":if fallback{"iwinfo-fallback"}else{"netifd-status"},"lanVerified":is_lan}));
+                if !enabled || !is_lan {
+                    if fallback && !is_lan {
+                        assoc_complete = false;
+                    }
                     continue;
                 }
                 let stations = call("iwinfo", "assoclist", json!({"device":ifname}));

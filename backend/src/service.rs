@@ -90,27 +90,34 @@ impl NativeService {
                         .as_array()
                         .cloned()
                         .unwrap_or_default();
-                    for profile in info["wifiControls"]["profiles"]
+                    for profile in info["wifiControls"]["displayProfiles"]
                         .as_array()
                         .into_iter()
                         .flatten()
                     {
                         if let Some(row) = wireless.iter_mut().find(|r| r["id"] == profile["id"]) {
                             for field in ["ssid", "band"] {
-                                row[field] = profile[field].clone();
+                                if row[field].is_null() || row[field] == "" {
+                                    row[field] = profile[field].clone();
+                                }
                             }
                             row["encryption"] = profile["authMode"].clone();
                             row["authMode"] = profile["authMode"].clone();
                             row["configuredEnabled"] = profile["enabled"].clone();
+                            row["configuredChannelWidth"] = profile["channelWidth"].clone();
                         } else {
                             let mut row = profile.clone();
                             row["source"] = json!("uci-configuration");
+                            row["configuredEnabled"] = row["enabled"].clone();
+                            row["configuredChannelWidth"] = row["channelWidth"].clone();
+                            row["enabled"] = Value::Null;
+                            row["stateKnown"] = json!(false);
                             row["encryption"] = profile["authMode"].clone();
                             wireless.push(row);
                         }
                     }
                     status["system"]["lan"]["wireless"] = json!(wireless);
-                    if info["wifiControls"]["profiles"]
+                    if info["wifiControls"]["displayProfiles"]
                         .as_array()
                         .is_some_and(|p| !p.is_empty())
                     {
@@ -156,7 +163,9 @@ impl NativeService {
                 }
                 let sms_ready = self.sms.is_some()
                     && rows.iter().any(|r| {
-                        r["id"] == key && crate::control_runtime::ModemControls::available(r)
+                        r["id"] == key
+                            && r["smsReadSupported"] != false
+                            && crate::control_runtime::ModemControls::available(r)
                     });
                 let sms_write = sms_ready
                     && self.sms.as_ref().is_some_and(|s| {
@@ -198,6 +207,7 @@ impl NativeService {
                     self.controls.is_some()
                         && rows.iter().any(|r| r["id"] == key
                             && crate::control_runtime::ModemControls::available(r)
+                            && r["controlReadOnly"] != true
                             && crate::sms_settings::supported(r["model"].as_str().unwrap_or("")))
                 );
                 Ok(status)
@@ -788,17 +798,23 @@ pub fn lan(bus: &dyn Bus) -> Result<Lan> {
     Lan::new(address, mask)
 }
 pub fn run_readonly() -> Result<()> {
-    run(false)
+    run(Some(false))
 }
 pub fn run_standalone() -> Result<()> {
-    run(true)
+    run(Some(true))
 }
 pub fn run_auto() -> Result<()> {
-    let present = crate::connection_mode::qmodem_installed(Path::new("/"));
-    run(crate::connection_mode::automatic(present) == crate::connection_mode::Mode::Independent)
+    run(None)
 }
-fn run(standalone: bool) -> Result<()> {
+fn run(requested_standalone: Option<bool>) -> Result<()> {
     let bus = Arc::new(NativeBus::default());
+    let qmodem = crate::connection_mode::qmodem_installed(Path::new("/"));
+    let glinet = (requested_standalone != Some(true)
+        && !qmodem
+        && crate::glinet::Glinet::detected(bus.as_ref())
+            .unwrap_or_else(|_| Path::new("/etc/glversion").is_file()))
+    .then(|| crate::glinet::Glinet::new(bus.clone()));
+    let standalone = requested_standalone.unwrap_or(!qmodem && glinet.is_none());
     let lan = lan(bus.as_ref())?;
     let listener = TcpListener::bind((lan.address, API_PORT))
         .map_err(|_| PanelError::new("PORT_BUSY", 503))?;
@@ -807,7 +823,7 @@ fn run(standalone: bool) -> Result<()> {
             crate::independent_at::SystemHardware,
         ))
     });
-    let broker = (!standalone).then(|| {
+    let broker = (!standalone && glinet.is_none()).then(|| {
         Arc::new(Broker::new(
             bus.clone(),
             Arc::new(SystemDiscovery {
@@ -815,22 +831,29 @@ fn run(standalone: bool) -> Result<()> {
             }),
         ))
     });
-    let source: Arc<dyn crate::sampler::Source> = if let Some(source) = &independent {
+    let source: Arc<dyn crate::sampler::Source> = if let Some(source) = &glinet {
+        source.clone()
+    } else if let Some(source) = &independent {
         source.clone()
     } else {
         broker.clone().ok_or_else(failed)?
     };
     let sampler = Sampler::new(source.clone());
-    let sms_device: Option<Arc<dyn crate::sms_runtime::SmsDevice>> = independent
+    let sms_device: Option<Arc<dyn crate::sms_runtime::SmsDevice>> = glinet
+        .clone()
         .map(|source| source as Arc<dyn crate::sms_runtime::SmsDevice>)
         .or_else(|| {
-            broker.map(|b| {
-                let fallback = Arc::new(crate::compat_sms::CompatSms::new(b.clone()));
-                Arc::new(crate::qmodem_sms::QmodemSms::new(
-                    Arc::new(crate::qmodem_sms::NativeService::new(b)),
-                    fallback,
-                )) as Arc<dyn crate::sms_runtime::SmsDevice>
-            })
+            independent
+                .map(|source| source as Arc<dyn crate::sms_runtime::SmsDevice>)
+                .or_else(|| {
+                    broker.map(|b| {
+                        let fallback = Arc::new(crate::compat_sms::CompatSms::new(b.clone()));
+                        Arc::new(crate::qmodem_sms::QmodemSms::new(
+                            Arc::new(crate::qmodem_sms::NativeService::new(b)),
+                            fallback,
+                        )) as Arc<dyn crate::sms_runtime::SmsDevice>
+                    })
+                })
         });
     let sms = sms_device.and_then(|device| {
         let persistent = crate::private_store::PrivateStore::open(Path::new("/etc/wlmb-server"))
@@ -884,10 +907,10 @@ fn run(standalone: bool) -> Result<()> {
     let cleanup = service.clone();
     *service.connection.lock().map_err(|_| failed())? = json!({
         "mode":if standalone {"independent"} else {"shared"},
-        "qmodemDetected":crate::connection_mode::qmodem_installed(Path::new("/")),
+        "qmodemDetected":qmodem,
         "selection":"startup",
         "busyPortPolicy":"never-steal",
-        "sharedService":if standalone {Value::Null} else {json!("at-daemon")}
+        "sharedService":if standalone {Value::Null} else if glinet.is_some() {json!("glinet-modem-at")} else {json!("at-daemon")}
     });
     let stop = Arc::new(AtomicBool::new(false));
     let term = signal_hook::flag::register(signal_hook::consts::SIGTERM, stop.clone())

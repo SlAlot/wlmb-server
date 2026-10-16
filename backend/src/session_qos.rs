@@ -48,7 +48,7 @@ pub fn attach(parser: &str, raw: &str, result: &mut Value) {
                 contracts.push(json!({"dlKbps":dl,"ulKbps":ul,"cid":id,"apn":p.get(3),"source":format!("AT^DSAMBR={id}"),"kind":"AMBR"}));
             }
         }
-    } else if parser == "quectel" {
+    } else if matches!(parser, "quectel" | "quectel-rg650") {
         for p in records(raw, "+QNWCFG:") {
             if p.len() != 6 || p[0] != "nr5g_ambr" || !apn(&p[1]) {
                 continue;

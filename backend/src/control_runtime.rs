@@ -74,6 +74,9 @@ impl ModemControls {
             return Err(PanelError::new("AT_WRITE_DISABLED", 403));
         }
         let row = self.row(key)?;
+        if row["controlReadOnly"] == true && !read {
+            return Err(PanelError::new("AT_WRITE_DISABLED", 403));
+        }
         let mut value = self
             .security
             .lock()
@@ -90,6 +93,9 @@ impl ModemControls {
     pub fn execute(&self, key: &str, command: &str, nonce: &str, owner: &str) -> Result<Value> {
         security::validate_at(command)?;
         let row = self.row(key)?;
+        if row["controlReadOnly"] == true && !security::read_only(command) {
+            return Err(PanelError::new("AT_WRITE_DISABLED", 403));
+        }
         self.security
             .lock()
             .map_err(|_| PanelError::new("CONTROL_BUSY", 409))?

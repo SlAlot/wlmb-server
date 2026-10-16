@@ -86,6 +86,9 @@ pub fn identify(model: &str) -> Value {
                     p["parser"] = json!("quectel-rg801");
                     p["state"] = json!("fixture-testing-partial");
                 }
+                if name == "rg650v-eu" {
+                    p["parser"] = json!("quectel-rg650");
+                }
                 if ["fm650-cn", "l610-eu", "nl678"].contains(&name) {
                     p["queries"] = json!(["AT+GTCCINFO?", "AT+GTCAINFO?"]);
                     p["parser"] = json!("fibocom-hex");
@@ -197,7 +200,8 @@ pub fn identify(model: &str) -> Value {
                         && platform(name) == "qualcomm"
                         && (name.starts_with("rm5")
                             || name.starts_with("rg5")
-                            || name == "mh8001-eu");
+                            || name == "mh8001-eu"
+                            || name == "rg650v-eu");
                     if let Some(queries) = p["queries"].as_array_mut() {
                         if use_ambr {
                             queries.push(json!("AT+QNWCFG=\"nr5g_ambr\""));

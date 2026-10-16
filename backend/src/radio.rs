@@ -619,7 +619,7 @@ fn bw(code: &str, rat: &str) -> Value {
         lookup(number(code), if rat == "NR" { NR_BW } else { LTE_BW })
     }
 }
-fn quectel(raw: &str, unisoc: bool) -> Value {
+fn quectel(raw: &str, unisoc: bool, compact_nr: bool) -> Value {
     let (mut serving, mut neighbors, mut carriers) = (vec![], vec![], vec![]);
     for mut p in records(raw, "+QENG:") {
         if p.first().is_some_and(|v| v.starts_with("neighbourcell")) {
@@ -677,6 +677,46 @@ fn quectel(raw: &str, unisoc: bool) -> Value {
         if numeric(&p[1], 0., if rat == "NR" { 3279165. } else { 262143. })
             .is_none_or(|v| v.fract() != 0.)
         {
+            continue;
+        }
+        // RG650 真机紧凑格式不含旧版载波状态字段；末尾未核实字段不猜作 SINR。
+        if compact_nr && rat == "NR" && p.len() == 8 {
+            let pci = n(&p[4], 0., 1007.);
+            let power = n(&p[5], -156., -28.);
+            let quality = n(&p[6], -44., 20.);
+            let width = bw(&p[2], "NR");
+            if pci.as_f64().is_none_or(|n| n.fract() != 0.)
+                || power.is_null()
+                || quality.is_null()
+                || width.is_null()
+            {
+                continue;
+            }
+            let primary: Vec<_> = serving
+                .iter()
+                .filter(|r| {
+                    r["rat"] == "NR" && r["pci"] == pci && as_num(&r["channel"]) == number(&p[1])
+                })
+                .collect();
+            let sinr = if primary.len() == 1 {
+                primary[0]["sinr"].clone()
+            } else {
+                Value::Null
+            };
+            let mut extras = json!({"dlBandwidthMHz":width,"rsrp":power,"rsrq":quality,"sinr":sinr,"active":null,
+                "protocolLayout":"rg650-compact-nr","metricSources":{"rsrp":"AT+QCAINFO","rsrq":"AT+QCAINFO"}});
+            if !sinr.is_null() {
+                extras["metricSources"]["sinr"] = json!("AT+QENG=\"servingcell\"");
+            }
+            carriers.push(cell(
+                "NR",
+                if p[0] == "PCC" { "pcc" } else { "scc" },
+                &p[1],
+                pci,
+                &band[2],
+                "AT+QCAINFO",
+                extras,
+            ));
             continue;
         }
         let reported_pci = if p.len() > 5 {
@@ -1228,9 +1268,10 @@ pub(crate) fn parse_snapshot(parser: &str, raw: &str) -> Result<Value> {
 fn dispatch(parser: &str, raw: &str) -> Result<Value> {
     let mut result = match parser {
         "tdtech" => tdtech(raw),
-        "quectel" => quectel(raw, false),
-        "quectel-rg801" => quectel(&vendor_csv::frames(raw).join("\n"), false),
-        "quectel-unisoc" => quectel(raw, true),
+        "quectel" => quectel(raw, false, false),
+        "quectel-rg650" => quectel(raw, false, true),
+        "quectel-rg801" => quectel(&vendor_csv::frames(raw).join("\n"), false, false),
+        "quectel-unisoc" => quectel(raw, true, false),
         "simcom" => simcom(raw),
         "fibocom-fm350" => fm350(raw, false, false),
         "fibocom-qualcomm" => fm350(raw, true, false),

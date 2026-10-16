@@ -138,7 +138,7 @@ impl NativeHost {
             .map(|mut old| wifi_features(fresh_features, &mut old))
             .unwrap_or((Value::Null, false));
         let mut complete = feature_fresh && status.is_object();
-        let mut out = json!({});
+        let mut out = json!({"__runtimeManaged":status.as_object().is_some_and(|m|m.values().any(|r|r["interfaces"].as_array().is_some_and(|a|!a.is_empty())))});
         for p in host_controls::profiles(wireless).into_iter().take(2) {
             let Some(radio) = p["radio"].as_str() else {
                 continue;

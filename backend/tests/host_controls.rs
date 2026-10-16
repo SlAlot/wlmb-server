@@ -23,6 +23,39 @@ fn snapshot() -> Value {
     "lanDevice":"br-lan","wanDevice":"usb0","nftAvailable":true,"flowOffload":false,"devices":[{"mac":"02:00:00:00:00:01","ip":"192.168.1.2"}]})
 }
 #[test]
+fn disabled_guest_profiles_do_not_hide_primary_aps_and_unknown_runtime_cannot_write() {
+    let mut s = snapshot();
+    for flag in [json!("1"), json!(true), json!(1), json!("true")] {
+        s["wireless"]["values"]["guest"] = json!({".type":"wifi-iface","device":"radio1","mode":"ap","network":"guest","disabled":flag});
+        assert_eq!(host_controls::profiles(&s["wireless"]).len(), 2);
+    }
+    s["wireless"]["values"]["guest"]["disabled"] = json!("0");
+    assert_eq!(host_controls::profiles(&s["wireless"]).len(), 1);
+    s["wireless"]["values"]["radio2"] =
+        json!({".type":"wifi-device","band":"6g","htmode":"EHT160"});
+    s["wireless"]["values"]["ap2"] = json!({".type":"wifi-iface","device":"radio2","mode":"ap","network":"lan","ssid":"six","encryption":"ccmp","disabled":"1","key":"NEVER_EXPOSE"});
+    let display = host_controls::display_profiles(&s["wireless"]);
+    assert_eq!(display.len(), 3);
+    assert!(
+        !serde_json::to_string(&display)
+            .unwrap()
+            .contains("NEVER_EXPOSE")
+    );
+    assert_eq!(
+        display.iter().find(|r| r["band"] == "6g").unwrap()["enabled"],
+        false
+    );
+    s["radioCapabilities"]["__runtimeManaged"] = json!(false);
+    assert!(host_controls::editable_profiles(&s).is_empty());
+    assert!(
+        host_controls::wifi_changes(
+            &s,
+            &json!({"kind":"wifi_edit","band":"2g","changes":{"ssid":"x"}})
+        )
+        .is_err()
+    );
+}
+#[test]
 fn wifi_config_typed_disabled_flags_are_consistent() {
     for flag in [json!(true), json!(1), json!("1"), json!("true")] {
         let mut value = snapshot();
