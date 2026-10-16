@@ -682,7 +682,7 @@
     },
     {
       "path": "tools/check-installer.cjs",
-      "sha256": "34df8b62854285626c791b745c2599be14652a0239ac8a4fcec9d06d81cedcc8"
+      "sha256": "098a20ffbb3fae62abbb7cbbb2acf15b9734022fdac82f035770d14350b661c6"
     },
     {
       "path": "tools/check-luci.cjs",

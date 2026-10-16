@@ -136,7 +136,7 @@ try {
   fixture('configured-abi-unknown', { archConfig: 'aarch64_cortex-a72\n', fail: true })
   fixture('configured-abi-ambiguous', { archConfig: 'aarch64_cortex-a53\nx86_64\n', fail: true })
   fixture('configured-abi-cross-family', { defaultAbi: 'x86_64', archConfig: 'aarch64_cortex-a53\n', fail: true })
-  fixture('configured-x86', { defaultAbi: 'x86_64', archConfig: 'x86_64\n' })
+  fixture('configured-x86', { abi: 'x86_64', defaultAbi: 'x86_64', archConfig: 'x86_64\n' })
   fixture('proxy-apk-online', { proxy: true, online: true })
   fixture('proxy-ipk-online', { proxy: true, online: true, manager: 'opkg' })
   fixture('proxy-check', { proxy: true, online: true, check: true })
