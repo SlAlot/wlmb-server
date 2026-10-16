@@ -2,6 +2,7 @@
 'use strict'
 const fs=require('node:fs'),os=require('node:os'),path=require('node:path'),cp=require('node:child_process'),crypto=require('node:crypto')
 const {build,VERSION}=require('./package-source.cjs')
+const {platform}=require('./platforms.cjs')
 const hash=b=>crypto.createHash('sha256').update(b).digest('hex')
 function main(){
   const [binary,arch,abi,compilerPackage]=process.argv.slice(2)
@@ -9,6 +10,7 @@ function main(){
   const compilerBytes=fs.readFileSync(compilerPackage)
   if(hash(compilerBytes)!=='2edccd3267ce540f8d2371a0f394e84b40d8348ecc28425309e6d07079ed1259')throw new Error('APK build compiler checksum mismatch')
   const {tar,ipk,manifest}=build(binary,arch,abi)
+  const {id}=platform(arch,abi)
   const stage=fs.mkdtempSync(path.join(os.tmpdir(),'wlmb-package-'))
   const tool=path.join(stage,'apk.static'),archive=path.join(stage,'payload.tar.gz'),output=path.join(stage,'wlmb-server.apk')
   fs.writeFileSync(tool,cp.execFileSync('tar',['-xOf',path.resolve(compilerPackage),'sbin/apk.static'],{maxBuffer:16000000}),{mode:0o755})
@@ -18,9 +20,9 @@ function main(){
   cp.execFileSync(tool,['verify','--allow-untrusted',output],{stdio:'inherit'})
   const payload=fs.readFileSync(output),dist=path.resolve(__dirname,'../dist')
   fs.mkdirSync(dist,{recursive:true});manifest.packageSha256=hash(payload);manifest.packageBytes=payload.length
-  fs.writeFileSync(path.join(dist,`wlmb-server-${VERSION}-${arch}.apk`),payload)
-  fs.writeFileSync(path.join(dist,`wlmb-server-${VERSION}-${arch}.ipk`),ipk)
-  fs.writeFileSync(path.join(dist,`manifest-${arch}.json`),JSON.stringify(manifest,null,2)+'\n')
+  fs.writeFileSync(path.join(dist,`wlmb-server-${VERSION}-${id}.apk`),payload)
+  fs.writeFileSync(path.join(dist,`wlmb-server-${VERSION}-${id}.ipk`),ipk)
+  fs.writeFileSync(path.join(dist,`manifest-${id}.json`),JSON.stringify(manifest,null,2)+'\n')
   console.log(JSON.stringify({version:VERSION,arch,abi:manifest.packageArchitecture,apkBytes:payload.length,ipkBytes:ipk.length,apkSha256:manifest.packageSha256}))
 }
 main()

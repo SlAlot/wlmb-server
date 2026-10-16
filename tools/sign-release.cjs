@@ -2,6 +2,7 @@
 // 仅在通过检查的标签发布任务中使用私钥；不执行制品中的程序，不上传临时密钥。
 const fs = require('node:fs'), os = require('node:os'), path = require('node:path'), cp = require('node:child_process'), crypto = require('node:crypto'), assert = require('node:assert/strict')
 const { VERSION } = require('./package-source.cjs')
+const { PLATFORMS } = require('./platforms.cjs')
 const hash = bytes => crypto.createHash('sha256').update(bytes).digest('hex')
 const COMPILER_SHA256 = '2edccd3267ce540f8d2371a0f394e84b40d8348ecc28425309e6d07079ed1259'
 function publicKey() {
@@ -36,11 +37,12 @@ function sign(directory, compilerPackage, key = publicKey()) {
       try { run(['verify', '--keys-dir', empty, file]) } catch { failed = true }
       assert(failed, '没有可信公钥时必须拒绝安装包')
     }
-    for (const arch of ['aarch64', 'x86_64']) {
-      const pkg = path.join(directory, 'wlmb-packages-' + arch + '-unknown-linux-musl')
+    for (const { id: arch, architecture, packageArchitecture, target } of PLATFORMS) {
+      const pkg = path.join(directory, 'wlmb-packages-' + target)
       const file = path.join(pkg, `wlmb-server-${VERSION}-${arch}.apk`), manifestFile = path.join(pkg, 'manifest-' + arch + '.json')
       const manifest = JSON.parse(fs.readFileSync(manifestFile, 'utf8')), before = fs.readFileSync(file)
-      assert.equal(manifest.version, VERSION);assert.equal(manifest.architecture, arch)
+      assert.equal(manifest.version, VERSION);assert.equal(manifest.architecture, architecture)
+      assert.equal(manifest.packageArchitecture, packageArchitecture, '签名包必须匹配指定固件 ABI')
       assert.equal(hash(before), manifest.packageSha256);assert.equal(before.length, manifest.packageBytes)
       run(['verify', '--allow-untrusted', '--keys-dir', empty, file])
       // 签名工具需要允许读取尚未签名的输入；生成后必须独立严格验签，不用于用户安装。

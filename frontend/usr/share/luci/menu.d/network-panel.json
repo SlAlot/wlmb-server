@@ -2,7 +2,7 @@
   "admin/services/wlmb-server": {
     "title": "网络面板",
     "order": 50,
-    "action": { "type": "view", "path": "wlmb-server/index-v1_0_8_release" },
+    "action": { "type": "view", "path": "wlmb-server/index-v1_0_9_release" },
     "depends": { "acl": ["luci-app-network-panel"] }
   }
 }

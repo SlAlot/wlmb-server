@@ -84,7 +84,7 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: '24'
-      - run: sudo apt-get update && sudo apt-get install -y musl-tools gcc-aarch64-linux-gnu
+      - run: sudo apt-get update && sudo apt-get install -y musl-tools gcc-aarch64-linux-gnu qemu-user
       - name: Locate toolchain linker
         run: |
           linker="$(find "$(rustc --print sysroot)/lib/rustlib" -type f -name rust-lld -print -quit)"
@@ -114,6 +114,12 @@ jobs:
             *) exit 1 ;;
           esac
           node tools/package-native.cjs backend/target/${{ matrix.target }}/release/wlmb-server "$arch" "$abi" "$RUNNER_TEMP/wlmb-apk-compiler.apk"
+          if [ "$arch" = aarch64 ]; then
+            qemu-aarch64 -cpu cortex-a53 backend/target/${{ matrix.target }}/release/wlmb-server --version
+            node tools/package-native.cjs backend/target/${{ matrix.target }}/release/wlmb-server "$arch" aarch64_generic "$RUNNER_TEMP/wlmb-apk-compiler.apk"
+          else
+            backend/target/${{ matrix.target }}/release/wlmb-server --version
+          fi
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: wlmb-packages-${{ matrix.target }}

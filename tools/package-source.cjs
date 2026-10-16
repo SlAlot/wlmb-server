@@ -2,7 +2,8 @@
 'use strict'
 const fs = require('node:fs'), path = require('node:path'), crypto = require('node:crypto'), zlib = require('node:zlib')
 const root = path.resolve(__dirname, '..'), hash = bytes => crypto.createHash('sha256').update(bytes).digest('hex')
-const VERSION = '1.0.8'
+const { platform } = require('./platforms.cjs')
+const VERSION = '1.0.9'
 const VIEW = 'index-v' + VERSION.replace(/[.-]/g,'_') + '_release'
 // 从语义版本生成固定时间戳，保证资源更新与归档可重复。
 const match = /^(\d+)\.(\d+)\.(\d+)(?:-r(\d+))?$/.exec(VERSION)
@@ -36,7 +37,7 @@ function build(binary,architecture,packageArchitecture=architecture) {
   const bytes = fs.readFileSync(binary), expected = {aarch64:183,x86_64:62}[architecture]
   if(!expected || bytes.toString('hex',0,4)!=='7f454c46' || bytes[4]!==2 || bytes[5]!==1 || bytes.readUInt16LE(18)!==expected) throw new Error('ELF architecture mismatch')
   if(!bytes.includes(Buffer.from(`WLMB_BUILD=${VERSION};pushplus-https=1`))) throw new Error('Stale or incomplete binary: release requires exact version and PushPlus HTTPS')
-  if(!/^[a-zA-Z0-9_-]{1,64}$/.test(packageArchitecture) || (architecture==='aarch64'&&!/^aarch64(?:_|$)/.test(packageArchitecture)) || (architecture==='x86_64'&&packageArchitecture!=='x86_64')) throw new Error('Package ABI tag mismatch')
+  platform(architecture, packageArchitecture)
   const source = [{name:'usr/sbin/wlmb-server',bytes,mode:0o755},{name:'usr/libexec/rpcd/network-panel',link:'/usr/sbin/wlmb-server',mode:0o755}]
   function tree(dir,prefix) {
     for(const entry of fs.readdirSync(dir,{withFileTypes:true})) {

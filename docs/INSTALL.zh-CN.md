@@ -16,7 +16,7 @@ wget -O /tmp/wlmb-install.sh https://github.com/SlAlot/wlmb-server/releases/late
 
 安装完成后显示**LuCI → 服务 → 网络面板**，以及小程序连接地址。安装默认启动服务及自启；已有插件配置保留，不修改拨号、WiFi、防火墙配置，不重启设备。后续同钥签名APK可直接通过LuCI上传升级。
 
-当前支持ABI `aarch64_cortex-a53`、`x86_64`。不是所有ARM64固件都使用同一ABI，不匹配会停止，不强制安装。
+当前支持ABI `aarch64_cortex-a53`、`aarch64_generic`、`x86_64`。armsr/armv8使用aarch64_generic，手动下载时请选择文件名含aarch64_generic的IPK或APK；现有aarch64后缀仍对应Cortex-A53包。不是所有ARM64固件都使用同一ABI，不匹配或匹配歧义会停止，不强制安装。
 
 1.0.5修正APK架构检测：优先读取/etc/apk/arch中的固件配置；apk --print-arch可能只返回aarch64等默认CPU架构，不能据此误判或强装。多架构配置需要唯一匹配，跨CPU家族或未覆盖配置拒绝。
 

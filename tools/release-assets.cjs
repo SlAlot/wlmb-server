@@ -1,22 +1,24 @@
 'use strict'
-// 发布前核对两种架构的二进制、包摘要与源文件清单，只整理插件制品。
+// 发布前核对两种处理器架构、三种包 ABI 的摘要与源文件清单，只整理插件制品。
 const fs = require('node:fs'), path = require('node:path'), cp = require('node:child_process'), crypto = require('node:crypto'), assert = require('node:assert/strict')
 const { build, VERSION } = require('./package-source.cjs')
 const { publicKey } = require('./sign-release.cjs')
 const { render } = require('./installer.cjs')
+const { PLATFORMS } = require('./platforms.cjs')
 const hash = bytes => crypto.createHash('sha256').update(bytes).digest('hex')
 function prepare(directory, output, commit, tag) {
   assert.equal(tag, 'v' + VERSION, '标签必须和前后端版本一致')
   assert(/^[a-f0-9]{40}$/.test(commit), '制品必须绑定完整提交')
   const files = new Map(), key = publicKey()
-  for (const arch of ['aarch64', 'x86_64']) {
-    const target = arch + '-unknown-linux-musl', pkg = path.join(directory, 'wlmb-packages-' + target)
+  for (const { id: arch, architecture, packageArchitecture, target } of PLATFORMS) {
+    const pkg = path.join(directory, 'wlmb-packages-' + target)
     const manifest = JSON.parse(fs.readFileSync(path.join(pkg, 'manifest-' + arch + '.json'), 'utf8'))
     const binary = path.join(directory, 'wlmb-server-' + target, 'wlmb-server')
-    assert.equal(manifest.version, VERSION);assert.equal(manifest.architecture, arch);assert.equal(manifest.backend, 'rust')
+    assert.equal(manifest.version, VERSION);assert.equal(manifest.architecture, architecture);assert.equal(manifest.backend, 'rust')
+    assert.equal(manifest.packageArchitecture, packageArchitecture, '发布包必须匹配指定固件 ABI')
     assert.equal(manifest.binarySha256, hash(fs.readFileSync(binary)))
     assert.deepEqual(manifest.packageSignature, { format: 'apk-v3', publicKeyFile: key.fileName, publicKeySha256: key.sha256 }, '正式APK必须经过固定公钥签名验证')
-    const expected = build(binary, arch, manifest.packageArchitecture)
+    const expected = build(binary, architecture, packageArchitecture)
     assert.deepEqual(manifest.files, expected.manifest.files, '安装文件必须对应本次源码')
     for (const extension of ['apk', 'ipk']) {
       const name = `wlmb-server-${VERSION}-${arch}.${extension}`, bytes = fs.readFileSync(path.join(pkg, name))
@@ -41,7 +43,7 @@ function prepare(directory, output, commit, tag) {
   files.set('install-gh-proxy.sh', render(files, 'gh-proxy'))
   files.set('release.json', Buffer.from(JSON.stringify({
     schema: 'WLMB-RELEASE/1', version: VERSION, tag, commit, license: 'LicenseRef-WLMB-NonCommercial',
-    platforms: ['aarch64_cortex-a53', 'x86_64'],
+    platforms: PLATFORMS.map(row => row.packageArchitecture),
     apkSigning: { publicKeyFile: key.fileName, publicKeySha256: key.sha256 },
     protocolComplete: compatibility.summary.protocolComplete, hardwareComplete: compatibility.summary.hardwareComplete,
     assets: [...files].map(([name, bytes]) => ({ name, bytes: bytes.length, sha256: hash(bytes) }))

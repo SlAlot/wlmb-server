@@ -2,8 +2,9 @@
 // 安装器使用临时目录及包管理器替身回归；不安装真实包，不写宿主系统公钥或网络配置。
 const fs = require('node:fs'), path = require('node:path'), os = require('node:os'), cp = require('node:child_process'), assert = require('node:assert/strict')
 const { VERSION } = require('./package-source.cjs'), { render } = require('./installer.cjs'), { publicKey } = require('./sign-release.cjs')
+const { PLATFORMS } = require('./platforms.cjs')
 const files = new Map()
-for (const arch of ['aarch64', 'x86_64']) for (const ext of ['apk', 'ipk']) files.set(`wlmb-server-${VERSION}-${arch}.${ext}`, Buffer.from(arch + ':' + ext + ':仅安装器流程替身'))
+for (const { id: arch } of PLATFORMS) for (const ext of ['apk', 'ipk']) files.set(`wlmb-server-${VERSION}-${arch}.${ext}`, Buffer.from(arch + ':' + ext + ':仅安装器流程替身'))
 const source = render(files).toString(), key = publicKey()
 const proxySource = render(files, 'gh-proxy').toString()
 assert(source.includes("DOWNLOAD_PREFIX=''"))
@@ -36,10 +37,12 @@ function fixture(name, options = {}) {
   if (options.conflictingKey) write(path.join(trust, key.fileName), '另一个公钥')
   if (options.existingKey) write(path.join(trust, key.fileName), key.publicKeyPem)
   if (options.archConfig !== undefined) write(path.join(dir, 'apk-arch'), options.archConfig)
-  if (options.badPackage) fs.appendFileSync(path.join(bundle, `wlmb-server-${VERSION}-aarch64.apk`), '损坏')
+  const selected = PLATFORMS.find(row => row.packageArchitecture === config.abi)
+  const selectedName = selected && `wlmb-server-${VERSION}-${selected.id}.${config.manager === 'opkg' ? 'ipk' : 'apk'}`
+  if (options.badPackage) fs.appendFileSync(path.join(bundle, selectedName), '损坏')
   if (options.badKey) fs.appendFileSync(path.join(bundle, key.fileName), '损坏')
   if (options.linkedPackage) {
-    const file = path.join(bundle, `wlmb-server-${VERSION}-aarch64.apk`)
+    const file = path.join(bundle, selectedName)
     fs.renameSync(file, file + '.original');fs.symlinkSync(file + '.original', file)
   }
   const program = `const fs=require('node:fs'),path=require('node:path');const c=${JSON.stringify(config)},a=process.argv.slice(2),name=path.basename(process.argv[1]);
@@ -51,7 +54,7 @@ if(name==='uci'){console.log('192.168.66.1');process.exit(0)}
 if(name==='ubus'){console.log(JSON.stringify({ok:false,error:{code:'SESSION_EXPIRED'}}));process.exit(0)}
 if(name==='curl'){if(c.downloadFails)process.exit(22);const out=a[a.indexOf('--output')+1],file=path.basename(a[a.length-1]);fs.copyFileSync(path.join(c.bundle,file),out);process.exit(0)}
 if(name==='apk'&&a.includes('--print-arch')){if(c.manager!=='apk')process.exit(1);console.log(c.defaultAbi||c.abi);process.exit(0)}
-if(name==='opkg'&&a.includes('print-architecture')){if(c.manager!=='opkg')process.exit(1);console.log('arch all 1\\narch '+c.abi+' 10');process.exit(0)}
+if(name==='opkg'&&a.includes('print-architecture')){if(c.manager!=='opkg')process.exit(1);console.log(c.opkgArchitectures||'arch all 1\\narch '+c.abi+' 10');process.exit(0)}
 if(a.includes('verify')){if(c.badSignature)process.exit(1);console.log('fixture signature: OK');process.exit(0)}
 if(a.includes('status')){if(c.missingDependency)process.exit(1);console.log('Status: install ok installed');process.exit(0)}
 if(a.includes('update'))process.exit(c.preflightFails?1:0);
@@ -82,7 +85,12 @@ process.exit(1);`
   if (options.fail) {
     assert.notEqual(result.status, 0, name + ': 应拒绝\n' + output)
     assert(!output.includes('安装完成：'), name + ': 失败不能显示安装完成')
-  } else assert.equal(result.status, 0, name + '\n' + output)
+  } else {
+    assert.equal(result.status, 0, name + '\n' + output)
+    if (!options.cancel) assert(output.includes(config.abi), name + ': 必须识别固件包 ABI')
+  }
+  for (const row of installs) assert(row.a.some(value => path.basename(value) === selectedName), name + ': 不能选择其他 ABI 的安装包')
+  if (!options.fail && options.online && !options.cancel) assert(actions.some(row => row.name === 'curl' && path.basename(row.a.at(-1)) === selectedName), name + ': 必须下载匹配 ABI 的安装包')
   const expectedInstalls = options.fail ? (options.installFails || options.notReady || options.staleDaemon ? 1 : 0) : options.check || options.cancel ? 0 : 1
   assert.equal(installs.length, expectedInstalls, name)
   const keyPath = path.join(trust, key.fileName)
@@ -103,7 +111,7 @@ try {
   fixture('ipk-arm', { manager: 'opkg' });fixture('ipk-x86', { manager: 'opkg', abi: 'x86_64' })
   fixture('check', { check: true });fixture('cancel', { cancel: true })
   fixture('confirmation-required', { noConfirm: true, fail: true })
-  fixture('unsupported-abi', { abi: 'aarch64_generic', fail: true })
+  fixture('unsupported-abi', { abi: 'aarch64_cortex-a72', fail: true })
   fixture('bad-package', { badPackage: true, fail: true });fixture('bad-key', { badKey: true, fail: true })
   fixture('bad-signature', { badSignature: true, fail: true });fixture('key-conflict', { conflictingKey: true, fail: true })
   fixture('preflight', { preflightFails: true, fail: true })
@@ -125,7 +133,7 @@ try {
   fixture('openwrt-abi-check', { defaultAbi: 'aarch64', archConfig: 'aarch64_cortex-a53\n', check: true })
   fixture('openwrt-abi-list', { defaultAbi: 'aarch64', archConfig: 'aarch64\naarch64_cortex-a53\n' })
   fixture('generic-abi-not-assumed', { defaultAbi: 'aarch64', archConfig: 'aarch64\n', fail: true })
-  fixture('configured-abi-unknown', { archConfig: 'aarch64_generic\n', fail: true })
+  fixture('configured-abi-unknown', { archConfig: 'aarch64_cortex-a72\n', fail: true })
   fixture('configured-abi-ambiguous', { archConfig: 'aarch64_cortex-a53\nx86_64\n', fail: true })
   fixture('configured-abi-cross-family', { defaultAbi: 'x86_64', archConfig: 'aarch64_cortex-a53\n', fail: true })
   fixture('configured-x86', { defaultAbi: 'x86_64', archConfig: 'x86_64\n' })
@@ -137,5 +145,19 @@ try {
   fixture('proxy-bad-key', { proxy: true, online: true, badKey: true, fail: true })
   fixture('proxy-bad-signature', { proxy: true, online: true, badSignature: true, fail: true })
   fixture('proxy-download-failure', { proxy: true, online: true, downloadFails: true, fail: true })
-  console.log('安装器' + cases + '组POSIX流程回归通过：双包管理器／双架构、在线／离线、确认、检查、摘要、验签、空间、依赖、公钥冲突、失败回滚、版本和服务检查；替身不视为实机安装验收。')
+  for (const manager of ['apk', 'opkg']) {
+    fixture('generic-' + manager + '-offline', { manager, abi: 'aarch64_generic' })
+    fixture('generic-' + manager + '-online', { manager, abi: 'aarch64_generic', online: true })
+    fixture('generic-' + manager + '-check', { manager, abi: 'aarch64_generic', online: true, check: true })
+    fixture('generic-' + manager + '-proxy', { manager, abi: 'aarch64_generic', online: true, proxy: true })
+    fixture('generic-' + manager + '-corrupt', { manager, abi: 'aarch64_generic', badPackage: true, fail: true })
+  }
+  fixture('generic-apk-configured', { abi: 'aarch64_generic', defaultAbi: 'aarch64', archConfig: 'aarch64_generic\n' })
+  fixture('generic-apk-configured-check', { abi: 'aarch64_generic', defaultAbi: 'aarch64', archConfig: 'aarch64\naarch64_generic\n', check: true })
+  fixture('generic-signature', { abi: 'aarch64_generic', badSignature: true, fail: true })
+  fixture('generic-apk-cross-family', { defaultAbi: 'x86_64', archConfig: 'aarch64_generic\n', fail: true })
+  fixture('generic-apk-ambiguous', { defaultAbi: 'aarch64', archConfig: 'aarch64_generic\naarch64_cortex-a53\n', fail: true })
+  fixture('generic-ipk-ambiguous', { manager: 'opkg', opkgArchitectures: 'arch all 1\narch aarch64_generic 10\narch aarch64_cortex-a53 20', fail: true })
+  fixture('generic-ipk-duplicate', { manager: 'opkg', abi: 'aarch64_generic', opkgArchitectures: 'arch all 1\narch aarch64_generic 10\narch aarch64_generic 10' })
+  console.log('安装器' + cases + '组POSIX流程回归通过：双包管理器／三种ABI、在线／离线、确认、检查、摘要、验签、空间、依赖、公钥冲突、失败回滚、版本和服务检查；替身不视为实机安装验收。')
 } finally { fs.rmSync(suite, { recursive: true, force: true }) }

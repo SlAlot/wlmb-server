@@ -5,7 +5,7 @@
   "license": "LicenseRef-WLMB-NonCommercial",
   "commercialClientSourceIncluded": false,
   "protocol": "NETWORK-PANEL-OPENWRT/1",
-  "pluginVersion": "1.0.8",
+  "pluginVersion": "1.0.9",
   "backendLanguage": "Rust",
   "files": [
     {
@@ -14,7 +14,7 @@
     },
     {
       "path": ".github/workflows/check.yml",
-      "sha256": "bc693a329cec464327fe1e0f79bbe201c6d6dc52b7afe0024ab511e9137ec78c"
+      "sha256": "54410cdb08500a66a302185284d44d1808310285c2da093546d70aadbf7f1f00"
     },
     {
       "path": ".github/workflows/qmodem-audit.yml",
@@ -30,11 +30,11 @@
     },
     {
       "path": "backend/Cargo.lock",
-      "sha256": "8ff3868890d9a0db254a037d24736533a7e6f885cf16024181b44ec2508aca1b"
+      "sha256": "069634c646706dfe36cf8eb9d7de17c5faed155aa1f9d8a90c72bc5e593e74c7"
     },
     {
       "path": "backend/Cargo.toml",
-      "sha256": "6e267cb793b53c15f8a23d53e792647166a14c681317e0b56c9e543b82cd221e"
+      "sha256": "87c65619498f70ebf11dc61406a5e2e82c5391838d1e1f4eb2131c544516a8ff"
     },
     {
       "path": "backend/src/actions.rs",
@@ -110,7 +110,7 @@
     },
     {
       "path": "backend/src/lib.rs",
-      "sha256": "0127d5e8c94d31c2d90ffe1279a276a4b29787a2789e55560b4918f44561dd26"
+      "sha256": "7677baae824a9cbad9af4141bc5b4e0a81d5b561a6501d378803e9f72dd1ed94"
     },
     {
       "path": "backend/src/lock_protocol.rs",
@@ -466,11 +466,11 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "5b3cfe4c57eed2f5248473122375d7020e93782271f2cb5f7333fc4990b85dad"
+      "sha256": "eeb8b049f3d42c1cf509a73ddb1ff3253bbaa8a6fd06fa63787e1e38bb3721a0"
     },
     {
       "path": "docs/api-contract.json",
-      "sha256": "016c7daf3ccf4910f5be82089917c4b924da2ad2d940d938e130288549c6f8cc"
+      "sha256": "1d14ab1b79c88bcda2f6781849d655e471a52dc595323cd24be8ca0116df7fa8"
     },
     {
       "path": "docs/API.en.md",
@@ -482,7 +482,7 @@
     },
     {
       "path": "docs/APK-INSTALL.zh-CN.md",
-      "sha256": "9ae15880039924ab1645ce988218d48bf505c9916192be613ece6f374b67ba7d"
+      "sha256": "6db9ef9ea17d3737a8654025743c868f77ab96cfb77a4678109c3565b568e594"
     },
     {
       "path": "docs/apk-signing-key.json",
@@ -490,7 +490,7 @@
     },
     {
       "path": "docs/BUILD.md",
-      "sha256": "a354189d350d5d2c4b3412f98038d3e595ed82d6f09e04e58843980940bea411"
+      "sha256": "42bf0441917eed3e1ce535479db8b03525e18086505fb29afce3215b515cbdfe"
     },
     {
       "path": "docs/FEATURES.md",
@@ -506,7 +506,7 @@
     },
     {
       "path": "docs/INSTALL.zh-CN.md",
-      "sha256": "4035ea2fe9cc003bfd04bb49a5cc86743dee91c3a9d6e53fbe4d24574b3a8186"
+      "sha256": "0c46f751ae58885a9f621dc51acb6defbf8c4fe135100cca866c0f5a0487aadf"
     },
     {
       "path": "docs/LAN-RATES.md",
@@ -561,6 +561,10 @@
       "sha256": "65b8ef8741a09aac0f51f6892134469010cd34caaa14972cb898512c599cde67"
     },
     {
+      "path": "docs/RELEASE-1.0.9.md",
+      "sha256": "6d8dd70fa0b0c75c81f568e99ff274adbafb51a3fd1a9205129029c83f00f384"
+    },
+    {
       "path": "docs/RELEASE-AUDIT.md",
       "sha256": "819a5fec88e5944ebec07708c737b536a863d8719c0b835941a587ccf4d496b5"
     },
@@ -590,15 +594,15 @@
     },
     {
       "path": "frontend/usr/share/luci/menu.d/network-panel.json",
-      "sha256": "6b8afd6e40563b1b6a3d53d99fb280c3d51a8a1a3ecdc4acd65c18cf7af6dccb"
+      "sha256": "43c1f8ac607c79a433a612099c7bcda3efe7f8567ad45c981b34841d289953a5"
     },
     {
       "path": "frontend/usr/share/rpcd/acl.d/network-panel.json",
       "sha256": "079da3f7d880afb45f5b3954db5a7f934fd163a357637a903ba71043e9f6e4b4"
     },
     {
-      "path": "frontend/www/luci-static/resources/view/wlmb-server/index-v1_0_8_release.js",
-      "sha256": "8f69b2c4abdfaf7ad17ac48f6024af8e15f6c7f5c1783872785096949b4674cc"
+      "path": "frontend/www/luci-static/resources/view/wlmb-server/index-v1_0_9_release.js",
+      "sha256": "856963281c0d2c1439c5e095e6e3d90e36e4fc75d4e7d96fcace8b5c1c0c52ea"
     },
     {
       "path": "frontend/www/luci-static/resources/wlmb-server/guide.css",
@@ -606,7 +610,7 @@
     },
     {
       "path": "frontend/www/luci-static/resources/wlmb-server/guide.html",
-      "sha256": "86ed4315bae626b4ea24ead1089eebd604551afa653ec8c8135bfe7a38e0af84"
+      "sha256": "0b69df060d82f25f9d950fb38c00b74fab48711bb8b2f2798b1b55d65d0e3c17"
     },
     {
       "path": "frontend/www/luci-static/resources/wlmb-server/guide.js",
@@ -618,19 +622,19 @@
     },
     {
       "path": "frontend/www/luci-static/resources/wlmb-server/ui-notices.html",
-      "sha256": "84a9b04044d5d9f9ab834898234fad241c50885edb42f0b5ac4539487ab6647d"
+      "sha256": "b6275816993ce7602ac4029a2e84ecb848abe87c8f0db8549d6f3cd66fe87a57"
     },
     {
-      "path": "frontend/www/luci-static/resources/wlmb-server/webui-data-1.0.8.js",
-      "sha256": "ca4f230673c99de0dfd35b83e0cb62305292d40346166eeb2232b9085db50e5a"
+      "path": "frontend/www/luci-static/resources/wlmb-server/webui-data-1.0.9.js",
+      "sha256": "c346b8ea6617f836d4d030a728a06d225ffe344a6a3c85f859201bd5538e4b4a"
     },
     {
-      "path": "frontend/www/luci-static/resources/wlmb-server/webui-icons-1.0.8.js",
-      "sha256": "f9253b3d585c1f1c3171d94095cb3d69daff1d7a9adca840a420356e7d3827f8"
+      "path": "frontend/www/luci-static/resources/wlmb-server/webui-icons-1.0.9.js",
+      "sha256": "7dd7dc0907d29d3bff64fbd1f98a381df8f51cf17fe09919fb4326c206ee88b4"
     },
     {
-      "path": "frontend/www/luci-static/resources/wlmb-server/webui-shell-1.0.8.js",
-      "sha256": "b4717087cb9f762b75264b7b38fb6be3902d96c1b8ec9a7cb03de19ad70c4008"
+      "path": "frontend/www/luci-static/resources/wlmb-server/webui-shell-1.0.9.js",
+      "sha256": "90c4e8648756225c80cc308b32f6bb61a209ce21f8ee1330dc8a8430d1f3e88f"
     },
     {
       "path": "LICENSE",
@@ -650,11 +654,11 @@
     },
     {
       "path": "README.en.md",
-      "sha256": "60797233050ecceaeb261a427449a0e31c9d80488c35baf8ffb6ba8f5c4b323f"
+      "sha256": "c7b9ea6948910693ce7c320ba6ba00f2f2b90a99b30811cd01b7afca70f747c7"
     },
     {
       "path": "README.md",
-      "sha256": "7e43ba3aca352726c61e67400e5ecaad9169cb972d3663933b285eb6f2c1af82"
+      "sha256": "66d1c14cd589d020a0112b2ae71e6543220b92301a45594a1bd42ebb4cac7309"
     },
     {
       "path": "tools/audit-release-boundary.cjs",
@@ -662,7 +666,7 @@
     },
     {
       "path": "tools/check-apk-signing.cjs",
-      "sha256": "1437f8ac6c08463e4025abc8077e0217e4eec062cc1b0a98783d6195fdb36890"
+      "sha256": "ec951253c768605026ba9b2317c2a674771bc178e8ae7d80ef8eddb9168b84d8"
     },
     {
       "path": "tools/check-cell-draft.cjs",
@@ -678,15 +682,15 @@
     },
     {
       "path": "tools/check-installer.cjs",
-      "sha256": "3052d8f7cd4bd2b9bdbcec123ca82d573f45993c21df6921a43b67e09a84490e"
+      "sha256": "34df8b62854285626c791b745c2599be14652a0239ac8a4fcec9d06d81cedcc8"
     },
     {
       "path": "tools/check-luci.cjs",
-      "sha256": "395b9bc26a7099de67008c62d9fba8a8824c6843e7ac64c9bfc40a1326be015d"
+      "sha256": "1e09053d4f7568a6cab45b487d134f634cdf3066ec8aa431aca76d5daefccd79"
     },
     {
       "path": "tools/check-package.cjs",
-      "sha256": "17650515c800a6daccbfe15cca8454db85416514ea260928c3ebc6e9ca35bba8"
+      "sha256": "e6a8b97147c926e6781e9ecf00878130cd887db1b60521b3c0ef6dc9a86b5ba8"
     },
     {
       "path": "tools/check-project.cjs",
@@ -698,7 +702,7 @@
     },
     {
       "path": "tools/check-release-assets.cjs",
-      "sha256": "e555c603d631ed1fa313fc07edd9c529d01d498ecd61f3953608bb4d2109b5c2"
+      "sha256": "312bcd5187724bf0a183ecfd103344903d0684bc7d3b5a82c8fdac6b3fa41000"
     },
     {
       "path": "tools/check-release-readiness.cjs",
@@ -730,23 +734,27 @@
     },
     {
       "path": "tools/install-template.sh",
-      "sha256": "910c4cc1b231d5c2cafaf8a32625abe5a2a5518670adb6ae15acd087ea9bc234"
+      "sha256": "f4fd2b2c0ba554ce9a428c8428e5c112524a18b6f60095ef3b2fa405c0ed6823"
     },
     {
       "path": "tools/installer.cjs",
-      "sha256": "1d23b90822f5963fb3f2a9e0695e84a4ed71c6b654f9cf1ca3119380ab5a72c6"
+      "sha256": "73f677e62f9b335af8b2bc92e7e4a6d32b0e5a8738730be59053ff9bbc78375b"
     },
     {
       "path": "tools/package-native.cjs",
-      "sha256": "b72ac8852feab8d0aae7068b159e5873bfadf6f8fd9b6bb688824ff5ffa2396e"
+      "sha256": "9d47e59a25bf19f564e4020a73ebc1c9a125cf882924bf463c6ea1f5b0a895c9"
     },
     {
       "path": "tools/package-source.cjs",
-      "sha256": "3b3d562414b12a1aa77656280c67159f98bb118b66e8750427dcd53e7718a329"
+      "sha256": "243fe7bfbbb80232f2524055d847550c2e6096b938255abc8a6890e5e6c0e4a4"
+    },
+    {
+      "path": "tools/platforms.cjs",
+      "sha256": "5376656ca533e7586697076ce3267603e10b309872bc35bfc463af0a40f9bfe4"
     },
     {
       "path": "tools/publish-release.cjs",
-      "sha256": "f2eee481e643c7412bd931b495d4072a7e582e47c5cefe9d2f23d12713a09ce9"
+      "sha256": "8409ac86f8cbffc08f41352f06a443bde45f29d1d4da7f55087373161cf40e29"
     },
     {
       "path": "tools/qmodem-audit.cjs",
@@ -754,7 +762,7 @@
     },
     {
       "path": "tools/release-assets.cjs",
-      "sha256": "094b27c6bd2a4c3b7fff40000999c7005943f68c4c792b6935a9176ef3093a73"
+      "sha256": "ea278c8fc0a86804ba6d7c41fa8cf83aa7f581ce16d6a534168c0f82414689db"
     },
     {
       "path": "tools/release-readiness.cjs",
@@ -762,7 +770,7 @@
     },
     {
       "path": "tools/sign-release.cjs",
-      "sha256": "c3705fc70968c64c87aaa138ad9d8818f7c8513b6d8e0dd09786d27d301512ec"
+      "sha256": "a9d1d4b9cae9519238cafd48ff95cfb59abd281a8cb57ab4d9f0b11c89f3a1c5"
     },
     {
       "path": "tools/ui-tests/package-lock.json",

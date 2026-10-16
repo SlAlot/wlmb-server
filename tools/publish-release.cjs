@@ -12,7 +12,7 @@ function publish(directory, tag, repository, execute = cp.execFileSync) {
   const head = execute('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim()
   assert.equal(release.commit, head)
   const names = fs.readdirSync(directory).sort(), digests = new Map()
-  assert.equal(names.length, 14, '只上传完整插件发布清单、公钥及两个版本固定安装器')
+  assert.equal(names.length, 17, '只上传完整插件发布清单、公钥及两个版本固定安装器')
   const sums = fs.readFileSync(path.join(directory, 'SHA256SUMS'), 'utf8').trim().split('\n')
   for (const line of sums) {
     const match = /^([a-f0-9]{64})  ([a-zA-Z0-9._-]+)$/.exec(line)

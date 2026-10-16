@@ -2,7 +2,7 @@
 
 [正式版下载](https://github.com/SlAlot/wlmb-server/releases/latest)提供ARM64／x86_64的IPK、APK；两个架构均不是all包。附SHA256SUMS、release.json、安装文件清单和逐型号兼容报告。版本、完整提交和摘要以本次Release资产为准。
 
-IPK用于opkg，APK用于apk；ARM64包ABI为aarch64_cortex-a53，x86_64包ABI为x86_64。其他ABI不可强装。1.0.3起正式APK签名，首次安装先核对并导入公钥，见[安装说明](APK-INSTALL.zh-CN.md)。摘要不能替代可信来源。
+IPK用于opkg，APK用于apk；包ABI包括aarch64_cortex-a53、aarch64_generic（armsr/armv8）和x86_64。两种ARM64包使用同一通用aarch64-unknown-linux-musl程序，包元数据分别匹配固件ABI，不使用Cortex-A53专用编译指令。其他ABI不可强装。APK首次安装先核对并导入公钥，见[安装说明](APK-INSTALL.zh-CN.md)。摘要不能替代可信来源。
 
 ## GitHub Actions
 
@@ -17,7 +17,7 @@ Actions可手动运行：运行引用必须选择现有v标签，填写同一标
 
 普通作业只有contents:read，发布步骤才有contents:write；Action固定完整提交。工具核对APK编译器摘要，项目许可及Rust依赖声明随包提供。
 
-正式Release共14项资产，包含公钥、INSTALL-APK.md、官方install.sh及可选的install-gh-proxy.sh。安装器由已验证的四种安装包生成，内置本版本摘要及固定公钥指纹；安装器本身的摘要也进入SHA256SUMS，首次下载脚本仍需信任官方发布渠道。安装器回归使用临时目录与包管理器替身，不等于硬件安装验收。源码、安装包均不包含私钥；签名临时文件在步骤结束时删除。私钥由维护者在仓库外保管，环境只允许v*标签部署，密钥只能进入该环境的Secret，不能进入变量、日志或构建附件。更换公钥必须同步元数据、指纹、安装说明及签名测试，公告迁移流程；不自动替换用户信任。PR／main的Actions调试包仍未签名，不能冒充正式发布包。
+正式Release共17项资产：六个安装包、三份安装清单、两份兼容报告、公钥、INSTALL-APK.md、两个安装器、release.json及SHA256SUMS。安装器由已验证的六个安装包生成，内置本版本摘要及固定公钥指纹；安装器本身的摘要也进入SHA256SUMS，首次下载脚本仍需信任官方发布渠道。安装器回归使用临时目录与包管理器替身，不等于硬件安装验收。ARM64程序另经QEMU Cortex-A53执行版本查询，只验证指令基线，不冒充完整固件或模组实测。源码、安装包均不包含私钥；签名临时文件在步骤结束时删除。私钥由维护者在仓库外保管，环境只允许v*标签部署，密钥只能进入该环境的Secret，不能进入变量、日志或构建附件。更换公钥必须同步元数据、指纹、安装说明及签名测试，公告迁移流程；不自动替换用户信任。PR／main的Actions调试包仍未签名，不能冒充正式发布包。
 
 ## 本地开发
 

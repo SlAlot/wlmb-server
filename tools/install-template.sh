@@ -50,28 +50,31 @@ if command -v apk >/dev/null 2>&1; then
     # 默认CPU架构不等于固件包ABI；和APK自身一样优先读取持久架构配置。
     if [ -f "/etc/apk/arch" ]; then
       configured=$(awk 'NF==1 {print $1}' "/etc/apk/arch") || fail '读取APK架构配置失败'
-      ABI=$(printf '%s\n' "$configured" | awk '($1=="aarch64_cortex-a53" || $1=="x86_64") && !seen[$1]++ {print $1}')
+      ABI=$(printf '%s\n' "$configured" | awk '($1=="aarch64_cortex-a53" || $1=="aarch64_generic" || $1=="x86_64") && !seen[$1]++ {print $1}')
       [ -n "$ABI" ] || ABI=$configured
     fi
     case "$DEFAULT_ARCH:$ABI" in
-      aarch64:aarch64_cortex-a53|aarch64_cortex-a53:aarch64_cortex-a53|x86_64:x86_64) ;;
+      aarch64:aarch64_cortex-a53|aarch64_cortex-a53:aarch64_cortex-a53|aarch64:aarch64_generic|aarch64_generic:aarch64_generic|x86_64:x86_64) ;;
       *) fail "APK默认架构与可用包ABI尚未覆盖或不一致：$DEFAULT_ARCH / $ABI" ;;
     esac
   fi
 fi
 if [ -z "$MANAGER" ] && command -v opkg >/dev/null 2>&1; then
-  ABI=$(opkg print-architecture | awk '$1=="arch" && ($2=="aarch64_cortex-a53" || $2=="x86_64") {print $2}')
+  ABI=$(opkg print-architecture | awk '$1=="arch" && ($2=="aarch64_cortex-a53" || $2=="aarch64_generic" || $2=="x86_64") && !seen[$2]++ {print $2}')
   MANAGER=opkg
 fi
 case "$ABI" in
   aarch64_cortex-a53) ARCH=aarch64 ;;
+  aarch64_generic) ARCH=aarch64_generic ;;
   x86_64) ARCH=x86_64 ;;
   *) fail "尚未提供此设备ABI的安装包：${ABI:-未识别}；不强制安装" ;;
 esac
 case "$MANAGER:$ARCH" in
   apk:aarch64) EXT=apk; PKG_SHA='@APK_AARCH64_SHA256@'; PKG_BYTES=@APK_AARCH64_BYTES@ ;;
+  apk:aarch64_generic) EXT=apk; PKG_SHA='@APK_AARCH64_GENERIC_SHA256@'; PKG_BYTES=@APK_AARCH64_GENERIC_BYTES@ ;;
   apk:x86_64) EXT=apk; PKG_SHA='@APK_X86_64_SHA256@'; PKG_BYTES=@APK_X86_64_BYTES@ ;;
   opkg:aarch64) EXT=ipk; PKG_SHA='@IPK_AARCH64_SHA256@'; PKG_BYTES=@IPK_AARCH64_BYTES@ ;;
+  opkg:aarch64_generic) EXT=ipk; PKG_SHA='@IPK_AARCH64_GENERIC_SHA256@'; PKG_BYTES=@IPK_AARCH64_GENERIC_BYTES@ ;;
   opkg:x86_64) EXT=ipk; PKG_SHA='@IPK_X86_64_SHA256@'; PKG_BYTES=@IPK_X86_64_BYTES@ ;;
   *) fail '没有识别到可用的包管理器' ;;
 esac

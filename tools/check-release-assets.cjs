@@ -4,16 +4,17 @@ const fs = require('node:fs'), os = require('node:os'), path = require('node:pat
 const { build, VERSION } = require('./package-source.cjs'), { prepare } = require('./release-assets.cjs')
 const { publish } = require('./publish-release.cjs')
 const { publicKey } = require('./sign-release.cjs')
+const { PLATFORMS } = require('./platforms.cjs')
 const hash = bytes => crypto.createHash('sha256').update(bytes).digest('hex')
 const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'wlmb-release-fixture-'))
 assert(path.dirname(directory) === path.resolve(os.tmpdir()) && path.basename(directory).startsWith('wlmb-release-fixture-'))
 function write(file, bytes) { fs.mkdirSync(path.dirname(file), { recursive: true });fs.writeFileSync(file, bytes) }
 try {
-  for (const [arch, machine, abi] of [['aarch64', 183, 'aarch64_cortex-a53'], ['x86_64', 62, 'x86_64']]) {
-    const target = arch + '-unknown-linux-musl', binary = path.join(directory, 'wlmb-server-' + target, 'wlmb-server')
+  for (const { id: arch, architecture, packageArchitecture: abi, target } of PLATFORMS) {
+    const machine = architecture === 'aarch64' ? 183 : 62, binary = path.join(directory, 'wlmb-server-' + target, 'wlmb-server')
     const bytes = Buffer.alloc(256);bytes.write('7f454c46', 0, 'hex');bytes[4] = 2;bytes[5] = 1;bytes.writeUInt16LE(machine, 18);bytes.write(`WLMB_BUILD=${VERSION};pushplus-https=1`, 64)
     write(binary, bytes)
-    const result = build(binary, arch, abi), apk = Buffer.from('合成APK，仅用于摘要测试')
+    const result = build(binary, architecture, abi), apk = Buffer.from('合成APK，仅用于摘要测试')
     result.manifest.packageSha256 = hash(apk);result.manifest.packageBytes = apk.length
     const key = publicKey()
     result.manifest.packageSignature = { format: 'apk-v3', publicKeyFile: key.fileName, publicKeySha256: key.sha256 }
@@ -26,7 +27,8 @@ try {
   write(path.join(report, 'wlmb-compatibility.json'), JSON.stringify({ schema: 'WLMB-COMPATIBILITY-AUDIT/1', version: VERSION, referenceRevision: ref, summary: { models: 91, identityGaps: 0, protocolComplete: false, hardwareComplete: false } }))
   write(path.join(report, 'wlmb-release-readiness.json'), JSON.stringify({ schema: 'WLMB-RELEASE-READINESS/1', referenceRevision: ref, identifiedModels: 91, missingIdentity: [] }))
   const output = path.join(directory, 'release'), files = prepare(directory, output, 'b'.repeat(40), 'v' + VERSION)
-  assert.equal(files.length, 14)
+  assert.equal(files.length, 17)
+  assert.deepEqual(JSON.parse(fs.readFileSync(path.join(output, 'release.json'))).platforms, PLATFORMS.map(row => row.packageArchitecture))
   assert(fs.readFileSync(path.join(output, 'install.sh'), 'utf8').includes("VERSION='" + VERSION + "'"))
   assert(fs.readFileSync(path.join(output, 'install-gh-proxy.sh'), 'utf8').includes("DOWNLOAD_PREFIX='https://gh-proxy.com/'"))
   const key = publicKey()
@@ -54,12 +56,12 @@ try {
       const name = path.basename(args[3]);assert(!remote.assets.some(item => item.name === name))
       remote.assets.push({ name, digest: 'sha256:' + hash(fs.readFileSync(args[3])) });return ''
     }
-    assert.equal(args[1], 'edit');assert.equal(remote.assets.length, 14);remote.draft = false;return ''
+    assert.equal(args[1], 'edit');assert.equal(remote.assets.length, 17);remote.draft = false;return ''
   }
   assert.throws(() => publish(output, 'v' + VERSION, 'SlAlot/wlmb-server', execute), /模拟上传中断/)
   assert.equal(remote.assets.length, 3);assert.equal(remote.draft, true, '资产未齐不能发布草稿')
   failUpload = false
-  assert.equal(publish(output, 'v' + VERSION, 'SlAlot/wlmb-server', execute).assets, 14)
+  assert.equal(publish(output, 'v' + VERSION, 'SlAlot/wlmb-server', execute).assets, 17)
   const completed = uploadCalls
   publish(output, 'v' + VERSION, 'SlAlot/wlmb-server', execute)
   assert.equal(uploadCalls, completed, '相同制品重跑不重复上传')
@@ -73,6 +75,14 @@ try {
   assert.throws(() => prepare(directory, path.join(directory, 'bad'), 'b'.repeat(40), 'v' + VERSION))
   assert(!fs.existsSync(path.join(directory, 'bad')), '校验失败不能产生发布资产')
   write(apk, Buffer.from('合成APK，仅用于摘要测试'))
+  const genericFile = path.join(directory, 'wlmb-packages-aarch64-unknown-linux-musl', 'manifest-aarch64_generic.json')
+  const generic = fs.readFileSync(genericFile)
+  write(genericFile, JSON.stringify({ ...JSON.parse(generic), packageArchitecture: 'aarch64_cortex-a53' }))
+  assert.throws(() => prepare(directory, path.join(directory, 'wrong-abi'), 'b'.repeat(40), 'v' + VERSION), /ABI/)
+  assert(!fs.existsSync(path.join(directory, 'wrong-abi')))
+  fs.unlinkSync(genericFile)
+  assert.throws(() => prepare(directory, path.join(directory, 'missing-abi'), 'b'.repeat(40), 'v' + VERSION), /ENOENT/)
+  write(genericFile, generic)
   const manifestFile = path.join(directory, 'wlmb-packages-x86_64-unknown-linux-musl', 'manifest-x86_64.json')
   const manifest = JSON.parse(fs.readFileSync(manifestFile, 'utf8'))
   delete manifest.packageSignature;write(manifestFile, JSON.stringify(manifest))
