@@ -192,7 +192,16 @@ fn disabled_configured_ap_remains_visible_without_claiming_live_devices() {
             .as_array()
             .is_some_and(|a| !a.is_empty())
         {
-            assert_eq!(v["system"]["lan"]["wireless"][0]["enabled"], false);
+            assert!(v["system"]["lan"]["wireless"][0]["enabled"].is_null());
+            assert_eq!(
+                v["system"]["lan"]["wireless"][0]["configuredEnabled"],
+                false
+            );
+            assert_eq!(v["system"]["lan"]["wireless"][0]["stateKnown"], false);
+            assert_eq!(
+                v["system"]["lan"]["wireless"][0]["source"],
+                "uci-configuration"
+            );
             assert_eq!(v["system"]["lan"]["wireless"][0]["ssid"], "Disabled AP");
             assert_eq!(v["system"]["lan"]["wireless"][0]["encryption"], "psk2");
             assert_eq!(v["capabilities"]["wifi"], true);

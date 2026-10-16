@@ -10,7 +10,7 @@ use wlmb_server::{
     PanelError, Result,
     glinet::Glinet,
     sampler::Source,
-    sms_runtime::{SmsDevice, SmsHub},
+    sms_runtime::{Factory, ForwardRuntime, Resources, Settings, SmsDevice, SmsHub, Store},
     transport::Bus,
 };
 struct Fixture {
@@ -23,6 +23,7 @@ struct Fixture {
     mode: u8,
     empty: bool,
     restart: bool,
+    offline_object: Option<String>,
 }
 fn object(name: &str, id: u32) -> Value {
     json!({"name":name,"objectId":id,"signature":{"get_result_AT":{"cmd":3,"timeout":5,"source_flag":5,"sub_id":5}}})
@@ -39,6 +40,7 @@ impl Default for Fixture {
             mode: 0,
             empty: true,
             restart: false,
+            offline_object: None,
         }
     }
 }
@@ -58,6 +60,9 @@ impl Bus for Fixture {
         );
         let cmd = args["cmd"].as_str().unwrap();
         self.commands.lock().unwrap().push(cmd.into());
+        if self.offline_object.as_deref() == Some(object) {
+            return Err(PanelError::new("AT_FAILED", 409));
+        }
         if let Some(value) = self.reply.lock().unwrap().clone() {
             return Ok(value);
         }
@@ -69,8 +74,11 @@ impl Bus for Fixture {
                 let mut n = self.stores.lock().unwrap();
                 *n += 1;
                 format!(
-                    "+CPMS: \"{}\",0,127,\"ME\",0,127,\"ME\",0,127\r\nOK\r\n",
-                    if self.changed && *n > 1 { "SM" } else { "ME" }
+                    "+CPMS: \"{}\",{},127,\"ME\",{},127,\"ME\",{},127\r\nOK\r\n",
+                    if self.changed && *n > 1 { "SM" } else { "ME" },
+                    usize::from(!self.empty),
+                    usize::from(!self.empty),
+                    usize::from(!self.empty)
                 )
             }
             "AT+CMGL=4" => {
@@ -134,6 +142,48 @@ fn discovers_cpu_and_usb_objects_without_assuming_cpu_or_a_port() {
             .iter()
             .any(|c| c.starts_with("AT+CMG") || c.starts_with("AT+CFUN"))
     );
+}
+#[test]
+fn an_offline_usb_manager_does_not_hide_a_working_cpu_modem() {
+    let bus = Arc::new(Fixture {
+        objects: Mutex::new(vec![
+            object("modem.A_USB.AT", 1235),
+            object("modem.CPU.AT", 1234),
+        ]),
+        offline_object: Some("modem.A_USB.AT".into()),
+        ..Fixture::default()
+    });
+    let gl = Glinet::new(bus.clone());
+    let rows = gl.modems().unwrap();
+    assert_eq!(rows.len(), 1);
+    assert_eq!(rows[0]["object"], "modem.CPU.AT");
+    assert_eq!(gl.modems().unwrap(), rows);
+    assert_eq!(bus.commands.lock().unwrap().len(), 2);
+}
+struct Disabled;
+impl Store for Disabled {
+    fn load(&self) -> Result<Settings> {
+        Ok(Settings::default())
+    }
+    fn save(&self, _: &Settings) -> Result<()> {
+        Ok(())
+    }
+}
+impl Factory for Disabled {
+    fn create(&self, _: &str) -> Result<Resources> {
+        panic!("短信收取和转发关闭时不得创建推送资源")
+    }
+}
+#[test]
+fn disabled_receive_and_forward_never_poll_glinet_or_allocate_push_resources() {
+    let bus = Arc::new(Fixture::default());
+    let gl = Glinet::new(bus.clone());
+    let runtime =
+        ForwardRuntime::new(SmsHub::new(gl), Arc::new(Disabled), Arc::new(Disabled)).unwrap();
+    runtime.start_saved().unwrap();
+    assert_eq!(runtime.public().unwrap()["runtime"]["running"], false);
+    assert!(bus.commands.lock().unwrap().is_empty());
+    runtime.shutdown();
 }
 #[test]
 fn shared_transport_uses_every_catalog_identity_instead_of_a_mudi_only_model_list() {

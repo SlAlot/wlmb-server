@@ -314,7 +314,7 @@
     },
     {
       "path": "backend/tests/glinet.rs",
-      "sha256": "0db181ba1272bc06b1f7726d6ef5567dc14a1d89dbff27d41c156c105f343bf1"
+      "sha256": "b561f527753871c3cd7496909028bfd8a36f67749c2dda30ba09c22dd7dd42c0"
     },
     {
       "path": "backend/tests/host_controls.rs",
@@ -322,7 +322,7 @@
     },
     {
       "path": "backend/tests/host_service.rs",
-      "sha256": "29790121986142b30a099689cc0142d18ee3406c98ee2eb350e4fb025f527728"
+      "sha256": "1e790681d39b8a2ff38910b13edeab6b21bb4ec603b2794b103258dd4e52508e"
     },
     {
       "path": "backend/tests/independent_at.rs",
