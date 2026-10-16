@@ -3,7 +3,7 @@
 const fs = require('node:fs'), path = require('node:path'), crypto = require('node:crypto'), zlib = require('node:zlib')
 const root = path.resolve(__dirname, '..'), hash = bytes => crypto.createHash('sha256').update(bytes).digest('hex')
 const { platform } = require('./platforms.cjs')
-const VERSION = '1.1.0'
+const VERSION = '1.1.1'
 const VIEW = 'index-v' + VERSION.replace(/[.-]/g,'_') + '_release'
 // 从语义版本生成固定时间戳，保证资源更新与归档可重复。
 const match = /^(\d+)\.(\d+)\.(\d+)(?:-r(\d+))?$/.exec(VERSION)

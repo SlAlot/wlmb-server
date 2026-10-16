@@ -3,9 +3,9 @@
     'use strict';
     var definitions=[{key:0,name:'网络信息',icon:'home',group:0},{key:1,name:'邻区扫描',icon:'neighbors',group:1},{key:4,name:'WiFi 与设备',icon:'wifi',group:2},{key:5,name:'频段与小区',icon:'bands',group:1},{key:6,name:'短信',icon:'sms',group:3},{key:7,name:'短信转发',icon:'sms',group:3},{key:8,name:'设备与流量',icon:'chart',group:4},{key:2,name:'AT 控制台',icon:'terminal',group:4},{key:3,name:'插件设置',icon:'settings',group:4}];
     var groups=[{name:'概览',icon:'home',keys:[0]},{name:'网络',icon:'neighbors',keys:[1,5]},{name:'WiFi',icon:'wifi',keys:[4]},{name:'短信',icon:'sms',keys:[6,7]},{name:'设置',icon:'settings',keys:[3,8,2]}];
-    global.WLMBWebUI={version:'1.1.0',mount:function(target,bridge){
+    global.WLMBWebUI={version:'1.1.1',mount:function(target,bridge){
         var D=global.WLMBUIData,I=global.WLMBIcons,doc=target.ownerDocument;
-        if(!D||D.version!=='1.1.0'||!I||I.version!=='1.1.0')throw new Error('独立前端资源版本不一致');
+        if(!D||D.version!=='1.1.1'||!I||I.version!=='1.1.1')throw new Error('独立前端资源版本不一致');
         var disposed=false,failed=false,current=bridge.active||0,filter='',search='',refreshing=false,reading=false,copying=false,smsStamp='',overviewStamp='',neighborStamp='';
         var panelRoot=target.closest('#wlmb-panel'),theme='auto',collapsed=false,lastGroup={};
         var motion=typeof global.matchMedia==='function'?global.matchMedia('(prefers-reduced-motion: reduce)'):null,animations=new Set(),paintedPage=-1,carrierDetails=new Set();

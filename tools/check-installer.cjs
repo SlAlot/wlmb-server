@@ -40,6 +40,8 @@ function fixture(name, options = {}) {
   const selected = PLATFORMS.find(row => row.packageArchitecture === config.abi)
   const selectedName = selected && `wlmb-server-${VERSION}-${selected.id}.${config.manager === 'opkg' ? 'ipk' : 'apk'}`
   if (options.badPackage) fs.appendFileSync(path.join(bundle, selectedName), '损坏')
+  for (const name of options.missingPackages || []) fs.unlinkSync(path.join(bundle, name))
+  for (const name of options.corruptPackages || []) fs.appendFileSync(path.join(bundle, name), '损坏')
   if (options.badKey) fs.appendFileSync(path.join(bundle, key.fileName), '损坏')
   if (options.linkedPackage) {
     const file = path.join(bundle, selectedName)
@@ -49,19 +51,20 @@ function fixture(name, options = {}) {
 fs.appendFileSync(c.log,JSON.stringify({name,a})+'\\n');
 if(name==='id'){console.log(c.nonRoot?'1000':'0');process.exit(0)}
 if(name==='sleep')process.exit(0);
+if(name==='uname'){console.log(a.includes('-m')?(c.kernelArch||(c.abi.startsWith('aarch64')?'aarch64':'x86_64')):'Linux');process.exit(0)}
 if(name==='df'){console.log('Filesystem 1024-blocks Used Available Capacity Mounted');console.log('fixture 1000000 1 '+(c.lowSpace?'1':'999999')+' 1% /');process.exit(0)}
 if(name==='uci'){console.log('192.168.66.1');process.exit(0)}
 if(name==='ubus'){console.log(JSON.stringify({ok:false,error:{code:'SESSION_EXPIRED'}}));process.exit(0)}
-if(name==='curl'){if(c.downloadFails)process.exit(22);const out=a[a.indexOf('--output')+1],file=path.basename(a[a.length-1]);fs.copyFileSync(path.join(c.bundle,file),out);process.exit(0)}
+if(name==='curl'){const out=a[a.indexOf('--output')+1],file=path.basename(a[a.length-1]);if(c.downloadFails||(c.downloadRejectedPackages||[]).includes(file))process.exit(22);fs.copyFileSync(path.join(c.bundle,file),out);process.exit(0)}
 if(name==='apk'&&a.includes('--print-arch')){if(c.manager!=='apk')process.exit(1);console.log(c.defaultAbi||c.abi);process.exit(0)}
 if(name==='opkg'&&a.includes('print-architecture')){if(c.manager!=='opkg')process.exit(1);console.log(c.opkgArchitectures||'arch all 1\\narch '+c.abi+' 10');process.exit(0)}
 if(a.includes('verify')){if(c.badSignature)process.exit(1);console.log('fixture signature: OK');process.exit(0)}
 if(a.includes('status')){if(c.missingDependency)process.exit(1);console.log('Status: install ok installed');process.exit(0)}
-if(a.includes('update'))process.exit(c.preflightFails?1:0);
-if(a.includes('--simulate')||a.includes('--noaction'))process.exit(c.preflightFails?1:0);
+if(a.includes('update'))process.exit(c.preflightFails&&!c.updateSucceeds?1:0);
+if(a.includes('--simulate')||a.includes('--noaction')){const file=path.basename(a[a.length-1]);if(c.preflightFails||(c.rejectedPackages||[]).includes(file)){console.error('模拟拒绝 '+file);process.exit(1)}if(c.requiresRefresh&&!fs.readFileSync(c.log,'utf8').split('\\n').filter(Boolean).map(v=>JSON.parse(v)).some(v=>v.a.includes('update')))process.exit(1);process.exit(0)}
 if(a.includes('add')||a.includes('install')){if(c.installFails)process.exit(1);fs.writeFileSync(c.server,${JSON.stringify(marker(VERSION))},{mode:0o755});process.exit(0)}
 process.exit(1);`
-  for (const name of ['apk', 'opkg', 'ubus', 'uci', 'id', 'df', 'sleep', 'curl']) write(path.join(bin, name), '#!' + process.execPath + '\n' + program, 0o755)
+  for (const name of ['apk', 'opkg', 'ubus', 'uci', 'id', 'df', 'sleep', 'curl', 'uname']) write(path.join(bin, name), '#!' + process.execPath + '\n' + program, 0o755)
   const file = path.join(dir, 'install.sh')
   // 测试仅重定位系统路径及命令搜索目录，生产脚本不接受这些测试覆盖参数。
   const script = (options.proxy ? proxySource : source).replace('PATH=/usr/sbin:/usr/bin:/sbin:/bin', 'PATH=' + JSON.stringify(bin + ':/usr/sbin:/usr/bin:/sbin:/bin')).replaceAll('/etc/apk/keys', trust).replaceAll('/etc/apk/arch', path.join(dir, 'apk-arch')).replaceAll('/usr/sbin/wlmb-server', server).replaceAll('/tmp/wlmb-installer.lock', path.join(dir, 'lock'))
@@ -80,6 +83,10 @@ process.exit(1);`
     assert(!url.includes('/latest/') && !url.includes('#'), '不混用动态版本或网页片段地址')
   }
   const installs = actions.filter(row => ['apk', 'opkg'].includes(row.name) && (row.a.includes('add') || row.a.includes('install')) && !row.a.includes('--simulate') && !row.a.includes('--noaction'))
+  const attempts = actions.filter(row => ['apk', 'opkg'].includes(row.name) && (row.a.includes('--simulate') || row.a.includes('--noaction'))).map(row => path.basename(row.a.at(-1)))
+  if (options.expectedAttempts) assert.deepEqual(attempts, options.expectedAttempts, name + ': 候选顺序及重试次数')
+  assert(actions.filter(row => row.a.includes('update')).length <= 1, name + ': 只能刷新一次现有源')
+  if (!options.online || options.check) assert(!actions.some(row => row.a.includes('update')), name + ': 离线和仅检查模式不刷新源')
   assert.equal(fs.readFileSync(path.join(dir, 'config-kept'), 'utf8'), '已有配置不删除\n')
   assert(!fs.existsSync(path.join(dir, 'lock')), name + ': 安装锁必须释放')
   if (options.fail) {
@@ -156,8 +163,34 @@ try {
   fixture('generic-apk-configured-check', { abi: 'aarch64_generic', defaultAbi: 'aarch64', archConfig: 'aarch64\naarch64_generic\n', check: true })
   fixture('generic-signature', { abi: 'aarch64_generic', badSignature: true, fail: true })
   fixture('generic-apk-cross-family', { defaultAbi: 'x86_64', archConfig: 'aarch64_generic\n', fail: true })
-  fixture('generic-apk-ambiguous', { defaultAbi: 'aarch64', archConfig: 'aarch64_generic\naarch64_cortex-a53\n', fail: true })
-  fixture('generic-ipk-ambiguous', { manager: 'opkg', opkgArchitectures: 'arch all 1\narch aarch64_generic 10\narch aarch64_cortex-a53 20', fail: true })
+  fixture('generic-apk-multiple', { abi: 'aarch64_generic', defaultAbi: 'aarch64', archConfig: 'aarch64_generic\naarch64_cortex-a53\n' })
+  fixture('generic-ipk-priority', { manager: 'opkg', opkgArchitectures: 'arch all 1\narch aarch64_generic 10\narch aarch64_cortex-a53 20' })
   fixture('generic-ipk-duplicate', { manager: 'opkg', abi: 'aarch64_generic', opkgArchitectures: 'arch all 1\narch aarch64_generic 10\narch aarch64_generic 10' })
+  const specific = ext => `wlmb-server-${VERSION}-aarch64.${ext}`, generic = ext => `wlmb-server-${VERSION}-aarch64_generic.${ext}`
+  const mixedOpkg = 'arch all 1\narch aarch64_generic 10\narch aarch64_cortex-a53 20'
+  for (const proxy of [false, true]) {
+    const route = proxy ? 'proxy-' : 'official-'
+    fixture(route + 'ipk-fallback', { manager: 'opkg', abi: 'aarch64_generic', opkgArchitectures: mixedOpkg, rejectedPackages: [specific('ipk')], expectedAttempts: [specific('ipk'), generic('ipk')], online: true, proxy })
+    fixture(route + 'apk-fallback', { abi: 'aarch64_generic', archConfig: 'aarch64_cortex-a53\naarch64_generic\n', rejectedPackages: [specific('apk')], expectedAttempts: [specific('apk'), generic('apk')], online: true, proxy })
+    fixture(route + 'ipk-first-success', { manager: 'opkg', opkgArchitectures: mixedOpkg, expectedAttempts: [specific('ipk')], online: true, proxy })
+    fixture(route + 'all-candidates-fail', { manager: 'opkg', opkgArchitectures: mixedOpkg, preflightFails: true, updateSucceeds: true, expectedAttempts: [specific('ipk'), generic('ipk'), specific('ipk'), generic('ipk')], online: true, proxy, fail: true })
+  }
+  fixture('ipk-inverse-priority', { manager: 'opkg', abi: 'aarch64_generic', opkgArchitectures: 'arch aarch64_cortex-a53 10\narch aarch64_generic 20', expectedAttempts: [generic('ipk')] })
+  fixture('ipk-inverse-fallback', { manager: 'opkg', opkgArchitectures: 'arch aarch64_cortex-a53 10\narch aarch64_generic 20', rejectedPackages: [generic('ipk')], expectedAttempts: [generic('ipk'), specific('ipk')] })
+  fixture('ipk-tie-specific-first', { manager: 'opkg', opkgArchitectures: 'arch aarch64_generic 10\narch aarch64_cortex-a53 10', expectedAttempts: [specific('ipk')] })
+  fixture('ipk-duplicate-best-priority', { manager: 'opkg', abi: 'aarch64_generic', opkgArchitectures: 'arch aarch64_generic 5\narch aarch64_cortex-a53 10\narch aarch64_generic 20', expectedAttempts: [generic('ipk')] })
+  fixture('ipk-zero-priority', { manager: 'opkg', abi: 'aarch64_generic', opkgArchitectures: 'arch aarch64_cortex-a53 0\narch aarch64_generic 10', expectedAttempts: [generic('ipk')] })
+  fixture('ipk-invalid-priority', { manager: 'opkg', opkgArchitectures: 'arch aarch64_cortex-a53 invalid\narch aarch64_generic 10', expectedAttempts: [], fail: true })
+  fixture('ipk-cross-family', { manager: 'opkg', opkgArchitectures: 'arch x86_64 10\narch aarch64_cortex-a53 20', expectedAttempts: [], fail: true })
+  fixture('kernel-family-conflict', { manager: 'opkg', kernelArch: 'x86_64', expectedAttempts: [], fail: true })
+  fixture('offline-missing-first-candidate', { manager: 'opkg', abi: 'aarch64_generic', opkgArchitectures: mixedOpkg, missingPackages: [specific('ipk')], expectedAttempts: [generic('ipk')] })
+  fixture('online-download-first-failure', { manager: 'opkg', abi: 'aarch64_generic', opkgArchitectures: mixedOpkg, downloadRejectedPackages: [specific('ipk')], expectedAttempts: [generic('ipk')], online: true })
+  fixture('offline-all-candidates-fail', { manager: 'opkg', opkgArchitectures: mixedOpkg, preflightFails: true, expectedAttempts: [specific('ipk'), generic('ipk')], fail: true })
+  fixture('feed-refresh-once-after-all-candidates', { manager: 'opkg', opkgArchitectures: mixedOpkg, requiresRefresh: true, expectedAttempts: [specific('ipk'), generic('ipk'), specific('ipk')], online: true })
+  fixture('multiple-check-no-install', { manager: 'opkg', opkgArchitectures: mixedOpkg, check: true, expectedAttempts: [] })
+  fixture('corrupt-first-is-terminal', { manager: 'opkg', abi: 'aarch64_generic', opkgArchitectures: mixedOpkg, corruptPackages: [specific('ipk')], expectedAttempts: [], fail: true })
+  fixture('signature-first-is-terminal', { archConfig: 'aarch64_cortex-a53\naarch64_generic\n', badSignature: true, expectedAttempts: [], fail: true })
+  fixture('actual-install-failure-no-fallback', { manager: 'opkg', opkgArchitectures: mixedOpkg, installFails: true, expectedAttempts: [specific('ipk')], fail: true })
+  fixture('service-not-ready-no-fallback', { manager: 'opkg', opkgArchitectures: mixedOpkg, notReady: true, expectedAttempts: [specific('ipk')], fail: true })
   console.log('安装器' + cases + '组POSIX流程回归通过：双包管理器／三种ABI、在线／离线、确认、检查、摘要、验签、空间、依赖、公钥冲突、失败回滚、版本和服务检查；替身不视为实机安装验收。')
 } finally { fs.rmSync(suite, { recursive: true, force: true }) }
