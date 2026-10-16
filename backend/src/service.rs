@@ -809,12 +809,14 @@ pub fn run_auto() -> Result<()> {
 fn run(requested_standalone: Option<bool>) -> Result<()> {
     let bus = Arc::new(NativeBus::default());
     let qmodem = crate::connection_mode::qmodem_installed(Path::new("/"));
-    let glinet = (requested_standalone != Some(true)
+    let glinet_detected = requested_standalone != Some(true)
         && !qmodem
         && crate::glinet::Glinet::detected(bus.as_ref())
-            .unwrap_or_else(|_| Path::new("/etc/glversion").is_file()))
-    .then(|| crate::glinet::Glinet::new(bus.clone()));
-    let standalone = requested_standalone.unwrap_or(!qmodem && glinet.is_none());
+            .unwrap_or_else(|_| Path::new("/etc/glversion").is_file());
+    let backend = crate::connection_mode::backend(requested_standalone, qmodem, glinet_detected);
+    let glinet = (backend == crate::connection_mode::Backend::Glinet)
+        .then(|| crate::glinet::Glinet::new(bus.clone()));
+    let standalone = backend == crate::connection_mode::Backend::Independent;
     let lan = lan(bus.as_ref())?;
     let listener = TcpListener::bind((lan.address, API_PORT))
         .map_err(|_| PanelError::new("PORT_BUSY", 503))?;

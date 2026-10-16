@@ -20,4 +20,5 @@ assert.equal(audit.summary.models,1);assert.equal(audit.summary.transportProfile
 assert.equal(audit.summary.hardwareComplete,false)
 assert.deepEqual(audit.features.bandLock.states.implemented,['m1'])
 assert.ok(audit.modes.shared.includes('事务')&&audit.modes.independent.includes('空闲'))
+assert.ok(audit.modes.glinet.includes('只读')&&audit.modes.glinet.includes('写入关闭'))
 console.log('Release gate: identity, bus/platform coverage, conditional SMS, missing protocols and hardware evidence stay separate.')

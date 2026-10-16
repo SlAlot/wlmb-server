@@ -12,7 +12,7 @@ PushPlus成功连续请求至少间隔13秒，首条不固定等待13秒。已�
 
 ## 共享模式
 
-开发代码另支持GL.iNet共享AT的PDU收取和转发，暂不开放发送／删除及未经验证的事件，详见[GL.iNet适配边界](GLINET.md)。原厂CNMI、编码和存储均不改动；不能将QModem事务与事件能力直接套到GL.iNet。正式1.0.9尚不包含该适配。
+1.1.0起另支持GL.iNet共享AT的PDU收取和转发，暂不开放发送／删除及未经验证的事件，详见[GL.iNet适配边界](GLINET.md)。原厂CNMI、编码和存储均不改动；不能将QModem事务与事件能力直接套到GL.iNet。
 
 核验QModem qmodem.sms v3及方法签名，按模组section绑定。数据库事件核对owner、端口、epoch和sequence，必要时有界跟进读取。兜底调用sync再读库，沿用原auto_delete策略，不修改配置。完整数据库ID与SIM索引隔离；删除前重核指纹，删除数据库记录不保证清理SIM副本。
 

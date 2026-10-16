@@ -6,6 +6,25 @@ pub enum Mode {
     Shared,
     Independent,
 }
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Backend {
+    Qmodem,
+    Glinet,
+    Independent,
+}
+pub fn backend(requested_standalone: Option<bool>, qmodem: bool, glinet: bool) -> Backend {
+    if requested_standalone == Some(true) {
+        Backend::Independent
+    } else if qmodem {
+        Backend::Qmodem
+    } else if glinet {
+        Backend::Glinet
+    } else if requested_standalone == Some(false) {
+        Backend::Qmodem
+    } else {
+        Backend::Independent
+    }
+}
 impl Mode {
     pub fn name(self) -> &'static str {
         match self {
@@ -32,6 +51,31 @@ pub fn automatic(qmodem_present: bool) -> Mode {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn auto_and_explicit_modes_keep_shared_managers_ahead_of_independent_ports() {
+        use super::{Backend, backend};
+        for qmodem in [false, true] {
+            for glinet in [false, true] {
+                let detected = if qmodem {
+                    Backend::Qmodem
+                } else if glinet {
+                    Backend::Glinet
+                } else {
+                    Backend::Independent
+                };
+                assert_eq!(backend(None, qmodem, glinet), detected);
+                assert_eq!(backend(Some(true), qmodem, glinet), Backend::Independent);
+                assert_eq!(
+                    backend(Some(false), qmodem, glinet),
+                    if glinet && !qmodem {
+                        Backend::Glinet
+                    } else {
+                        Backend::Qmodem
+                    }
+                );
+            }
+        }
+    }
     #[test]
     fn manager_presence_selects_transport_not_permission_to_take_ports() {
         assert_eq!(super::automatic(true), super::Mode::Shared);

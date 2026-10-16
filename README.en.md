@@ -2,9 +2,9 @@
 
 [简体中文](README.md) · [Downloads](https://github.com/SlAlot/wlmb-server/releases/latest) · [API](docs/API.en.md)
 
-**Network Panel 1.0.9** by **SlAlot** is a bounded Rust modem service with an independent LuCI JavaScript/CSS interface for OpenWrt. The first public release is 1.0.0. Default port: **1117**. It does not take over dialing. QModem's public identity facts, AT formats and shared interfaces inform the independently implemented adapters.
+**Network Panel 1.1.0** by **SlAlot** is a bounded Rust modem service with an independent LuCI JavaScript/CSS interface for OpenWrt. The first public release is 1.0.0. Default port: **1117**. It does not take over dialing. QModem's public identity facts, AT formats and shared interfaces inform the independently implemented adapters.
 
-1.0.9 adds aarch64_generic packages for armsr/armv8, with matching official, accelerated and offline installers. The official Release page is authoritative.
+1.1.0 adds automatic GL.iNet shared AT discovery, RG650V-EU carrier parsing and WiFi runtime fallbacks. Cortex-A53, armsr/armv8 and x86_64 packages remain available with matching official, accelerated and offline installers. The official Release page is authoritative.
 
 Source is publicly available under a [custom non-commercial attribution license](LICENSE). **Commercial use requires separate permission**; retain author and source notices. This is source-available, not MIT/GPL or OSI-approved open source. Third-party materials retain their own licenses.
 
@@ -35,9 +35,9 @@ APK ABI detection prioritizes the firmware's `/etc/apk/arch`. `apk --print-arch`
 Download from [Releases](https://github.com/SlAlot/wlmb-server/releases/latest) and verify `SHA256SUMS`. Use the actual firmware's package manager and ABI: 24.10 normally uses IPK/opkg; 25.12 normally uses APK/apk. Provided ABIs: `aarch64_cortex-a53`, `aarch64_generic` and `x86_64`. For armsr/armv8 choose the filename containing `aarch64_generic`, not the Cortex-A53 package. Other architectures/ABIs are not covered. APK here is not an Android application.
 
 ```sh
-opkg install /tmp/wlmb-server-1.0.9-aarch64.ipk
+opkg install /tmp/wlmb-server-1.1.0-aarch64.ipk
 # On APK firmware, only after verifying the trusted download and checksum:
-apk add /tmp/wlmb-server-1.0.9-aarch64.apk
+apk add /tmp/wlmb-server-1.1.0-aarch64.apk
 ```
 
 Official APK assets from 1.0.3 are signed. Before the first APK installation, download `wlmb-server-signing.pem` from the official Release, verify its file SHA-256 below against this README, then copy it to `/etc/apk/keys/wlmb-server-signing.pem` with mode 644. Only then use LuCI upload or the command above; new routers do not automatically trust our key. Do not replace firmware keys or disable signature validation. See the [step-by-step installation guide](docs/APK-INSTALL.zh-CN.md).
@@ -54,6 +54,8 @@ The catalog maps 91 identities and 131 bus profiles. Implemented paths cover tem
 
 Shared mode reuses existing QModem interfaces; it does not take over, patch, upgrade or reconfigure QModem. Older/custom firmware mixing direct and shared AT access can still cause contention or delays. The plugin preserves bounded cache validity and rejects recognized crossed replies, but does not add special adaptations or promise to eliminate other clients' blocking.
 
+Auto mode prefers QModem, then discovers GL.iNet shared CPU/USB AT services, otherwise uses protected independent discovery. GL.iNet supports verified PDU reading and forwarding; unverified events, sending/deletion and modem locking writes remain disabled. Missing WiFi runtime interfaces produce read-only/unknown state, not a false disabled status. LuCI on port 8080 does not change the plugin API on 1117. This is capability-based compatibility, not certification of every GL.iNet model; see [GL.iNet](docs/GLINET.md).
+
 ## WeChat and other clients
 
 Open “网络面板助手” in WeChat, join the router WiFi, select **openwrt**, and enter your management address with port 1117. The mini-program is a separate closed-source commercial client. Its paid features do not restrict the plugin WebUI.
@@ -69,4 +71,4 @@ cargo clippy --locked --all-targets --all-features --manifest-path backend/Cargo
 
 Matching `vX.Y.Z` tags trigger Actions checks, ARM64/x86_64 builds and IPK/APK packaging. Verified assets, checksums, commit metadata and compatibility reports are uploaded only after required jobs pass. Existing assets are not overwritten. See [build instructions](docs/BUILD.md).
 
-[Changelog](CHANGELOG.md) · [1.0.9 notes](docs/RELEASE-1.0.9.md) · [security](docs/SECURITY.md) · [performance](docs/PERFORMANCE.md) · [QModem references](docs/QMODEM.md) · [frontend notices](docs/FRONTEND-SOURCES.md)
+[Changelog](CHANGELOG.md) · [1.1.0 notes](docs/RELEASE-1.1.0.md) · [security](docs/SECURITY.md) · [performance](docs/PERFORMANCE.md) · [QModem references](docs/QMODEM.md) · [frontend notices](docs/FRONTEND-SOURCES.md)

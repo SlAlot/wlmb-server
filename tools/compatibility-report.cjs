@@ -16,7 +16,7 @@ function compatibility(upstream,catalog){
  for(const entry of Object.values(features))for(const names of Object.values(entry.states))names.sort()
  return {schema:'WLMB-COMPATIBILITY-AUDIT/1',version:VERSION,referenceRevision:upstream.revision,scope:'compiled-code-and-runtime-gates-not-hardware-certification',
   summary:{models:models.length,transportProfiles:readiness.transportProfiles,identityGaps:readiness.missingIdentity.length,protocolComplete:readiness.protocolComplete,hardwareComplete:readiness.hardwareComplete},
-  modes:{shared:'相同解析器；读写取决于已核验共享接口、事务或短信服务',independent:'相同解析器；必须有核验为空闲的AT端点及固件能力'},features,readiness,models}
+  modes:{shared:'相同解析器；读写取决于已核验QModem共享接口、事务或短信服务',glinet:'动态发现CPU／USB共享AT并复用相同目录；PDU只读与转发，无已核验短信事件，短信发送／删除和锁定写入关闭',independent:'相同解析器；必须有核验为空闲的AT端点及固件能力'},features,readiness,models}
 }
 module.exports={compatibility}
 if(require.main===module){
