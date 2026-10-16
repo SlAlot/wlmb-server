@@ -59,7 +59,7 @@ type Replies = Vec<Vec<(u8, Vec<u8>)>>;
 fn modem_objects(replies: Replies) -> Result<Vec<Value>> {
     let mut found = std::collections::BTreeSet::new();
     let mut objects = Vec::new();
-    if replies.len() > 8 {
+    if replies.len() > 15 {
         return Err(fail());
     }
     for reply in replies {
@@ -72,15 +72,28 @@ fn modem_objects(replies: Replies) -> Result<Vec<Value>> {
         };
         let name = one(2)?.strip_suffix(&[0]).ok_or_else(fail)?;
         let name = std::str::from_utf8(name).map_err(|_| fail())?;
+        if !name.starts_with("modem.") || name.contains('\0') {
+            return Err(fail());
+        }
+        if !name.ends_with(".AT") {
+            continue;
+        }
         let id = u32_attr(one(3)?)?;
         if !crate::glinet::object_name(name) || id == 0 || !found.insert(name.to_owned()) {
             return Err(fail());
         }
         objects.push(json!({"name":name,"objectId":id,"signature":blob::decode_object(one(6)?)?}));
+        if objects.len() > 8 {
+            return Err(fail());
+        }
     }
     Ok(objects)
 }
 impl Channel {
+    fn modems(&mut self, deadline: Instant) -> Result<Vec<Value>> {
+        // ubus 只支持末尾星号；先按前缀查询，再本地筛选 AT 对象。
+        modem_objects(self.request(4, 0, blob::attr(2, false, b"modem.*\0")?, deadline)?)
+    }
     fn connect(deadline: Instant) -> Result<Self> {
         let mut socket = UnixStream::connect("/var/run/ubus/ubus.sock").map_err(|_| fail())?;
         let (kind, _, peer, _) = frame(&mut socket, deadline)?;
@@ -361,15 +374,7 @@ impl Bus for NativeBus {
         if state.channel.is_none() {
             state.channel = Some(Channel::connect(deadline)?);
         }
-        let result = (|| {
-            let replies = state.channel.as_mut().ok_or_else(fail)?.request(
-                4,
-                0,
-                blob::attr(2, false, b"modem.*.AT\0")?,
-                deadline,
-            )?;
-            modem_objects(replies)
-        })();
+        let result = state.channel.as_mut().ok_or_else(fail)?.modems(deadline);
         if result.is_err() {
             state.channel.take();
         }
@@ -503,6 +508,57 @@ mod event_tests {
         let mut bad = row;
         bad[1].1 = 0u32.to_be_bytes().to_vec();
         assert!(modem_objects(vec![bad]).is_err());
+    }
+    #[test]
+    fn native_modem_lookup_uses_a_trailing_wildcard_and_filters_other_services() {
+        let (socket, mut peer) = UnixStream::pair().unwrap();
+        let deadline = Instant::now() + Duration::from_secs(2);
+        let worker = std::thread::spawn(move || {
+            let (kind, sequence, object, raw) = frame(&mut peer, deadline).unwrap();
+            assert_eq!((kind, object), (4, 0));
+            let parsed = blob::attrs(&raw).unwrap();
+            assert_eq!(parsed.len(), 1);
+            assert_eq!(parsed[0], (2, false, b"modem.*\0".as_slice()));
+            for (name, id) in [("modem.CPU.AT", 1234u32), ("modem.CPU.status", 1235)] {
+                let mut body = blob::attr(2, false, format!("{name}\0").as_bytes()).unwrap();
+                body.extend(blob::attr(3, false, &id.to_be_bytes()).unwrap());
+                body.extend(
+                    blob::attr(
+                        6,
+                        false,
+                        &blob::encode_object(&json!({"get_result_AT":{"cmd":3,"timeout":5}}))
+                            .unwrap(),
+                    )
+                    .unwrap(),
+                );
+                let mut reply = vec![0, 2];
+                reply.extend(sequence.to_be_bytes());
+                reply.extend(0u32.to_be_bytes());
+                reply.extend(blob::attr(0, false, &body).unwrap());
+                peer.write_all(&reply).unwrap();
+            }
+            let mut status = vec![0, 1];
+            status.extend(sequence.to_be_bytes());
+            status.extend(0u32.to_be_bytes());
+            status.extend(
+                blob::attr(
+                    0,
+                    false,
+                    &blob::attr(1, false, &0u32.to_be_bytes()).unwrap(),
+                )
+                .unwrap(),
+            );
+            peer.write_all(&status).unwrap();
+        });
+        let mut channel = Channel {
+            socket,
+            sequence: 0,
+            events: vec![],
+        };
+        let rows = channel.modems(deadline).unwrap();
+        assert_eq!(rows.len(), 1);
+        assert_eq!(rows[0]["name"], "modem.CPU.AT");
+        worker.join().unwrap();
     }
     use super::*;
     use crate::transport::SmsEvents;

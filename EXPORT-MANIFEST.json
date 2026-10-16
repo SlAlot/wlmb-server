@@ -134,7 +134,7 @@
     },
     {
       "path": "backend/src/native_ubus.rs",
-      "sha256": "8e1064662795970af46646c1adce069ebc72523336a8556fc1fb0564a32a39b0"
+      "sha256": "6f57827abb740fba364c81f18eebe9179dbae3c909057ee6cab695dd1e17f2fc"
     },
     {
       "path": "backend/src/network_operator.rs",
@@ -514,7 +514,7 @@
     },
     {
       "path": "docs/GLINET.md",
-      "sha256": "5c503a5fe8c6fbb82f9f3a66031e998ac635529696ce379f9f8863513e06bbef"
+      "sha256": "d6495bb9ad659aa7558a4d822f735c60bab159586644f38b13a748989ecb5ad1"
     },
     {
       "path": "docs/ICON-SOURCES.md",

@@ -8,6 +8,8 @@
 
 共享调用只提交`cmd`、`timeout`，核对`channel_status: true`、`data`、结束状态和已知回复标签，绑定ubus对象实例。禁止调用`update_AT_process`、`set_at_log_level`、切卡或飞行模式。有限缓存身份查询，错误冷却，无常驻辅助进程。服务实例变化或回复不完整时丢弃结果，不自动重发写操作。
 
+线协议查询使用`modem.*`前缀匹配，再本地筛选`.AT`结尾及方法签名；不把中间星号当作ubus支持的通配符。协议依据：[OpenWrt ubus查询实现](https://github.com/openwrt/ubus/blob/master/ubusd_proto.c)。
+
 模组身份使用同一QModem参考目录及已有解析器，不另建Mudi7型号名单。未收录型号仅提供通用有限信号，不宣称具有邻区、聚合或短信能力。传输适配不等于每个固件的AT格式、事件和写入事务均相同。
 
 ## 已有样本
