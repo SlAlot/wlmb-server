@@ -146,7 +146,7 @@ pub fn band_candidates(rat: &str, channel: f64) -> Vec<String> {
         .map(|(b, _, _)| format!("{prefix}{b}"))
         .collect()
 }
-fn cell(
+pub(crate) fn cell(
     rat: &str,
     role: &str,
     channel: &str,

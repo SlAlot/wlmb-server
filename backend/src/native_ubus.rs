@@ -389,7 +389,7 @@ impl Bus for NativeBus {
             .map(|v| Box::new(v) as Box<dyn crate::transport::SmsEvents>)
     }
     fn describe(&self, object: &str, timeout: Duration) -> Result<Value> {
-        if !["at-daemon", "qmodem.sms"].contains(&object)
+        if !["at-daemon", "qmodem.sms", "qmodem"].contains(&object)
             || timeout.is_zero()
             || timeout > Duration::from_secs(5)
         {

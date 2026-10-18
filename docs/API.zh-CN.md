@@ -37,6 +37,10 @@ radio.serving是服务测量；radio.carriers是已报告载波库存，两者�
 
 签约速率、APN、QCI、模组温度、运营商按对应字段及stale状态呈现。capabilities按功能逐项控制，接口存在并不等于能力已开放。
 
+1.1.2新增`modems[].infoTransport=qmodem-rpc`表示使用QModem原生信息查询，不授予AT写入权限。原生快照的`providerCached`和`sourceCacheAgeUnknown`说明上游缓存年龄无法确认。
+
+`system.lan.deviceBlockReason`说明上网控制不可用原因：`FLOW_OFFLOAD_ENABLED`为已启用流量加速，`FLOW_OFFLOAD_UNCONFIRMED`为加速状态未确认，`FIREWALL_UNAVAILABLE`为防火墙不可读，`LAN_INTERFACE_UNCONFIRMED`／`WAN_INTERFACE_UNCONFIRMED`为接口未确认，`FORWARD_PATH_AMBIGUOUS`为转发路径不明确，`HOST_STATE_STALE`为控制快照过期。能力可用时为null；客户端仍以`deviceBlockSupported`及过期标记控制操作，不自行更改加速设置。
+
 ## 异步动作与确认
 
 长动作返回 `{"job":"...","state":"pending"}`。只轮询control_result，可得到pending、done/result或error/error。执行连接中断时不要自动重发。

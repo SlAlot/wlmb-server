@@ -119,6 +119,7 @@ pub(crate) fn allowed(object: &str, method: &str) -> bool {
     match object {
         "session" => ["login", "access", "destroy"].contains(&method),
         "at-daemon" => ["list", "sendat", "lease_acquire", "lease_release"].contains(&method),
+        "qmodem" => ["cell_info", "network_info", "base_info"].contains(&method),
         "qmodem.sms" => [
             "status",
             "config_get",
@@ -143,6 +144,24 @@ pub(crate) fn allowed(object: &str, method: &str) -> bool {
 
 #[cfg(test)]
 mod feature_allowlist_tests {
+    #[test]
+    fn native_qmodem_read_access_does_not_expose_arbitrary_at_or_write_methods() {
+        for method in ["cell_info", "network_info", "base_info"] {
+            assert!(super::allowed("qmodem", method));
+        }
+        for method in [
+            "send_at",
+            "set_lockband",
+            "set_mode",
+            "modem_redial",
+            "do_reboot",
+            "send_sms",
+            "delete_sms",
+            "set_sms_storage",
+        ] {
+            assert!(!super::allowed("qmodem", method));
+        }
+    }
     #[test]
     fn wifi_features_are_readable_without_general_luci_access() {
         assert!(super::allowed("luci", "getFeatures"));
@@ -475,6 +494,12 @@ struct Ports {
     quarantined: HashMap<String, Value>,
     retained: HashMap<String, Arc<crate::qmodem_queue::Held>>,
 }
+struct NativeBase {
+    binding: Value,
+    finished: Instant,
+    observed_at: u64,
+    value: Result<Value>,
+}
 pub struct Broker {
     pub bus: Arc<dyn Bus>,
     pub discovery: Arc<dyn Discovery>,
@@ -484,6 +509,8 @@ pub struct Broker {
     pub(crate) sms_leased: bool,
     pub(crate) sms_events: bool,
     queue: Option<Arc<crate::qmodem_queue::Contract>>,
+    info_schema: Value,
+    info_base: Mutex<HashMap<String, NativeBase>>,
 }
 impl Broker {
     pub fn new(bus: Arc<dyn Bus>, discovery: Arc<dyn Discovery>) -> Self {
@@ -491,6 +518,9 @@ impl Broker {
             .describe("at-daemon", Duration::from_secs(3))
             .unwrap_or(Value::Null);
         let queue = discovery.shared_queue();
+        let info_schema = bus
+            .describe("qmodem", Duration::from_secs(3))
+            .unwrap_or(Value::Null);
         let sms_leased = crate::shared_sms::supported(&schema);
         let sms_events = schema["urc_list"].is_object()
             && [("at_port", 3), ("owner", 3), ("urc_id", 3), ("prefix", 3)]
@@ -507,17 +537,22 @@ impl Broker {
             sms_leased,
             sms_events,
             queue,
+            info_schema,
+            info_base: Mutex::new(HashMap::new()),
         }
     }
     pub fn modems(&self) -> Result<Vec<Value>> {
         let mut rows = self.discovery.modems()?;
         // 部分QModem固件省略共享配置；按已打开的唯一服务端口识别通道，每次发送前仍核验真实归属。
-        if rows.iter().any(|r| r["sharedPolicy"] == "automatic") {
+        let native_info = crate::qmodem_info::supported(&self.info_schema);
+        if native_info || rows.iter().any(|r| r["sharedPolicy"] == "automatic") {
             let listed = self
                 .bus
                 .call("at-daemon", "list", json!({}), Duration::from_secs(3));
             for index in 0..rows.len() {
-                if rows[index]["sharedPolicy"] != "automatic" {
+                if rows[index]["sharedPolicy"] != "automatic"
+                    && (!native_info || rows[index]["shared"] != true)
+                {
                     continue;
                 }
                 let port = rows[index]["port"].as_str().unwrap_or("");
@@ -540,6 +575,19 @@ impl Broker {
                 });
             }
         }
+        // 原生查询由 QModem 自己按配置访问模组；无需打开 at-daemon，也不授予 AT 写入权限。
+        for index in 0..rows.len() {
+            let unique = rows
+                .iter()
+                .filter(|row| row["port"] == rows[index]["port"])
+                .count()
+                == 1;
+            let row = &mut rows[index];
+            if row["shared"] != true && native_info && unique {
+                row["infoTransport"] = json!("qmodem-rpc");
+                row["infoReadOnly"] = json!(true);
+            }
+        }
         let mut ports = self.ports.lock().map_err(|_| unavailable())?;
         let now = Instant::now();
         ports.quarantined.retain(|port, instance| {
@@ -555,6 +603,9 @@ impl Broker {
             {
                 row["channelState"] = json!("sms-input-unknown");
                 row["channelReady"] = json!(false);
+                row.as_object_mut()
+                    .ok_or_else(unavailable)?
+                    .remove("infoTransport");
             }
         }
         ports.locks.retain(|port, lock| {
@@ -566,6 +617,120 @@ impl Broker {
                 && (active.contains(port) || rows.iter().any(|r| r["port"] == port.as_str()))
         });
         Ok(rows)
+    }
+    pub fn info_snapshot(&self, expected: &Value) -> Result<Option<Value>> {
+        if expected["infoTransport"] != "qmodem-rpc" {
+            return Ok(None);
+        }
+        let key = expected["id"].as_str().ok_or_else(unavailable)?;
+        let binding = |row: &Value| {
+            json!([
+                row["id"],
+                row["port"],
+                row["model"],
+                row["instance"],
+                row["infoTransport"]
+            ])
+        };
+        let matches = || -> Result<()> {
+            let rows = self.modems()?;
+            if rows.iter().filter(|row| row["id"] == key).count() != 1
+                || !rows.iter().any(|row| binding(row) == binding(expected))
+            {
+                return Err(PanelError::new("MODEM_CHANGED", 409));
+            }
+            Ok(())
+        };
+        matches()?;
+        let port = expected["port"].as_str().ok_or_else(unavailable)?;
+        let lock = self
+            .ports
+            .lock()
+            .map_err(|_| unavailable())?
+            .locks
+            .entry(port.to_owned())
+            .or_default()
+            .clone();
+        let _guard = lock
+            .try_lock()
+            .map_err(|_| PanelError::new("AT_BUSY", 409))?;
+        let call = |method| {
+            self.bus.call(
+                "qmodem",
+                method,
+                json!({"config_section":key}),
+                Duration::from_secs(20),
+            )
+        };
+        let at = crate::events::wall_ms();
+        let cell = call("cell_info")?;
+        let mut value = crate::qmodem_info::parse(&cell, None, at)?;
+        if crate::qmodem_info::method_supported(&self.info_schema, "network_info") {
+            let network_at = crate::events::wall_ms();
+            let result = call("network_info").and_then(|network| {
+                crate::qmodem_info::attach_network(&network, &mut value, network_at)
+            });
+            if let Err(error) = result {
+                value["errors"]
+                    .as_array_mut()
+                    .ok_or_else(unavailable)?
+                    .push(json!({"command":"qmodem.network_info","code":error.code}));
+            }
+        }
+        if crate::qmodem_info::method_supported(&self.info_schema, "base_info") {
+            let bound = binding(expected);
+            let cached = self
+                .info_base
+                .lock()
+                .map_err(|_| unavailable())?
+                .get(key)
+                .filter(|cached| {
+                    cached.binding == bound && cached.finished.elapsed() < Duration::from_secs(60)
+                })
+                .map(|cached| (cached.observed_at, cached.value.clone()));
+            let (observed_at, sensor) = cached.unwrap_or_else(|| {
+                let observed_at = crate::events::wall_ms();
+                let sensor = call("base_info").and_then(|base| {
+                    let mut filtered = json!({});
+                    crate::qmodem_info::attach_base(&base, &mut filtered, observed_at)?;
+                    Ok(filtered["temperature"].clone())
+                });
+                if let Ok(mut cache) = self.info_base.lock() {
+                    cache.retain(|_, cached| cached.finished.elapsed() < Duration::from_secs(90));
+                    if cache.len() < 64 {
+                        cache.insert(
+                            key.to_owned(),
+                            NativeBase {
+                                binding: bound,
+                                finished: Instant::now(),
+                                observed_at,
+                                value: sensor.clone(),
+                            },
+                        );
+                    }
+                }
+                (observed_at, sensor)
+            });
+            match sensor {
+                Ok(sensor) if sensor.is_object() => {
+                    value["temperature"] = sensor;
+                    value["temperature"]["observedAtMs"] = json!(observed_at);
+                }
+                Err(error) => value["errors"]
+                    .as_array_mut()
+                    .ok_or_else(unavailable)?
+                    .push(json!({"command":"qmodem.base_info","code":error.code})),
+                _ => {}
+            }
+        }
+        matches()?;
+        value["partial"] = json!(
+            value["errors"]
+                .as_array()
+                .is_some_and(|errors| !errors.is_empty())
+        );
+        value["modem"] = expected.clone();
+        Ok(Some(value))
     }
     pub fn query(&self, id: &str, command: &str, expected: Option<(&str, &str)>) -> Result<String> {
         let seconds = if matches!(command, "AT+CMGL=4" | "AT+CMGL=4,1" | "AT+CMGL=\"ALL\"") {

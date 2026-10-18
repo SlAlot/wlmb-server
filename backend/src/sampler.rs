@@ -15,6 +15,9 @@ use std::{
 pub trait Source: Send + Sync {
     fn modems(&self) -> Result<Vec<Value>>;
     fn query(&self, id: &str, command: &str, port: &str, model: &str) -> Result<String>;
+    fn info_snapshot(&self, _row: &Value) -> Result<Option<Value>> {
+        Ok(None)
+    }
     fn query_bound(&self, row: &Value, command: &str) -> Result<String> {
         if !self
             .modems()?
@@ -33,6 +36,9 @@ pub trait Source: Send + Sync {
 }
 #[cfg(unix)]
 impl Source for crate::transport::Broker {
+    fn info_snapshot(&self, row: &Value) -> Result<Option<Value>> {
+        self.info_snapshot(row)
+    }
     fn query_bound(&self, row: &Value, command: &str) -> Result<String> {
         self.query_bound(
             row,
@@ -109,8 +115,13 @@ fn id(modem: &Value) -> Result<&str> {
         .filter(|s| !s.is_empty() && s.len() <= 128)
         .ok_or_else(failed)
 }
-fn signature(modem: &Value) -> (&Value, &Value, &Value) {
-    (&modem["port"], &modem["model"], &modem["instance"])
+fn signature(modem: &Value) -> (&Value, &Value, &Value, &Value) {
+    (
+        &modem["port"],
+        &modem["model"],
+        &modem["instance"],
+        &modem["infoTransport"],
+    )
 }
 fn current(state: &State, key: &str, generation: u64) -> bool {
     state
@@ -207,11 +218,14 @@ impl Sampler {
             if state.jobs.contains_key(&key) || state.jobs.len() >= 4 {
                 return Ok(json!({"accepted":false,"busy":true}));
             }
-            if state
-                .cache
-                .get(&key)
-                .is_some_and(|c| c.finished.elapsed() < Duration::from_millis(800))
-            {
+            if state.cache.get(&key).is_some_and(|c| {
+                c.finished.elapsed()
+                    < if entry.modem["infoTransport"] == "qmodem-rpc" {
+                        Duration::from_secs(10)
+                    } else {
+                        Duration::from_millis(800)
+                    }
+            }) {
                 return Ok(json!({"accepted":false,"busy":false}));
             }
             state.jobs.insert(key.clone(), entry.generation);
@@ -226,8 +240,10 @@ impl Sampler {
                 let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
                     sampler.collect(&entry)
                 }));
-                if !matches!(result, Ok(Ok(()))) {
-                    sampler.failed_sample(&entry);
+                match result {
+                    Ok(Ok(())) => {}
+                    Ok(Err(error)) => sampler.failed_sample(&entry, error.code),
+                    Err(_) => sampler.failed_sample(&entry, "SAMPLE_FAILED"),
                 }
                 if let Ok(mut state) = sampler.state.lock() {
                     if state.jobs.get(&job_key) == Some(&generation) {
@@ -245,8 +261,8 @@ impl Sampler {
         }
         Ok(json!({"accepted":true,"busy":true}))
     }
-    fn failed_sample(&self, entry: &Entry) {
-        self.events.record("sampler", "SAMPLE_FAILED");
+    fn failed_sample(&self, entry: &Entry, code: &'static str) {
+        self.events.record("sampler", code);
         if let Ok(mut state) = self.state.lock() {
             let Ok(key) = id(&entry.modem) else {
                 return;
@@ -255,7 +271,7 @@ impl Sampler {
                 return;
             }
             let mut value = state.cache.get(key).map(|v| v.value.clone()).unwrap_or_else(|| json!({"modem":entry.modem,"serving":[],"carriers":[],"neighbors":[],"observations":[],"observedAtMs":wall_ms()}));
-            value["errors"] = json!([{"code":"SAMPLE_FAILED"}]);
+            value["errors"] = json!([{"code":code}]);
             value["stale"] = json!(true);
             value["partial"] = json!(true);
             value["pending"] = json!(false);
@@ -271,6 +287,34 @@ impl Sampler {
     }
     fn collect(&self, entry: &Entry) -> Result<()> {
         let key = id(&entry.modem)?;
+        if entry.modem["infoTransport"] == "qmodem-rpc" {
+            let value = self
+                .source
+                .info_snapshot(&entry.modem)?
+                .ok_or_else(|| PanelError::new("QMODEM_INFO_UNAVAILABLE", 503))?;
+            for error in value["errors"].as_array().into_iter().flatten() {
+                self.events.record(
+                    "sampler",
+                    if error["command"] == "qmodem.base_info" {
+                        "QMODEM_BASE_INFO_FAILED"
+                    } else {
+                        "QMODEM_NETWORK_INFO_FAILED"
+                    },
+                );
+            }
+            let mut state = self.state.lock().map_err(|_| failed())?;
+            if !state.stopping && current(&state, key, entry.generation) {
+                state.cache.insert(
+                    key.to_owned(),
+                    Cached {
+                        generation: entry.generation,
+                        value,
+                        finished: Instant::now(),
+                    },
+                );
+            }
+            return Ok(());
+        }
         let parser = entry.modem["profile"]["parser"]
             .as_str()
             .unwrap_or("generic");
@@ -598,6 +642,7 @@ impl Sampler {
                 .chain(&state.entries[..start])
                 .filter(|e| {
                     e.modem["shared"] == true
+                        || e.modem["infoTransport"] == "qmodem-rpc"
                         || e.modem["transport"] == "dedicated"
                             && e.modem["channelReady"] == true
                             && e.modem["identityVerified"] == true

@@ -2,9 +2,9 @@
 
 [简体中文](README.md) · [Downloads](https://github.com/SlAlot/wlmb-server/releases/latest) · [API](docs/API.en.md)
 
-**Network Panel 1.1.1** by **SlAlot** is a bounded Rust modem service with an independent LuCI JavaScript/CSS interface for OpenWrt. The first public release is 1.0.0. Default port: **1117**. It does not take over dialing. QModem's public identity facts, AT formats and shared interfaces inform the independently implemented adapters.
+**Network Panel 1.1.2** by **SlAlot** is a bounded Rust modem service with an independent LuCI JavaScript/CSS interface for OpenWrt. The first public release is 1.0.0. Default port: **1117**. It does not take over dialing. QModem's public identity facts, AT formats and shared interfaces inform the independently implemented adapters.
 
-1.1.1 fixes installer rejection of multiple compatible package ABIs. Candidates are verified and dry-run in firmware priority order before a single real installation. GL.iNet automatic discovery and WiFi compatibility from 1.1.0 remain available, alongside Cortex-A53, armsr/armv8 and x86_64 packages. Official, accelerated and offline installers share the fix.
+1.1.2 adds capability-based QModem native information queries when shared AT is unavailable, without taking over ports or changing QModem configuration. Device access control now explains acceleration, firewall and interface restrictions instead of a generic unavailable message. Existing ABI fallback, GL.iNet compatibility, Cortex-A53, armsr/armv8 and x86_64 packages remain available. Official and accelerated installers select this release after publication.
 
 Source is publicly available under a [custom non-commercial attribution license](LICENSE). **Commercial use requires separate permission**; retain author and source notices. This is source-available, not MIT/GPL or OSI-approved open source. Third-party materials retain their own licenses.
 
@@ -35,9 +35,9 @@ APK ABI detection prioritizes the firmware's `/etc/apk/arch`. `apk --print-arch`
 Download from [Releases](https://github.com/SlAlot/wlmb-server/releases/latest) and verify `SHA256SUMS`. Use the actual firmware's package manager and ABI: 24.10 normally uses IPK/opkg; 25.12 normally uses APK/apk. Provided ABIs: `aarch64_cortex-a53`, `aarch64_generic` and `x86_64`. For armsr/armv8 choose the filename containing `aarch64_generic`, not the Cortex-A53 package. Other architectures/ABIs are not covered. APK here is not an Android application.
 
 ```sh
-opkg install /tmp/wlmb-server-1.1.1-aarch64.ipk
+opkg install /tmp/wlmb-server-1.1.2-aarch64.ipk
 # On APK firmware, only after verifying the trusted download and checksum:
-apk add /tmp/wlmb-server-1.1.1-aarch64.apk
+apk add /tmp/wlmb-server-1.1.2-aarch64.apk
 ```
 
 Official APK assets from 1.0.3 are signed. Before the first APK installation, download `wlmb-server-signing.pem` from the official Release, verify its file SHA-256 below against this README, then copy it to `/etc/apk/keys/wlmb-server-signing.pem` with mode 644. Only then use LuCI upload or the command above; new routers do not automatically trust our key. Do not replace firmware keys or disable signature validation. See the [step-by-step installation guide](docs/APK-INSTALL.zh-CN.md).
@@ -71,4 +71,4 @@ cargo clippy --locked --all-targets --all-features --manifest-path backend/Cargo
 
 Matching `vX.Y.Z` tags trigger Actions checks, ARM64/x86_64 builds and IPK/APK packaging. Verified assets, checksums, commit metadata and compatibility reports are uploaded only after required jobs pass. Existing assets are not overwritten. See [build instructions](docs/BUILD.md).
 
-[Changelog](CHANGELOG.md) · [1.1.1 notes](docs/RELEASE-1.1.1.md) · [security](docs/SECURITY.md) · [performance](docs/PERFORMANCE.md) · [QModem references](docs/QMODEM.md) · [frontend notices](docs/FRONTEND-SOURCES.md)
+[Changelog](CHANGELOG.md) · [1.1.2 notes](docs/RELEASE-1.1.2.md) · [security](docs/SECURITY.md) · [performance](docs/PERFORMANCE.md) · [QModem references](docs/QMODEM.md) · [frontend notices](docs/FRONTEND-SOURCES.md)

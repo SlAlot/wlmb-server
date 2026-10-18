@@ -86,6 +86,8 @@ impl NativeService {
                     status["system"]["lan"]["controls"] = info["wifiControls"].clone();
                     status["system"]["lan"]["blocked"] = info["blocked"].clone();
                     status["system"]["lan"]["blockApplyError"] = info["blockApplyError"].clone();
+                    status["system"]["lan"]["deviceBlockReason"] =
+                        info["deviceBlockReason"].clone();
                     let mut wireless = status["system"]["lan"]["wireless"]
                         .as_array()
                         .cloned()
@@ -175,8 +177,16 @@ impl NativeService {
                     });
                 let radio_scope = rows
                     .iter()
-                    .find(|r| r["id"] == key && crate::control_runtime::ModemControls::available(r))
-                    .map(|r| crate::catalog::radio_capabilities(r["model"].as_str().unwrap_or("")))
+                    .find(|r| r["id"] == key)
+                    .map(|r| {
+                        if r["infoTransport"] == "qmodem-rpc" {
+                            json!({"signal":true,"carrierAggregation":true,"neighbors":false})
+                        } else if crate::control_runtime::ModemControls::available(r) {
+                            crate::catalog::radio_capabilities(r["model"].as_str().unwrap_or(""))
+                        } else {
+                            json!({})
+                        }
+                    })
                     .unwrap_or_else(|| json!({}));
                 status["capabilities"] = json!({"signal":radio_scope["signal"]==true,"neighbors":radio_scope["neighbors"]==true,"carrierAggregation":radio_scope["carrierAggregation"]==true,"wifi":status["system"]["lan"]["wifiReadSupported"]==true,"deviceList":status["system"]["lan"]["deviceListSupported"]==true,"deviceBlock":status["system"]["lan"]["deviceBlockSupported"]==true,"sms":sms_ready,"smsSend":sms_write,"smsDelete":sms_write,"smsForward":sms_ready && self.forwarding.is_some() && cfg!(feature="pushplus-https"),"trafficLimit":self.host.is_some(),"lockBand":band_lock,"bandLock":band_lock,"lockCell":lock,"cellLock":lock,"at":at_ready,"configure":self.controls.is_some() && self.settings_io.is_some()});
                 status["smsMode"] = json!(if !sms_ready {

@@ -6,12 +6,12 @@
 
 ## 1. 下载
 
-从[1.1.1正式发布页](https://github.com/SlAlot/wlmb-server/releases/tag/v1.1.1)下载APK、`SHA256SUMS`及`wlmb-server-signing.pem`。优先查看`/etc/apk/arch`确认固件包ABI，未配置时才参考`apk --print-arch`：支持`aarch64_cortex-a53`、`aarch64_generic`和`x86_64`，其他ABI不可强装。`armsr/armv8`使用`aarch64_generic`；下方Cortex-A53示例需将文件名改为`wlmb-server-1.1.1-aarch64_generic.apk`。推荐使用一键安装器自动选包。
+从[1.1.2正式发布页](https://github.com/SlAlot/wlmb-server/releases/tag/v1.1.2)下载APK、`SHA256SUMS`及`wlmb-server-signing.pem`。优先查看`/etc/apk/arch`确认固件包ABI，未配置时才参考`apk --print-arch`：支持`aarch64_cortex-a53`、`aarch64_generic`和`x86_64`，其他ABI不可强装。`armsr/armv8`使用`aarch64_generic`；下方Cortex-A53示例需将文件名改为`wlmb-server-1.1.2-aarch64_generic.apk`。推荐使用一键安装器自动选包。
 
 用自己的文件传输工具将公钥上传到`/tmp/wlmb-server-signing.pem`，或SSH下载固定版本：
 
 ```sh
-wget -O /tmp/wlmb-server-signing.pem https://github.com/SlAlot/wlmb-server/releases/download/v1.1.1/wlmb-server-signing.pem
+wget -O /tmp/wlmb-server-signing.pem https://github.com/SlAlot/wlmb-server/releases/download/v1.1.2/wlmb-server-signing.pem
 ```
 
 ## 2. 首次信任公钥
@@ -47,8 +47,8 @@ chmod 644 /etc/apk/keys/wlmb-server-signing.pem
 SSH也可以正常验证和安装，文件名按实际下载内容替换：
 
 ```sh
-apk verify /tmp/wlmb-server-1.1.1-aarch64.apk
-apk add /tmp/wlmb-server-1.1.1-aarch64.apk
+apk verify /tmp/wlmb-server-1.1.2-aarch64.apk
+apk add /tmp/wlmb-server-1.1.2-aarch64.apk
 ```
 
 安装默认启动服务和开机自启，不接管拨号。缺少依赖时使用固件自己的软件源，不混用不同固件的软件源。

@@ -150,12 +150,12 @@ function copyCode(value) {
     if(window.isSecureContext&&navigator.clipboard&&navigator.clipboard.writeText)return navigator.clipboard.writeText(value).catch(fallback);
     try{fallback();return Promise.resolve();}catch(error){return Promise.reject(error);}
 }
-var guide = function(hash) { return L.resource('wlmb-server/guide.html') + '?v=1.1.1&rev=release1_1_1' + (hash || ''); };
+var guide = function(hash) { return L.resource('wlmb-server/guide.html') + '?v=1.1.2&rev=release1_1_2' + (hash || ''); };
 function webuiScript(name) {
     return new Promise(function(resolve,reject) {
         var script = document.createElement('script'), settled = false;
         var timer = setTimeout(function() { settled=true; script.remove(); reject(new Error('前端组件加载超时')); },12000);
-        script.src = L.resource('wlmb-server/' + name) + '?v=1.1.1&rev=release1_1_1';
+        script.src = L.resource('wlmb-server/' + name) + '?v=1.1.2&rev=release1_1_2';
         script.onload = function() { if (!settled) { settled=true; clearTimeout(timer); resolve(); } };
         script.onerror = function() { if (!settled) { settled=true; clearTimeout(timer); script.remove(); reject(new Error('前端组件加载失败')); } };
         document.head.appendChild(script);
@@ -211,7 +211,7 @@ return view.extend({
         this.draw(data[1]);
         poll.add(function() { return self.update(false); }, 3);
         var root = E('div', { id: 'wlmb-panel', 'class': 'np-root' }, [
-            E('link', { rel: 'stylesheet', href: L.resource('wlmb-server/panel.css') + '?v=1.1.1&rev=release1_1_1' }),
+            E('link', { rel: 'stylesheet', href: L.resource('wlmb-server/panel.css') + '?v=1.1.2&rev=release1_1_2' }),
             E('div', { 'class': 'np-head' }, [E('div', {}, [E('div', { 'class': 'np-title', role: 'heading', 'aria-level': '2' }, '网络面板'), E('p', { 'class': 'np-desc' }, 'wlmb-server · 根据qmodem为参考开发接入')]), link('新手教程', guide())]),
             E('div', { 'class': 'np-statusbar', role: 'status', 'aria-live': 'polite' }, [
                 E('span', { 'class': 'np-chip' }, [this.dot, this.state]), E('span', { 'class': 'np-chip' }, ['模组 ', this.count]),
@@ -252,10 +252,10 @@ return view.extend({
                     ui.addNotification(null,E('p',{},error.message+'；当前使用兼容界面，操作接口保持不变。'),'error');
                 }};
             self.webuiBridge = bridge;
-            (window.WLMBIcons && window.WLMBIcons.version==='1.1.1' ? Promise.resolve() : webuiScript('webui-icons-1.1.1.js')).then(function() {
-                return window.WLMBUIData && window.WLMBUIData.version==='1.1.1' ? null : webuiScript('webui-data-1.1.1.js');
+            (window.WLMBIcons && window.WLMBIcons.version==='1.1.2' ? Promise.resolve() : webuiScript('webui-icons-1.1.2.js')).then(function() {
+                return window.WLMBUIData && window.WLMBUIData.version==='1.1.2' ? null : webuiScript('webui-data-1.1.2.js');
             }).then(function() {
-                return window.WLMBWebUI && window.WLMBWebUI.version==='1.1.1' ? null : webuiScript('webui-shell-1.1.1.js');
+                return window.WLMBWebUI && window.WLMBWebUI.version==='1.1.2' ? null : webuiScript('webui-shell-1.1.2.js');
             }).then(function() {
                 if (!root.isConnected) return;
                 self.pages.forEach(function(page) { pageContainer.appendChild(page); });
@@ -502,7 +502,7 @@ return view.extend({
         var signal = card(system.board && (system.board.model || system.board.board_name) || 'OpenWrt 设备', [
             E('div', { 'class': 'np-metrics' }, metrics.map(function(key) { return E('div', { 'class': 'np-metric' }, [E('span', { 'class': 'np-hint' }, key.toUpperCase()), E('strong', { 'class': 'np-value' }, text(primary[key])), E('small', {}, key === 'rsrp' || key === 'rssi' ? ' dBm' : ' dB')]); })),
             E('p', { 'class': 'np-desc' }, text(primary.networkMode) + ' · ' + band(primary) + ' · PCI ' + text(primary.pci) + ' · ARFCN ' + text(primary.channel)),
-            !modem ? E('div', { 'class': 'np-notice' }, running ? '未发现可查询模组。按教程检查独立 AT 端点，不需要重新拨号。' : '启动服务后自动读取设备信息。') : modem.transport === 'dedicated' ? (modem.channelReady ? E('span') : E('div', { 'class': 'np-notice' }, '独立 AT 端点未就绪：' + text(modem.channelState) + '。不会抢占串口或改拨号。')) : !modem.shared ? E('div', { 'class': 'np-notice' }, '旧版通道未开启。本插件不会抢占串口或改拨号。') : E('span'),
+            !modem ? E('div', { 'class': 'np-notice' }, running ? '未发现可查询模组。按教程检查独立 AT 端点，不需要重新拨号。' : '启动服务后自动读取设备信息。') : modem.infoTransport === 'qmodem-rpc' ? E('div', { 'class': 'np-notice' }, '正在复用 QModem 信息接口；短信与锁定功能按实际通道能力提供。') : modem.transport === 'dedicated' ? (modem.channelReady ? E('span') : E('div', { 'class': 'np-notice' }, '独立 AT 端点未就绪：' + text(modem.channelState) + '。不会抢占串口或改拨号。')) : !modem.shared ? E('div', { 'class': 'np-notice' }, '共享 AT 通道未就绪，且未检测到兼容的信息接口。不会抢占串口或改拨号。') : E('span'),
             radio.pending ? E('p', { 'class': 'np-hint np-loading-status', role:'status' }, [E('span', { 'class':'np-spinner', 'aria-hidden':'true' }), '后台正在更新，先展示已读数据。']) : radio.stale ? E('p', { 'class':'np-hint' }, '数据已过期，请检查模组端点。') : E('span'),
             status.failure ? E('p', { 'class': 'np-notice' }, status.failure) : E('span'),
             E('span')]);
@@ -541,7 +541,7 @@ return view.extend({
             E('tbody', {}, devices.length ? devices.map(function(item) { return E('tr', {}, [
                 E('td', {}, item.name), E('td', {}, [E('div', {}, text(item.ip)), E('small', {}, item.mac)]), E('td', {}, item.type),
                 E('td', {}, [E('div',{},speed(item.rates && item.rates.downloadBytesPerSecond) + ' / ' + speed(item.rates && item.rates.uploadBytesPerSecond)),item.rateScope==='port'?E('small',{'class':'np-hint'},'网口 '+text(item.rateInterface)+' · 端口统计'):E('span')]),
-                E('td', {}, lan.deviceBlockSupported && !lanStale ? button((lan.blocked || []).includes(item.mac) ? '解除限制' : '限制上网', function() { return self.hostAction({kind:'device_block',mac:item.mac,blocked:!(lan.blocked || []).includes(item.mac)}); }, 'outline') : '当前系统未开放')
+                E('td', {}, lan.deviceBlockSupported && !lanStale ? button((lan.blocked || []).includes(item.mac) ? '解除限制' : '限制上网', function() { return self.hostAction({kind:'device_block',mac:item.mac,blocked:!(lan.blocked || []).includes(item.mac)}); }, 'outline') : lanStale ? '设备状态待更新' : ({FLOW_OFFLOAD_ENABLED:'已启用流量加速，上网控制暂不可用',FLOW_OFFLOAD_UNCONFIRMED:'流量加速状态未确认',FIREWALL_UNAVAILABLE:'无法读取防火墙状态',LAN_INTERFACE_UNCONFIRMED:'LAN 接口尚未确认',WAN_INTERFACE_UNCONFIRMED:'上网接口尚未确认',FORWARD_PATH_AMBIGUOUS:'LAN 与上网接口相同，暂不支持限制',HOST_STATE_STALE:'控制状态待更新'})[lan.deviceBlockReason] || '上网控制状态未确认，请刷新后重试')
             ]); }) : [E('tr', {}, E('td', { colspan:5 }, lanStale ? '设备快照已过期，等待后台更新' : lan.deviceListSupported ? lan.complete === false ? '设备列表尚未完整读取' : '暂未发现在线设备' : '当前系统未提供可读取的设备列表'))]) ])),
             !lanStale && lan.complete === false && devices.length ? E('p', {'class':'np-notice'}, '部分无线接口未完成读取，此列表可能不完整。') : E('span'),
             (lan.blocked || []).length ? E('div', { 'class': 'np-actions' }, (lan.blocked || []).map(function(mac) { return button('解除 ' + mac, function() {return self.hostAction({kind:'device_block',mac:mac,blocked:false});}, 'outline'); })) : E('span'),

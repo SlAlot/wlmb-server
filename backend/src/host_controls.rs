@@ -431,11 +431,24 @@ pub fn editable_profiles(snapshot: &Value) -> Vec<Value> {
     rows
 }
 pub fn guard_supported(s: &Value) -> bool {
-    s["nftAvailable"] == true
-        && s["flowOffload"] == false
-        && s["lanDevice"].as_str().is_some_and(interface)
-        && s["wanDevice"].as_str().is_some_and(interface)
-        && s["lanDevice"] != s["wanDevice"]
+    guard_unavailable_reason(s).is_none()
+}
+pub fn guard_unavailable_reason(s: &Value) -> Option<&'static str> {
+    if s["nftAvailable"] != true {
+        Some("FIREWALL_UNAVAILABLE")
+    } else if s["flowStateKnown"] == false || !s["flowOffload"].is_boolean() {
+        Some("FLOW_OFFLOAD_UNCONFIRMED")
+    } else if s["flowOffload"] == true {
+        Some("FLOW_OFFLOAD_ENABLED")
+    } else if !s["lanDevice"].as_str().is_some_and(interface) {
+        Some("LAN_INTERFACE_UNCONFIRMED")
+    } else if !s["wanDevice"].as_str().is_some_and(interface) {
+        Some("WAN_INTERFACE_UNCONFIRMED")
+    } else if s["lanDevice"] == s["wanDevice"] {
+        Some("FORWARD_PATH_AMBIGUOUS")
+    } else {
+        None
+    }
 }
 pub fn guard_script(snapshot: &Value, blocked: &BTreeSet<String>, cutoff: bool) -> Result<String> {
     if !guard_supported(snapshot) || blocked.len() > 128 || blocked.iter().any(|s| !mac(s)) {
@@ -566,8 +579,13 @@ impl HostControls {
         limit["cutoffSupported"] = json!(!stale && guard_supported(&s.snapshot));
         limit["cutoffActive"] = json!(s.cutoff_active && !stale && !s.apply_error);
         limit["applyError"] = json!(s.apply_error || stale);
+        let block_reason = if stale {
+            Some("HOST_STATE_STALE")
+        } else {
+            guard_unavailable_reason(&s.snapshot)
+        };
         Ok(
-            json!({"traffic":traffic,"trafficLimit":limit,"blocked":s.blocked,"blockApplyError":s.apply_error||stale,"deviceBlockSupported":!stale&&guard_supported(&s.snapshot),
+            json!({"traffic":traffic,"trafficLimit":limit,"blocked":s.blocked,"blockApplyError":s.apply_error||stale,"deviceBlockSupported":block_reason.is_none(),"deviceBlockReason":block_reason,
             "wifiControls":{"profiles":p,"displayProfiles":if stale{vec![]}else{display_profiles(&s.snapshot["wireless"])},"editableBands":p.iter().map(|p|p["band"].clone()).collect::<Vec<_>>(),"bandUnifySupported":unify,
                 "bandUnifyEnabled":s.unify_enabled&&!stale,"bandUnifyStateKnown":!stale&&wifi_unified(&s.snapshot).is_some(),"bandUnifyManaged":s.unify_managed&&!stale,"bandUnifySource":if s.unify_managed{"plugin"}else{"system-config"},"stale":stale}}),
         )

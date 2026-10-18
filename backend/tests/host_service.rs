@@ -66,6 +66,36 @@ fn both_transports_gate_radio_features_on_ready_channel_and_exact_parser() {
         }
     }
 }
+#[test]
+fn native_qmodem_information_is_visible_to_clients_without_enabling_writes_for_any_model() {
+    for (_, models) in wlmb_server::catalog::MODELS {
+        for model in models.split_whitespace() {
+            let source = Arc::new(Inventory(vec![json!({"id":"m1","model":model,
+                "port":"/dev/ttyUSB2","shared":false,"infoTransport":"qmodem-rpc"})]));
+            let sampler = Sampler::new(source.clone());
+            sampler.discover().unwrap();
+            let service =
+                NativeService::integrated(Arc::new(Empty), sampler, source, None, None, None)
+                    .unwrap();
+            let status = service.local("status", json!({"modem":"m1"})).unwrap();
+            assert_eq!(status["capabilities"]["signal"], true, "{model}");
+            assert_eq!(
+                status["capabilities"]["carrierAggregation"], true,
+                "{model}"
+            );
+            for key in [
+                "neighbors",
+                "at",
+                "smsSend",
+                "smsDelete",
+                "lockBand",
+                "lockCell",
+            ] {
+                assert_eq!(status["capabilities"][key], false, "{model}/{key}");
+            }
+        }
+    }
+}
 impl Source for Empty {
     fn modems(&self) -> Result<Vec<Value>> {
         Ok(vec![])

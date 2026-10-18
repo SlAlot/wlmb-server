@@ -322,7 +322,7 @@ impl HostIo for NativeHost {
         let radio_capabilities = self.radio_capabilities(&wireless);
         Ok(
             json!({"wireless":wireless,"radioCapabilities":radio_capabilities,"network":network,"lanDevice":lan_device,"wanDevice":crate::telemetry::wan_device(&wan),"nftAvailable":available,
-            "flowOffload":flow||configured_flow,"devices":peers.into_values().take(256).collect::<Vec<_>>()}),
+            "flowOffload":flow||configured_flow,"flowStateKnown":available&&firewall["values"].is_object(),"devices":peers.into_values().take(256).collect::<Vec<_>>()}),
         )
     }
     fn wifi(&self, snapshot: &Value, changes: &[Value]) -> Result<()> {

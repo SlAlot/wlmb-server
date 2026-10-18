@@ -431,6 +431,10 @@ fn guard_disabled_when_accelerated_and_budget_only_counts_observed_delta() {
     let day = Some(Date::parse("2026-10-10").unwrap());
     h.sample(day, Some(("usb0", 10000, 10000))).unwrap();
     h.sample(day, Some(("usb0", 10500, 10500))).unwrap();
+    assert_eq!(
+        h.public().unwrap()["deviceBlockReason"],
+        "FLOW_OFFLOAD_ENABLED"
+    );
     assert_eq!(h.public().unwrap()["traffic"]["monthBytes"], 1000);
     assert_eq!(h.public().unwrap()["trafficLimit"]["warning"], true);
     assert_eq!(
@@ -438,6 +442,26 @@ fn guard_disabled_when_accelerated_and_budget_only_counts_observed_delta() {
         false
     );
     assert!(!io.calls.lock().unwrap().iter().any(|v| v["cutoff"] == true));
+}
+#[test]
+fn device_block_reasons_match_the_existing_safety_gate_without_changing_configuration() {
+    let good = snapshot();
+    assert_eq!(host_controls::guard_unavailable_reason(&good), None);
+    for (key, value, code) in [
+        ("nftAvailable", json!(false), "FIREWALL_UNAVAILABLE"),
+        ("flowStateKnown", json!(false), "FLOW_OFFLOAD_UNCONFIRMED"),
+        ("flowOffload", json!(true), "FLOW_OFFLOAD_ENABLED"),
+        ("flowOffload", Value::Null, "FLOW_OFFLOAD_UNCONFIRMED"),
+        ("lanDevice", Value::Null, "LAN_INTERFACE_UNCONFIRMED"),
+        ("wanDevice", Value::Null, "WAN_INTERFACE_UNCONFIRMED"),
+        ("wanDevice", json!("br-lan"), "FORWARD_PATH_AMBIGUOUS"),
+    ] {
+        let mut state = good.clone();
+        state[key] = value;
+        assert!(!host_controls::guard_supported(&state));
+        assert_eq!(host_controls::guard_unavailable_reason(&state), Some(code));
+        assert!(host_controls::guard_script(&state, &BTreeSet::new(), true).is_err());
+    }
 }
 #[test]
 fn blocked_devices_persist_and_can_be_unblocked_after_leaving_lan() {

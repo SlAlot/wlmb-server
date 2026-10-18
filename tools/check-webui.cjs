@@ -448,6 +448,12 @@ async function main() {
   status.system.lan.ports=[{interface:'eth1',peerCount:1,rates:{downloadBytesPerSecond:125000,uploadBytesPerSecond:12500}}]
   page.draw(status);goPage('WiFi 与设备')
   assert.ok(page.networks.textContent.includes('网口 eth1 · 端口统计'));assert.ok(page.networks.textContent.includes('1.00 Mbps'));assert.ok(page.networks.textContent.includes('网口实时速率'))
+  for(const [reason,message] of [['FLOW_OFFLOAD_ENABLED','已启用流量加速，上网控制暂不可用'],['FIREWALL_UNAVAILABLE','无法读取防火墙状态'],['WAN_INTERFACE_UNCONFIRMED','上网接口尚未确认'],['HOST_STATE_STALE','控制状态待更新']]){
+    status.system.lan.deviceBlockSupported=false;status.system.lan.deviceBlockReason=reason;page.draw(status)
+    assert.ok(page.networks.textContent.includes(message),'Show the actual guard restriction: '+reason)
+    assert.ok(!page.networks.textContent.includes('当前系统未开放'))
+    assert.ok(![...page.networks.querySelectorAll('button')].some(node=>node.textContent==='限制上网'),'Do not bypass the backend guard')
+  }
   ;[...page.networks.querySelectorAll('button')].find(node=>node.textContent==='编辑').click()
   await settle(()=>doc.querySelector('.np-dialog [aria-label="启用 WiFi"]'))
   assert.equal(doc.querySelector('.np-dialog [aria-label="启用 WiFi"]').checked,true)
