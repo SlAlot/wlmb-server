@@ -49,7 +49,9 @@ fn sa_feedback_shape_maps_without_model_specific_routing_or_private_data() {
     assert_eq!(value["subscription"]["ulKbps"], 200000.);
     assert_eq!(value["subscription"]["cqiDl"], 6.);
     assert!(value["sessionQos"].is_null());
-    assert!(value["carriers"].as_array().unwrap().is_empty());
+    assert_eq!(value["carriers"].as_array().unwrap().len(), 1);
+    assert_eq!(value["carrierState"]["status"], "serving-only");
+    assert_eq!(value["carrierState"]["inventoryComplete"], false);
     assert!(!value.to_string().contains("synthetic-private-field"));
 }
 
@@ -115,12 +117,9 @@ fn lte_nsa_and_ca_do_not_mix_fields_or_make_ambiguous_carriers() {
         .iter_mut()
         .find(|row| row["key"] == "Band (CA)")
         .unwrap()["value"] = json!("78");
-    assert!(
-        qmodem_info::parse(&nsa, None, 2000).unwrap()["carriers"]
-            .as_array()
-            .unwrap()
-            .is_empty()
-    );
+    let incomplete = qmodem_info::parse(&nsa, None, 2000).unwrap();
+    assert_eq!(incomplete["carriers"].as_array().unwrap().len(), 2);
+    assert_eq!(incomplete["carrierState"]["status"], "serving-only");
 }
 
 #[test]

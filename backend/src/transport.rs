@@ -119,7 +119,15 @@ pub(crate) fn allowed(object: &str, method: &str) -> bool {
     match object {
         "session" => ["login", "access", "destroy"].contains(&method),
         "at-daemon" => ["list", "sendat", "lease_acquire", "lease_release"].contains(&method),
-        "qmodem" => ["cell_info", "network_info", "base_info"].contains(&method),
+        "qmodem" => [
+            "cell_info",
+            "network_info",
+            "base_info",
+            "get_current_band",
+            "get_neighborcell",
+            "send_at",
+        ]
+        .contains(&method),
         "qmodem.sms" => [
             "status",
             "config_get",
@@ -145,13 +153,20 @@ pub(crate) fn allowed(object: &str, method: &str) -> bool {
 #[cfg(test)]
 mod feature_allowlist_tests {
     #[test]
-    fn native_qmodem_read_access_does_not_expose_arbitrary_at_or_write_methods() {
-        for method in ["cell_info", "network_info", "base_info"] {
+    fn native_qmodem_read_access_does_not_expose_write_methods() {
+        for method in [
+            "cell_info",
+            "network_info",
+            "base_info",
+            "get_current_band",
+            "get_neighborcell",
+            "send_at",
+        ] {
             assert!(super::allowed("qmodem", method));
         }
         for method in [
-            "send_at",
             "set_lockband",
+            "set_neighborcell",
             "set_mode",
             "modem_redial",
             "do_reboot",
@@ -200,6 +215,20 @@ pub fn process(
     input: Option<&[u8]>,
     timeout: Duration,
 ) -> Result<String> {
+    let (success, raw) = process_capture(program, args, input, timeout)?;
+    if success { Ok(raw) } else { Err(unavailable()) }
+}
+pub(crate) fn process_capture(
+    program: &str,
+    args: &[&str],
+    input: Option<&[u8]>,
+    timeout: Duration,
+) -> Result<(bool, String)> {
+    let modem_tool = program == "/usr/libexec/modem/at"
+        && args == ["--json"]
+        && input
+            .and_then(|raw| serde_json::from_slice::<Value>(raw).ok())
+            .is_some_and(|value| crate::luoye::request_valid(&value));
     if ![
         "/sbin/uci",
         "/sbin/nft",
@@ -212,6 +241,7 @@ pub fn process(
         "/bin/date",
     ]
     .contains(&program)
+        && !modem_tool
         || timeout.is_zero()
         || timeout > Duration::from_secs(30)
     {
@@ -261,13 +291,10 @@ pub fn process(
         }
         raw.extend_from_slice(&chunk[..count]);
     }
-    loop {
+    let success = loop {
         match helper.child.try_wait() {
             Ok(Some(exit)) => {
-                if !exit.success() {
-                    return Err(unavailable());
-                }
-                break;
+                break exit.success();
             }
             Ok(None) => {
                 remaining(deadline)?;
@@ -275,8 +302,8 @@ pub fn process(
             }
             Err(_) => return Err(unavailable()),
         }
-    }
-    Ok(String::from_utf8_lossy(&raw).into_owned())
+    };
+    Ok((success, String::from_utf8_lossy(&raw).into_owned()))
 }
 fn identifier(v: &str) -> bool {
     !v.is_empty()
@@ -375,7 +402,17 @@ pub fn parse_config(raw: &str) -> Vec<Value> {
             (_, None | Some("")) => "automatic",
             _ => "disabled",
         };
-        rows.push(json!({"id":name,"port":port,"smsPort":sms_port,"model":model,"manufacturer":s.get("manufacturer").cloned().unwrap_or_default(),"platform":s.get("platform").cloned().unwrap_or_default(),"shared":shared_policy=="enabled","sharedPolicy":shared_policy,"discoveredBy":"qmodem-config","profile":crate::catalog::identify(model)}));
+        let use_ubus = match s.get("use_ubus").map(String::as_str) {
+            None | Some("" | "1") => Some(true),
+            Some("0") => Some(false),
+            _ => None,
+        };
+        let at_tool = match tool {
+            "" | "0" => Some("tom_modem"),
+            "1" => Some("sms_tool_q"),
+            _ => None,
+        };
+        rows.push(json!({"id":name,"port":port,"smsPort":sms_port,"model":model,"manufacturer":s.get("manufacturer").cloned().unwrap_or_default(),"platform":s.get("platform").cloned().unwrap_or_default(),"shared":shared_policy=="enabled","sharedPolicy":shared_policy,"qmodemUseUbus":use_ubus,"qmodemAtTool":at_tool,"discoveredBy":"qmodem-config","profile":crate::catalog::identify(model)}));
     }
     rows
 }
@@ -511,6 +548,7 @@ pub struct Broker {
     queue: Option<Arc<crate::qmodem_queue::Contract>>,
     info_schema: Value,
     info_base: Mutex<HashMap<String, NativeBase>>,
+    info_gate: Mutex<()>,
 }
 impl Broker {
     pub fn new(bus: Arc<dyn Bus>, discovery: Arc<dyn Discovery>) -> Self {
@@ -539,19 +577,22 @@ impl Broker {
             queue,
             info_schema,
             info_base: Mutex::new(HashMap::new()),
+            info_gate: Mutex::new(()),
         }
     }
     pub fn modems(&self) -> Result<Vec<Value>> {
         let mut rows = self.discovery.modems()?;
         // 部分QModem固件省略共享配置；按已打开的唯一服务端口识别通道，每次发送前仍核验真实归属。
         let native_info = crate::qmodem_info::supported(&self.info_schema);
-        if native_info || rows.iter().any(|r| r["sharedPolicy"] == "automatic") {
+        let at_style = crate::qmodem_at::style(&self.info_schema);
+        let native_provider = native_info || at_style.is_some();
+        if native_provider || rows.iter().any(|r| r["sharedPolicy"] == "automatic") {
             let listed = self
                 .bus
                 .call("at-daemon", "list", json!({}), Duration::from_secs(3));
             for index in 0..rows.len() {
                 if rows[index]["sharedPolicy"] != "automatic"
-                    && (!native_info || rows[index]["shared"] != true)
+                    && (!native_provider || rows[index]["shared"] != true)
                 {
                     continue;
                 }
@@ -583,9 +624,30 @@ impl Broker {
                 .count()
                 == 1;
             let row = &mut rows[index];
-            if row["shared"] != true && native_info && unique {
+            let raw_plan = at_style.and_then(|style| {
+                (row["qmodemUseUbus"].is_boolean() && row["qmodemAtTool"].is_string())
+                    .then(|| crate::qmodem_at::plan(row))
+                    .flatten()
+                    .map(|plan| (style, plan))
+            });
+            if row["shared"] != true && (native_info || raw_plan.is_some()) && unique {
                 row["infoTransport"] = json!("qmodem-rpc");
                 row["infoReadOnly"] = json!(true);
+                row["infoNeighborQuery"] = json!(if let Some((_, plan)) = &raw_plan {
+                    plan.neighbors
+                } else {
+                    crate::qmodem_info::method_supported(&self.info_schema, "get_neighborcell")
+                        && crate::qmodem_info::neighbor_query_safe(row)
+                });
+                row["infoCarrierQuery"] = json!(if let Some((_, plan)) = &raw_plan {
+                    plan.carriers
+                } else {
+                    crate::qmodem_info::method_supported(&self.info_schema, "get_current_band")
+                });
+                if let Some((style, _)) = raw_plan {
+                    row["infoAtParams"] = json!(style);
+                    row["infoInventorySource"] = json!("qmodem.send_at");
+                }
             }
         }
         let mut ports = self.ports.lock().map_err(|_| unavailable())?;
@@ -606,6 +668,7 @@ impl Broker {
                 row.as_object_mut()
                     .ok_or_else(unavailable)?
                     .remove("infoTransport");
+                row["infoNeighborQuery"] = json!(false);
             }
         }
         ports.locks.retain(|port, lock| {
@@ -619,6 +682,13 @@ impl Broker {
         Ok(rows)
     }
     pub fn info_snapshot(&self, expected: &Value) -> Result<Option<Value>> {
+        self.info_snapshot_progress(expected, &mut |_| Ok(()))
+    }
+    pub fn info_snapshot_progress(
+        &self,
+        expected: &Value,
+        publish: &mut dyn FnMut(Value) -> Result<()>,
+    ) -> Result<Option<Value>> {
         if expected["infoTransport"] != "qmodem-rpc" {
             return Ok(None);
         }
@@ -629,7 +699,15 @@ impl Broker {
                 row["port"],
                 row["model"],
                 row["instance"],
-                row["infoTransport"]
+                row["infoTransport"],
+                row["manufacturer"],
+                row["platform"],
+                row["sharedPolicy"],
+                row["infoNeighborQuery"],
+                row["infoCarrierQuery"],
+                row["infoAtParams"],
+                row["qmodemUseUbus"],
+                row["qmodemAtTool"]
             ])
         };
         let matches = || -> Result<()> {
@@ -642,6 +720,11 @@ impl Broker {
             Ok(())
         };
         matches()?;
+        // 上游被动邻区实现共用临时路径，本插件跨模组串行调用，避免自己的采集任务互相覆盖。
+        let _info_guard = self
+            .info_gate
+            .try_lock()
+            .map_err(|_| PanelError::new("AT_BUSY", 409))?;
         let port = expected["port"].as_str().ok_or_else(unavailable)?;
         let lock = self
             .ports
@@ -654,17 +737,126 @@ impl Broker {
         let _guard = lock
             .try_lock()
             .map_err(|_| PanelError::new("AT_BUSY", 409))?;
+        let transport_uncertain = std::cell::Cell::new(false);
         let call = |method| {
-            self.bus.call(
+            matches()?;
+            if transport_uncertain.get() {
+                return Err(PanelError::new("AT_READ_DEFERRED", 503));
+            }
+            let reply = self.bus.call(
                 "qmodem",
                 method,
                 json!({"config_section":key}),
                 Duration::from_secs(20),
-            )
+            );
+            if reply.is_err() {
+                transport_uncertain.set(true);
+            }
+            // 每次调用后重新绑定，配置变化时不能再向新设备读取或复用旧温度缓存。
+            matches()?;
+            reply
         };
-        let at = crate::events::wall_ms();
-        let cell = call("cell_info")?;
-        let mut value = crate::qmodem_info::parse(&cell, None, at)?;
+        let mut value = if let Some(style) = expected["infoAtParams"].as_u64() {
+            crate::qmodem_at::collect(
+                expected,
+                |command| {
+                    matches()?;
+                    let params = crate::qmodem_at::request(expected, style, command)?;
+                    let reply =
+                        self.bus
+                            .call("qmodem", "send_at", params, Duration::from_secs(12))?;
+                    matches()?;
+                    crate::qmodem_at::response(&reply, expected, command)
+                },
+                |value| {
+                    matches()?;
+                    publish(value)
+                },
+            )?
+        } else {
+            let at = crate::events::wall_ms();
+            let cell = call("cell_info")?;
+            let mut value = crate::qmodem_info::parse(&cell, None, at)?;
+            matches()?;
+            if expected["infoCarrierQuery"] == true {
+                value["carrierState"]["queryStatus"] = json!("pending");
+            }
+            if expected["infoNeighborQuery"] == true {
+                value["neighborState"] = json!({"status":"pending","queryStatus":"pending"});
+            }
+            let progress = |value: &Value, publish: &mut dyn FnMut(Value) -> Result<()>| {
+                let mut stage = value.clone();
+                stage["modem"] = expected.clone();
+                stage["pending"] = json!(true);
+                stage["partial"] = json!(true);
+                publish(stage)
+            };
+            // 先发布已校验的主信号，可选载波与邻区查询不能阻塞首屏展示。
+            progress(&value, publish)?;
+            for (method, field, enabled) in [
+                (
+                    "get_current_band",
+                    "carrierState",
+                    expected["infoCarrierQuery"] == true,
+                ),
+                (
+                    "get_neighborcell",
+                    "neighborState",
+                    expected["infoNeighborQuery"] == true,
+                ),
+            ] {
+                if !enabled {
+                    continue;
+                }
+                matches()?;
+                let observed_at = crate::events::wall_ms();
+                let result = call(method).and_then(|reply| {
+                    if method == "get_current_band" {
+                        crate::qmodem_info::attach_carriers(&reply, &mut value, observed_at)
+                    } else {
+                        crate::qmodem_info::attach_neighbors(&reply, &mut value, observed_at)
+                    }
+                });
+                if let Err(error) = result {
+                    if !value[field].is_object() || value[field]["status"] == "pending" {
+                        value[field] = json!({"status":"unavailable","stale":true});
+                    }
+                    value[field]["queryStatus"] = json!("error");
+                    value[field]["code"] = json!(error.code);
+                    value["errors"]
+                        .as_array_mut()
+                        .ok_or_else(unavailable)?
+                        .push(json!({"command":format!("qmodem.{method}"),"code":error.code}));
+                }
+                matches()?;
+                progress(&value, publish)?;
+                if transport_uncertain.get() {
+                    for deferred in ["carrierState", "neighborState"] {
+                        if value[deferred]["queryStatus"] == "pending" {
+                            value[deferred] = json!({"status":"unavailable","queryStatus":"error",
+                                "code":"AT_READ_DEFERRED","stale":true});
+                        }
+                    }
+                    value["infoSupplementDeferred"] = json!(true);
+                    break;
+                }
+            }
+            if value["neighborState"].is_null() {
+                value["neighborState"] = json!({"status":"unsupported","reason":"PASSIVE_NEIGHBOR_QUERY_UNAVAILABLE","stale":true});
+            }
+            value
+        };
+        // 独立解析完成后先发布，原生签约速率或温度读取仍只作为补充信息。
+        if expected["infoAtParams"].is_u64() {
+            matches()?;
+            publish(value.clone())?;
+        }
+        if value["infoSupplementDeferred"] == true {
+            matches()?;
+            value["partial"] = json!(true);
+            value["modem"] = expected.clone();
+            return Ok(Some(value));
+        }
         if crate::qmodem_info::method_supported(&self.info_schema, "network_info") {
             let network_at = crate::events::wall_ms();
             let result = call("network_info").and_then(|network| {
@@ -677,7 +869,10 @@ impl Broker {
                     .push(json!({"command":"qmodem.network_info","code":error.code}));
             }
         }
-        if crate::qmodem_info::method_supported(&self.info_schema, "base_info") {
+        if crate::qmodem_info::method_supported(&self.info_schema, "base_info")
+            && !transport_uncertain.get()
+        {
+            matches()?;
             let bound = binding(expected);
             let cached = self
                 .info_base
@@ -724,6 +919,9 @@ impl Broker {
             }
         }
         matches()?;
+        if transport_uncertain.get() {
+            value["infoSupplementDeferred"] = json!(true);
+        }
         value["partial"] = json!(
             value["errors"]
                 .as_array()

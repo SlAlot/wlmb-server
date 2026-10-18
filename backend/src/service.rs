@@ -179,8 +179,10 @@ impl NativeService {
                     .iter()
                     .find(|r| r["id"] == key)
                     .map(|r| {
-                        if r["infoTransport"] == "qmodem-rpc" {
-                            json!({"signal":true,"carrierAggregation":true,"neighbors":false})
+                        if r["infoTransport"] == crate::luoye_info::PROVIDER {
+                            json!({"signal":true,"carrierAggregation":true,"neighbors":r["infoNeighborQuery"]==true})
+                        } else if r["infoTransport"] == "qmodem-rpc" {
+                            json!({"signal":true,"carrierAggregation":r["infoAtParams"].is_null() || r["infoCarrierQuery"]==true,"neighbors":r["infoNeighborQuery"]==true})
                         } else if crate::control_runtime::ModemControls::available(r) {
                             crate::catalog::radio_capabilities(r["model"].as_str().unwrap_or(""))
                         } else {
@@ -818,12 +820,21 @@ pub fn run_auto() -> Result<()> {
 }
 fn run(requested_standalone: Option<bool>) -> Result<()> {
     let bus = Arc::new(NativeBus::default());
+    let luoye_detected = crate::luoye::SystemIo::detected(Path::new("/"));
     let qmodem = crate::connection_mode::qmodem_installed(Path::new("/"));
     let glinet_detected = requested_standalone != Some(true)
+        && !luoye_detected
         && !qmodem
         && crate::glinet::Glinet::detected(bus.as_ref())
             .unwrap_or_else(|_| Path::new("/etc/glversion").is_file());
-    let backend = crate::connection_mode::backend(requested_standalone, qmodem, glinet_detected);
+    let backend = crate::connection_mode::with_modem_cache(
+        requested_standalone,
+        qmodem,
+        glinet_detected,
+        luoye_detected,
+    );
+    let luoye = (backend == crate::connection_mode::Backend::Luoye)
+        .then(|| crate::luoye::Luoye::new(Arc::new(crate::luoye::SystemIo::new())));
     let glinet = (backend == crate::connection_mode::Backend::Glinet)
         .then(|| crate::glinet::Glinet::new(bus.clone()));
     let standalone = backend == crate::connection_mode::Backend::Independent;
@@ -835,7 +846,7 @@ fn run(requested_standalone: Option<bool>) -> Result<()> {
             crate::independent_at::SystemHardware,
         ))
     });
-    let broker = (!standalone && glinet.is_none()).then(|| {
+    let broker = (!standalone && glinet.is_none() && luoye.is_none()).then(|| {
         Arc::new(Broker::new(
             bus.clone(),
             Arc::new(SystemDiscovery {
@@ -843,7 +854,9 @@ fn run(requested_standalone: Option<bool>) -> Result<()> {
             }),
         ))
     });
-    let source: Arc<dyn crate::sampler::Source> = if let Some(source) = &glinet {
+    let source: Arc<dyn crate::sampler::Source> = if let Some(source) = &luoye {
+        source.clone()
+    } else if let Some(source) = &glinet {
         source.clone()
     } else if let Some(source) = &independent {
         source.clone()
@@ -920,9 +933,10 @@ fn run(requested_standalone: Option<bool>) -> Result<()> {
     *service.connection.lock().map_err(|_| failed())? = json!({
         "mode":if standalone {"independent"} else {"shared"},
         "qmodemDetected":qmodem,
+        "modemCacheDetected":luoye_detected,
         "selection":"startup",
         "busyPortPolicy":"never-steal",
-        "sharedService":if standalone {Value::Null} else if glinet.is_some() {json!("glinet-modem-at")} else {json!("at-daemon")}
+        "sharedService":if luoye.is_some() {json!(crate::luoye_info::PROVIDER)} else if standalone {Value::Null} else if glinet.is_some() {json!("glinet-modem-at")} else {json!("at-daemon")}
     });
     let stop = Arc::new(AtomicBool::new(false));
     let term = signal_hook::flag::register(signal_hook::consts::SIGTERM, stop.clone())

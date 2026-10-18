@@ -18,6 +18,13 @@ pub trait Source: Send + Sync {
     fn info_snapshot(&self, _row: &Value) -> Result<Option<Value>> {
         Ok(None)
     }
+    fn info_snapshot_progress(
+        &self,
+        row: &Value,
+        _publish: &mut dyn FnMut(Value) -> Result<()>,
+    ) -> Result<Option<Value>> {
+        self.info_snapshot(row)
+    }
     fn query_bound(&self, row: &Value, command: &str) -> Result<String> {
         if !self
             .modems()?
@@ -38,6 +45,13 @@ pub trait Source: Send + Sync {
 impl Source for crate::transport::Broker {
     fn info_snapshot(&self, row: &Value) -> Result<Option<Value>> {
         self.info_snapshot(row)
+    }
+    fn info_snapshot_progress(
+        &self,
+        row: &Value,
+        publish: &mut dyn FnMut(Value) -> Result<()>,
+    ) -> Result<Option<Value>> {
+        self.info_snapshot_progress(row, publish)
     }
     fn query_bound(&self, row: &Value, command: &str) -> Result<String> {
         self.query_bound(
@@ -115,13 +129,21 @@ fn id(modem: &Value) -> Result<&str> {
         .filter(|s| !s.is_empty() && s.len() <= 128)
         .ok_or_else(failed)
 }
-fn signature(modem: &Value) -> (&Value, &Value, &Value, &Value) {
-    (
-        &modem["port"],
-        &modem["model"],
-        &modem["instance"],
-        &modem["infoTransport"],
-    )
+fn signature(modem: &Value) -> Value {
+    json!([
+        modem["port"],
+        modem["model"],
+        modem["instance"],
+        modem["infoTransport"],
+        modem["manufacturer"],
+        modem["platform"],
+        modem["sharedPolicy"],
+        modem["infoNeighborQuery"],
+        modem["infoCarrierQuery"],
+        modem["infoAtParams"],
+        modem["qmodemUseUbus"],
+        modem["qmodemAtTool"]
+    ])
 }
 fn current(state: &State, key: &str, generation: u64) -> bool {
     state
@@ -222,6 +244,8 @@ impl Sampler {
                 c.finished.elapsed()
                     < if entry.modem["infoTransport"] == "qmodem-rpc" {
                         Duration::from_secs(10)
+                    } else if entry.modem["infoTransport"] == crate::luoye_info::PROVIDER {
+                        Duration::from_secs(2)
                     } else {
                         Duration::from_millis(800)
                     }
@@ -287,33 +311,33 @@ impl Sampler {
     }
     fn collect(&self, entry: &Entry) -> Result<()> {
         let key = id(&entry.modem)?;
-        if entry.modem["infoTransport"] == "qmodem-rpc" {
+        if entry.modem["infoTransport"] == "qmodem-rpc"
+            || entry.modem["infoTransport"] == crate::luoye_info::PROVIDER
+        {
             let value = self
                 .source
-                .info_snapshot(&entry.modem)?
+                .info_snapshot_progress(&entry.modem, &mut |value| {
+                    self.publish_native(entry, value)
+                })?
                 .ok_or_else(|| PanelError::new("QMODEM_INFO_UNAVAILABLE", 503))?;
             for error in value["errors"].as_array().into_iter().flatten() {
                 self.events.record(
                     "sampler",
-                    if error["command"] == "qmodem.base_info" {
-                        "QMODEM_BASE_INFO_FAILED"
-                    } else {
-                        "QMODEM_NETWORK_INFO_FAILED"
+                    match error["command"].as_str() {
+                        Some("qmodem.base_info") => "QMODEM_BASE_INFO_FAILED",
+                        Some("qmodem.get_current_band") => "QMODEM_CARRIERS_FAILED",
+                        Some("qmodem.get_neighborcell") => "QMODEM_NEIGHBORS_FAILED",
+                        Some(command) if crate::qmodem_at::command_allowed(command) => {
+                            "QMODEM_AT_READ_FAILED"
+                        }
+                        _ if entry.modem["infoTransport"] == crate::luoye_info::PROVIDER => {
+                            "MODEM_CACHE_PARTIAL"
+                        }
+                        _ => "QMODEM_NETWORK_INFO_FAILED",
                     },
                 );
             }
-            let mut state = self.state.lock().map_err(|_| failed())?;
-            if !state.stopping && current(&state, key, entry.generation) {
-                state.cache.insert(
-                    key.to_owned(),
-                    Cached {
-                        generation: entry.generation,
-                        value,
-                        finished: Instant::now(),
-                    },
-                );
-            }
-            return Ok(());
+            return self.publish_native(entry, value);
         }
         let parser = entry.modem["profile"]["parser"]
             .as_str()
@@ -517,6 +541,28 @@ impl Sampler {
         }
         Ok(())
     }
+    fn publish_native(&self, entry: &Entry, mut value: Value) -> Result<()> {
+        let key = id(&entry.modem)?;
+        let mut state = self.state.lock().map_err(|_| failed())?;
+        if !state.stopping && current(&state, key, entry.generation) {
+            if let Some(previous) = state
+                .cache
+                .get(key)
+                .filter(|v| v.generation == entry.generation)
+            {
+                crate::qmodem_info::retain_inventory(&mut value, &previous.value);
+            }
+            state.cache.insert(
+                key.to_owned(),
+                Cached {
+                    generation: entry.generation,
+                    value,
+                    finished: Instant::now(),
+                },
+            );
+        }
+        Ok(())
+    }
     fn publish(
         &self,
         entry: &Entry,
@@ -590,6 +636,16 @@ impl Sampler {
                     }
                 }
             }
+            for key in ["carrierState", "neighborState"] {
+                if let Some(info) = value.get_mut(key).filter(|v| v.is_object()) {
+                    info["stale"] = json!(
+                        info["stale"] == true
+                            || info["observedAtMs"]
+                                .as_u64()
+                                .is_none_or(|at| now < at || now - at > 15000)
+                    );
+                }
+            }
             if let Some(row) = value
                 .get_mut("secondaryMeasurement")
                 .filter(|row| row.is_object())
@@ -643,6 +699,7 @@ impl Sampler {
                 .filter(|e| {
                     e.modem["shared"] == true
                         || e.modem["infoTransport"] == "qmodem-rpc"
+                        || e.modem["infoTransport"] == crate::luoye_info::PROVIDER
                         || e.modem["transport"] == "dedicated"
                             && e.modem["channelReady"] == true
                             && e.modem["identityVerified"] == true

@@ -73,7 +73,7 @@ async function main() {
   const stylesheetUrl=new URL(stylesheet.attrs.href,'http://fixture.invalid')
   assert.equal(stylesheetUrl.pathname,'/luci-static/resources/wlmb-server/panel.css','Use actual LuCI resource path validation: append query outside L.resource()')
   assert.equal(stylesheetUrl.searchParams.get('v'),VERSION)
-  assert.equal(stylesheetUrl.searchParams.get('rev'),'release1_1_2','首版候选不能读取此前同版本的缓存资源')
+  assert.equal(stylesheetUrl.searchParams.get('rev'),'release1_1_3','首版候选不能读取此前同版本的缓存资源')
   assert.ok(fs.readFileSync(path.join(root, 'www/luci-static/resources/wlmb-server/panel.css'), 'utf8').includes('.np-card{'))
   assert.ok(dom.textContent.includes('网络面板'))
   assert.ok(dom.textContent.includes('已停止'))
@@ -295,6 +295,9 @@ async function main() {
   view.readonly=false;view.draw({...status,capabilities:{sms:true,smsSend:false,smsDelete:false,smsForward:false},smsMode:'compat-read-only'})
   assert.equal(view.smsSendButton.disabled,true);assert.equal(view.tabs.children[6].hidden,false);assert.equal(view.tabs.children[7].hidden,false)
   assert.equal(view.forwardSaveButton.disabled,true);assert.ok(view.forwardUnavailable.textContent.includes('未开放转发'))
+  view.draw({...status,modems:[{id:'test',model:'rm520f-gl',port:'/dev/modem-at',shared:false,infoTransport:'luoye-modem-cache'}],capabilities:{signal:true,neighbors:true,carrierAggregation:true,at:false,lockBand:false,lockCell:false,sms:false}})
+  assert.ok(view.overview.textContent.includes('落叶小通魔改的 modem'))
+  assert.ok(!view.overview.textContent.includes('共享 AT 通道未就绪'))
   for (const name of ['sms_refresh','sms_read_state','sms_prepare','sms_execute','sms_forward_configure']) {assert.ok(acl.write.ubus['network-panel'].includes(name));assert.ok(!acl.read.ubus['network-panel'].includes(name))}
   console.log('OpenWrt LuCI fixture checks passed: offline controls, state, cancel/confirm, no replay, tabs, ACL, tutorial. Not visual/live LuCI validation.')
 }

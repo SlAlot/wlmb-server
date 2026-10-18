@@ -3,7 +3,7 @@
   "protocol": "NETWORK-PANEL-OPENWRT/1",
   "contractVersion": 1,
   "port": 1117,
-  "pluginVersion": "1.1.2",
+  "pluginVersion": "1.1.3",
   "backendLanguage": "Rust",
   "releaseStatus": "stable",
   "hardwareValidation": "capability-gated-not-universal-firmware-certification",

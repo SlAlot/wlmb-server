@@ -104,6 +104,39 @@ impl Source for Empty {
         Err(PanelError::new("MODEM_NOT_READY", 409))
     }
 }
+
+#[test]
+fn luoye_information_capabilities_do_not_expose_console_locks_or_sms() {
+    for neighbors in [false, true] {
+        let source = Arc::new(Inventory(vec![
+            json!({"id":"luoye-modem","model":"rm520f-gl","port":"/dev/modem-at",
+            "shared":false,"identityVerified":false,"channelReady":false,"controlReadOnly":true,
+            "infoTransport":"luoye-modem-cache","infoNeighborQuery":neighbors}),
+        ]));
+        let sampler = Sampler::new(source.clone());
+        sampler.discover().unwrap();
+        let service =
+            NativeService::integrated(Arc::new(Empty), sampler, source, None, None, None).unwrap();
+        let status = service
+            .local("status", json!({"modem":"luoye-modem"}))
+            .unwrap();
+        assert_eq!(status["capabilities"]["signal"], true);
+        assert_eq!(status["capabilities"]["carrierAggregation"], true);
+        assert_eq!(status["capabilities"]["neighbors"], neighbors);
+        for key in [
+            "at",
+            "sms",
+            "smsSend",
+            "smsDelete",
+            "smsForward",
+            "lockBand",
+            "lockCell",
+        ] {
+            assert_eq!(status["capabilities"][key], false, "{key}");
+        }
+        assert!(service.local("at_prepare",json!({"modem":"luoye-modem","command":"AT+CSQ","ubus_rpc_session":"a".repeat(32)})).is_err());
+    }
+}
 impl Bus for Empty {
     fn call(&self, _: &str, _: &str, _: Value, _: Duration) -> Result<Value> {
         Err(PanelError::new("SYSTEM_UNAVAILABLE", 503))

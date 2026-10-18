@@ -3,9 +3,9 @@
     'use strict';
     var definitions=[{key:0,name:'网络信息',icon:'home',group:0},{key:1,name:'邻区扫描',icon:'neighbors',group:1},{key:4,name:'WiFi 与设备',icon:'wifi',group:2},{key:5,name:'频段与小区',icon:'bands',group:1},{key:6,name:'短信',icon:'sms',group:3},{key:7,name:'短信转发',icon:'sms',group:3},{key:8,name:'设备与流量',icon:'chart',group:4},{key:2,name:'AT 控制台',icon:'terminal',group:4},{key:3,name:'插件设置',icon:'settings',group:4}];
     var groups=[{name:'概览',icon:'home',keys:[0]},{name:'网络',icon:'neighbors',keys:[1,5]},{name:'WiFi',icon:'wifi',keys:[4]},{name:'短信',icon:'sms',keys:[6,7]},{name:'设置',icon:'settings',keys:[3,8,2]}];
-    global.WLMBWebUI={version:'1.1.2',mount:function(target,bridge){
+    global.WLMBWebUI={version:'1.1.3',mount:function(target,bridge){
         var D=global.WLMBUIData,I=global.WLMBIcons,doc=target.ownerDocument;
-        if(!D||D.version!=='1.1.2'||!I||I.version!=='1.1.2')throw new Error('独立前端资源版本不一致');
+        if(!D||D.version!=='1.1.3'||!I||I.version!=='1.1.3')throw new Error('独立前端资源版本不一致');
         var disposed=false,failed=false,current=bridge.active||0,filter='',search='',refreshing=false,reading=false,copying=false,smsStamp='',overviewStamp='',neighborStamp='';
         var panelRoot=target.closest('#wlmb-panel'),theme='auto',collapsed=false,lastGroup={};
         var motion=typeof global.matchMedia==='function'?global.matchMedia('(prefers-reduced-motion: reduce)'):null,animations=new Set(),paintedPage=-1,carrierDetails=new Set();
@@ -86,7 +86,8 @@
                     n('div',{'class':'np-carrier-head'},[n('div',{'class':'np-carrier-identity'},[n('strong',{},c.title),n('span',{'class':'np-carrier-band'},c.bandShortName)]),badge(c.sysMode)]),
                     n('div',{'class':'np-info-grid np-carrier-essential'},[field('下行频点'+(c.bandDesc?' · '+c.bandDesc:''),c.dlFcn),field('带宽 · 下行 / 上行',val(c.dlBandwidth,' MHz')+' / '+val(c.ulBandwidth,' MHz'))]),details]);});
             carrierDetails.forEach(function(key){if(!liveKeys.has(key))carrierDetails.delete(key);});
-            var section=card('载波聚合信息',[n('p',{'class':'np-hint'},r.stale?'缓存过期，载波状态未确认':net.carrierCount?net.carrierCount+' 载波 · 下行 '+val(net.dlBandwidth,' MHz')+' / 上行 '+val(net.ulBandwidth,' MHz'):'未读取载波信息'),n('div',{'class':'np-carrier-grid'},nodes)],'bands','purple');section.classList.add('np-carriers');return section;
+            var state=r.carrierState||{},hint=r.stale||state.stale?'缓存过期，载波状态未确认':state.queryStatus==='pending'?'正在更新聚合信息，先展示已有载波':state.queryStatus==='error'?'聚合信息读取未成功，展示已确认的服务载波':state.status==='serving-only'?'已读取当前服务载波，尚未报告额外聚合载波':net.carrierCount?net.carrierCount+' 载波 · 下行 '+val(net.dlBandwidth,' MHz')+' / 上行 '+val(net.ulBandwidth,' MHz'):'未读取载波信息';
+            var section=card('载波聚合信息',[n('p',{'class':'np-hint'},hint),n('div',{'class':'np-carrier-grid'},nodes)],'bands','purple');section.classList.add('np-carriers');return section;
         }
         function summary(snapshot){
             var r=snapshot.radio||{},s=snapshot.system||{},net=D.network(snapshot),q=r.stale||r.sessionQos?.stale?{}:r.sessionQos||{},sub=r.stale||r.subscription?.stale?{}:r.subscription||{},op=r.stale||r.networkOperator?.stale?{}:r.networkOperator||{},rates=s.stale||s.network?.stale?{}:s.network?.rates||{};
@@ -101,12 +102,13 @@
                 snapshot.failure?n('p',{'class':'np-notice'},snapshot.failure):null,r.refreshDeferred?n('p',{'class':'np-hint',role:'status'},'模组通道暂忙，展示有效期内的上次数据。'):r.pending?n('p',{'class':'np-hint np-loading-status',role:'status'},[n('span',{'class':'np-spinner','aria-hidden':'true'}),'后台正在更新，先展示已有快照。']):null])];
         }
         function showNeighbors(){
-            var snapshot=bridge.snapshot||{},rows=D.neighbors(snapshot,filter,search),stamp=JSON.stringify([rows,filter,search,snapshot.radio?.stale,snapshot.capabilities?.lockCell]);
+            var snapshot=bridge.snapshot||{},state=snapshot.radio?.neighborState||{},rows=D.neighbors(snapshot,filter,search),stamp=JSON.stringify([rows,filter,search,snapshot.radio?.stale,snapshot.capabilities?.lockCell,state]);
             if(stamp===neighborStamp)return;neighborStamp=stamp;count.textContent='共 '+rows.length+' 个 · 信号强度排序';
             neighborRows.replaceChildren.apply(neighborRows,rows.length?rows.map(function(row){
                 var choose=action('锁定',function(){var fresh=D.neighbors(bridge.snapshot||{},filter,search).find(function(item){return item.type===row.type&&item.pci===row.pci&&item.arfcn===row.arfcn;});if(!fresh?.lockable)return;try{bridge.chooseCell(fresh);current=5;draw();scrollTop();}catch(e){bridge.notify(e);}},'outline');choose.disabled=!row.lockable;
                 return n('article',{'class':'np-neighbor-card'},[n('div',{'class':'np-neighbor-head'},[n('strong',{},row.type+' '+row.bandLabel),choose]),n('p',{'class':'np-hint'},'PCI: '+row.pci+' · ARFCN: '+row.arfcn),n('dl',{'class':'np-neighbor-metrics'},[['RSRP',row.rsrp,'dBm',D.rsrpQuality],['RSRQ',row.rsrq,'dB',D.rsrqQuality],['SINR',row.sinr,'dB',D.sinrQuality]].map(function(v){var quality=v[3](v[1]);return n('div',{},[n('dt',{},v[0]),n('dd',{},[n('strong',{},val(v[1],v[2])),badge(quality.text,quality.level==null?'neutral':'quality-'+quality.level)])]);}))]);
-            }):[n('div',{'class':'np-empty-state'},[glyph('neighbors'),n('strong',{},'暂无邻区数据'),n('p',{'class':'np-hint'},search||filter?'可更改筛选条件':'以模组实际返回的测量为准')])]);
+            }):[n('div',{'class':'np-empty-state'},[glyph('neighbors'),n('strong',{},state.queryStatus==='pending'?'正在读取邻区':state.queryStatus==='error'?'邻区读取未成功':state.status==='unsupported'?'被动邻区查询暂不可用':'暂无邻区数据'),n('p',{'class':'np-hint'},search||filter?'可更改筛选条件':state.queryStatus==='error'?'请稍后刷新；读取失败不代表附近没有基站':state.status==='unsupported'?'当前通道未提供经核验的被动查询，不会自动搜网':state.status==='empty'?'模组未报告可用邻区；部分固件不返回 5G 邻区测量':'以模组实际返回的测量为准')])]);
+            neighborNotice.textContent=state.automaticRetryPaused?'原事务结果未确认，已暂停自动邻区重试；请先确认 modem 服务恢复，刷新页面不会重发。':rows.length&&(state.queryStatus==='error'||state.stale)?'邻区状态尚未确认，展示上次读取的记录。':'';neighborNotice.hidden=!neighborNotice.textContent;
             filterButtons.forEach(function(item){item.node.classList.toggle('selected',filter===item.value);item.node.setAttribute('aria-pressed',String(filter===item.value));});
         }
         function copy(item){if(copying||!item.code||disposed)return;copying=true;Promise.resolve().then(function(){return bridge.copySmsCode(item);}).catch(bridge.notify).finally(function(){copying=false;});}
@@ -134,7 +136,7 @@
         var filterRow=n('div',{'class':'np-neighbor-filter'});
         [['','全部'],['NR','5G'],['LTE','4G']].forEach(function(item){var node=action(item[1],function(){filter=item[0];showNeighbors();});filterButtons.push({value:item[0],node:node});filterRow.appendChild(node);});
         searchInput.addEventListener('input',function(){search=searchInput.value;showNeighbors();});filterRow.appendChild(searchInput);filterRow.appendChild(count);
-        var neighbors=n('div',{'class':'np-neighbor-presentation'},[filterRow,neighborRows]),subnav=n('nav',{'class':'np-section-tabs','aria-label':'当前功能分组'}),mobile=n('nav',{'class':'np-mobile-navigation','aria-label':'主要功能导航'});
+        var neighborNotice=n('p',{'class':'np-hint',role:'status'}),neighbors=n('div',{'class':'np-neighbor-presentation'},[filterRow,neighborRows,neighborNotice]),subnav=n('nav',{'class':'np-section-tabs','aria-label':'当前功能分组'}),mobile=n('nav',{'class':'np-mobile-navigation','aria-label':'主要功能导航'});
         var brand=n('div',{'class':'np-navigation-brand'},[n('strong',{},'网络面板'),n('span',{},'免费 OpenWrt 插件 · 1117')]),service=n('div',{'class':'np-navigation-status',role:'status'});
         nav.id='np-primary-navigation';
         var collapseButton=action('',function(){collapsed=!collapsed;applyCollapse();try{global.sessionStorage.setItem('wlmb-server.sidebar',collapsed?'collapsed':'expanded');}catch(_){} });collapseButton.appendChild(sidebarIcon());collapseButton.classList.add('np-collapse-toggle');collapseButton.setAttribute('aria-controls',nav.id);
@@ -186,7 +188,7 @@
                 lastGroup[definitions.find(function(entry){return entry.key===current;}).group]=current;
                 updateNavigation(entries);applyTheme();applyCollapse();var page=definitions.find(function(entry){return entry.key===current;});title.textContent=page.name;
                 description.textContent=(snapshot.system?.board?.model||snapshot.system?.board?.board_name||'OpenWrt 设备')+' · 根据qmodem为参考开发接入';
-                service.replaceChildren(n('span',{'class':'np-service-dot'+(runtime.running&&runtime.controlReady?' ready':'')}),doc.createTextNode((runtime.failure?'状态未确认':runtime.running?runtime.controlReady?'运行中':'启动中':'已停止')+' · '+(snapshot.connection?.mode==='shared'?'共享通道':snapshot.connection?.mode==='independent'?'独立通道':'通道待核对')));
+                service.replaceChildren(n('span',{'class':'np-service-dot'+(runtime.running&&runtime.controlReady?' ready':'')}),doc.createTextNode((runtime.failure?'状态未确认':runtime.running?runtime.controlReady?'运行中':'启动中':'已停止')+' · '+(snapshot.connection?.sharedService==='luoye-modem-cache'?'modem 缓存':snapshot.connection?.mode==='shared'?'共享通道':snapshot.connection?.mode==='independent'?'独立通道':'通道待核对')));
                 refreshButton.disabled=refreshing||!bridge.canRefresh();refreshButton.textContent=refreshing?'正在刷新…':'刷新数据';refreshButton.setAttribute('aria-busy',String(refreshing));management.hidden=current!==3;
                 var selector=bridge.toolbar.querySelector('select');if(selector)selector.hidden=(snapshot.modems||[]).length<=1;
                 body.hidden=current!==0&&current!==1;bridge.pages.hidden=current===0||current===1;

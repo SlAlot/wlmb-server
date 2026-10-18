@@ -635,16 +635,14 @@ fn quectel(raw: &str, unisoc: bool, compact_nr: bool) -> Value {
                 ));
                 continue;
             }
-            if p.len()
-                >= if p.get(1).is_some_and(|v| v == "LTE") {
-                    8
-                } else {
-                    7
-                }
-                && ["LTE", "NR", "NR5G"].contains(&p[1].as_str())
-            {
+            if p.len() >= 6 && ["LTE", "NR", "NR5G"].contains(&p[1].as_str()) {
                 let rat = if p[1] == "LTE" { "LTE" } else { "NR" };
-                neighbors.push(cell(rat,"neighbor",&p[2],n(&p[3],0.,1007.),"","AT+QENG=neighbourcell",json!({"rsrp":p[if rat=="LTE"&&!unisoc{5}else{4}],"rsrq":p[if rat=="LTE"&&!unisoc{4}else{5}],"rssi":if rat=="LTE"&&!unisoc{json!(p[6])}else{Value::Null},"sinr":p[if rat=="LTE"&&(!unisoc||p[0]!="neighbourcell"){7}else{6}]})));
+                let intra_inter =
+                    rat == "LTE" && !unisoc && (p[0] != "neighbourcell" || p.len() >= 8);
+                neighbors.push(cell(rat,"neighbor",&p[2],n(&p[3],0.,if rat=="LTE"{503.}else{1007.}),"","AT+QENG=neighbourcell",json!({
+                    "rsrp":p.get(if intra_inter{5}else{4}),"rsrq":p.get(if intra_inter{4}else{5}),
+                    "rssi":if intra_inter{json!(p.get(6))}else{Value::Null},
+                    "sinr":if rat=="LTE" && !unisoc && !intra_inter{Value::Null}else{json!(p.get(if rat=="LTE"&&(!unisoc||p[0]!="neighbourcell"){7}else{6}))}})));
             }
             continue;
         }
@@ -810,7 +808,11 @@ fn quectel(raw: &str, unisoc: bool, compact_nr: bool) -> Value {
             }
         }
     }
-    neighbors.retain(|r| !serving.iter().any(|s| same_identity(s, r)));
+    neighbors.retain(|r| {
+        !r["channel"].is_null()
+            && !r["pci"].is_null()
+            && !serving.iter().any(|s| same_identity(s, r))
+    });
     json!({"carriers":complete_inventory(&serving,carriers),"serving":serving,"neighbors":deduplicate(neighbors)})
 }
 

@@ -5,7 +5,7 @@
   "license": "LicenseRef-WLMB-NonCommercial",
   "commercialClientSourceIncluded": false,
   "protocol": "NETWORK-PANEL-OPENWRT/1",
-  "pluginVersion": "1.1.2",
+  "pluginVersion": "1.1.3",
   "backendLanguage": "Rust",
   "files": [
     {
@@ -30,11 +30,11 @@
     },
     {
       "path": "backend/Cargo.lock",
-      "sha256": "415eb04e53c31749fde7dbfd6647aaf3dbc9c7e2d5d0ca6f847569144ed18dbd"
+      "sha256": "9cfa10e690aff7ac1193b4e91df97eb852539a9c8c7ff31fca07edda79f917f2"
     },
     {
       "path": "backend/Cargo.toml",
-      "sha256": "fc9fc21dd4fc9b94e95420b2bf008260bb7baec5e57f0dda3638096b73c78e2a"
+      "sha256": "86eb99235704648bc24c1527317fd3fff9a0bd66bb95892306375a73edd99c15"
     },
     {
       "path": "backend/src/actions.rs",
@@ -74,7 +74,7 @@
     },
     {
       "path": "backend/src/connection_mode.rs",
-      "sha256": "7c4bd6d44761d8c970dc0230c590599b0cff02e2a6271b105da0d67e8a6bbcde"
+      "sha256": "4995fc3b6dded970a19d87c01319a8b62b42af267440cbd956b9e90ced18408f"
     },
     {
       "path": "backend/src/control_runtime.rs",
@@ -114,11 +114,23 @@
     },
     {
       "path": "backend/src/lib.rs",
-      "sha256": "e30b7547dae9e0f9fb81d44696ca15fe4191be740ed3e70e4bb9e2615465a1a5"
+      "sha256": "762a13e1028d455d8b96154f6571f8fde7783d02342eac1a28b9201d3234e42b"
     },
     {
       "path": "backend/src/lock_protocol.rs",
       "sha256": "19b819bc89ef83358234ed480368a50f26dac4f50b7dc7275e9d1782b2b3877e"
+    },
+    {
+      "path": "backend/src/luoye_info.rs",
+      "sha256": "25b4a014ff61c9a9ad8a35a8df9cc12ae8039af0029117c27bfbf9d8d079617d"
+    },
+    {
+      "path": "backend/src/luoye.rs",
+      "sha256": "f369c5dcab7629e780fb3f355bec30ecdc38f737af1fd79499ebee41e4e406ae"
+    },
+    {
+      "path": "backend/src/luoye/native.rs",
+      "sha256": "317ccad6055459652894ec1289ff93e4a28d7b867cf56943d68a3770e325cb54"
     },
     {
       "path": "backend/src/main.rs",
@@ -134,7 +146,7 @@
     },
     {
       "path": "backend/src/native_ubus.rs",
-      "sha256": "1c7ddd9be73cf5a1de383836f782b47739985cd3da94cbe39bb8818c7ce4c33e"
+      "sha256": "c30f1c544032950faf25ca3fd0c3b67cf2e68dca21f4c59f043ebd7c9e54d607"
     },
     {
       "path": "backend/src/network_operator.rs",
@@ -145,8 +157,16 @@
       "sha256": "a191ccf1d49ac2950f3aead42e1c0f52c2cc4214ab5e244c126d169e39ea8a37"
     },
     {
+      "path": "backend/src/qmodem_at.rs",
+      "sha256": "bd28a486fa7b96507a949fb47718dac21a82bc67e952aa7199c1fa5595f0db0e"
+    },
+    {
       "path": "backend/src/qmodem_info.rs",
-      "sha256": "af1ea32317aba96982627dcd5fe5f3aeb681004e778d20c0e4b74ede3858e67e"
+      "sha256": "30cd0ab54755d6f3eeca1959bf9ce5671901cac9d8d7b47bc5738701d6096d1d"
+    },
+    {
+      "path": "backend/src/qmodem_info/inventory.rs",
+      "sha256": "f114ba398d5f39860994c584f9042d7c96b68ed64218174c2b3a97e91415558a"
     },
     {
       "path": "backend/src/qmodem_queue.rs",
@@ -166,7 +186,7 @@
     },
     {
       "path": "backend/src/radio.rs",
-      "sha256": "ffcd05813fe072ecd3a76aea217276e3c1b6768650a3b29c56f1631e947ffc90"
+      "sha256": "4917d37a82391987c4adb38121d39c056e4f7d56bef118b5860f349b9595278c"
     },
     {
       "path": "backend/src/radio/fibocom_lte.rs",
@@ -198,7 +218,7 @@
     },
     {
       "path": "backend/src/sampler.rs",
-      "sha256": "9efa872939872f9afc9e7cb3f44a569e0d6c2edbe41bdcecc8faac295cf6ef8d"
+      "sha256": "41476f436ce2dfa161b61c2d0318fe60555e747cc3138710d1c9097188ead58a"
     },
     {
       "path": "backend/src/sampling.rs",
@@ -210,7 +230,7 @@
     },
     {
       "path": "backend/src/service.rs",
-      "sha256": "2f907d180c4b804f5704b43f6a680fd5f7b3390bd081f97d907097ee9f46bdbd"
+      "sha256": "7c4043d12a8fa4b31b76b9cf04ec6f87aecc1ebc2f66fb313e78d4fba5d0862a"
     },
     {
       "path": "backend/src/session_qos.rs",
@@ -274,7 +294,7 @@
     },
     {
       "path": "backend/src/transport.rs",
-      "sha256": "30d4cb47c0717f833a6b1cc9436edf2b7334e3438b79b53e17dac84a8d15e678"
+      "sha256": "108fceea865ec2147e7b4c26a3b95847c1b0f29edd74943fb0b0cf3f236d9f22"
     },
     {
       "path": "backend/src/vendor_cell_lock.rs",
@@ -326,7 +346,7 @@
     },
     {
       "path": "backend/tests/host_service.rs",
-      "sha256": "776a17dd613dfb6ae654c1f2acb8122fe508418853da65abe1759b7252d4fcee"
+      "sha256": "08af162bd3878722e7a18993799aa6f2880c6a29f9adbe4f919dee977d6341bb"
     },
     {
       "path": "backend/tests/independent_at.rs",
@@ -353,6 +373,10 @@
       "sha256": "44274bc83bbadd4365b6780a85b79cffe1849ac545290449049f187b8533bd89"
     },
     {
+      "path": "backend/tests/luoye.rs",
+      "sha256": "83f7d29423468884baf79361c467594a657ccd1384d87b3dfe02f1524768328e"
+    },
+    {
       "path": "backend/tests/mode_parity.rs",
       "sha256": "e32f0d9917da545b9d3556a8dc9780a43925d3d251631d97c2dd8f644c8462d1"
     },
@@ -373,16 +397,32 @@
       "sha256": "2761c1233d7dc9ce7b4378240104b5c1fba44768ea1c95fcff8a1d0e83cad41e"
     },
     {
+      "path": "backend/tests/qmodem_at_transport.rs",
+      "sha256": "1048fbcee2ed8b3903b9d09f20a31393999e3f2d89c7c9b37f68ceee8a73514a"
+    },
+    {
+      "path": "backend/tests/qmodem_at.rs",
+      "sha256": "5673e0c3fe0e041c6ca6d3ee8060a2470a6459047840cc707df822f7912eda95"
+    },
+    {
       "path": "backend/tests/qmodem_info_sampler.rs",
       "sha256": "af22233aa2b672c5bb4bb93ca3106f0f97aad968e5d4e632103a0b62dfb2fe26"
     },
     {
       "path": "backend/tests/qmodem_info_transport.rs",
-      "sha256": "7f69098dd6e6415bc536e3ee7a7d1b6cf88086609c66013d47a9e99adc7ba28a"
+      "sha256": "434f291e55073646c8f27f472c754b5065d20f721ca73a68e3d9403f25580bab"
     },
     {
       "path": "backend/tests/qmodem_info.rs",
-      "sha256": "e9e6bf147e1510d54be2b9a11e667a54eed422e11361f55f0ceee6b4a53252c9"
+      "sha256": "d6f4fa688dda6713a52e950ad9c6d3d356ce38ba31603613b76351bb992973a5"
+    },
+    {
+      "path": "backend/tests/qmodem_inventory.rs",
+      "sha256": "8151a80a710beebf9200185660742d67eb1af3b34bd0ea5b4bc2f307e300800d"
+    },
+    {
+      "path": "backend/tests/qmodem_progress.rs",
+      "sha256": "f0a082ce0e606d790f98779e405155ce656e3b2f2b39e7f335bde3cbc03f7080"
     },
     {
       "path": "backend/tests/qmodem_queue.rs",
@@ -494,19 +534,19 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "2927ad1c1299d2199e93741d467d3cc1b59f896defb1d4f2468e06335dc178ee"
+      "sha256": "671d96b57d66fed407bdd9bcb2dff2f4580fc52cea145ae6dafa38c6d5bce49a"
     },
     {
       "path": "docs/api-contract.json",
-      "sha256": "e18f92ce842d0229aaf26d26b1de5eae4f028afff62b5c89c49d417d175c839e"
+      "sha256": "2d625abeb77718a059f52560ddc6d41e2ebbe557bffbdc721dea841636d7a00a"
     },
     {
       "path": "docs/API.en.md",
-      "sha256": "e491091c279bca9dadba312ab27c7dc06e5ebb672493dcc1b3f7d1c973f9fbb5"
+      "sha256": "84b7d238984e9fd8eab4957b53a3aebbf221d3da18b8f5c203796ad3ebdfd5f6"
     },
     {
       "path": "docs/API.zh-CN.md",
-      "sha256": "537f9620616573e71d454cc2c5b2d58b5b094da3d9c6a0205c86ca047f82cb39"
+      "sha256": "efde21cbdcc6d5c8732566cba06b864c5ac8961afe17d612dc04c0cec237d04f"
     },
     {
       "path": "docs/APK-INSTALL.zh-CN.md",
@@ -545,6 +585,10 @@
       "sha256": "528231ec96608e4d7f7ce98eb21fe071f0f53151f88f94991fe63866401bc6fe"
     },
     {
+      "path": "docs/LUOYE-MODEM.md",
+      "sha256": "b07b7a415ee0e3c6bd1c98a735de1402ef7df04d30c00241b547c548f763df42"
+    },
+    {
       "path": "docs/model-bands.json",
       "sha256": "41ba9a73d1474354deaca1db8783d5937682ce40e8168abb277ea9812481ae36"
     },
@@ -562,7 +606,7 @@
     },
     {
       "path": "docs/QMODEM.md",
-      "sha256": "430468d7a9d8ef1e63f2a27a52e0ee98e342db395ef69ec38cb396db4431b450"
+      "sha256": "fb3845187fd4ff770d79a109acd6041b6f4fc0073755bdfe33b15f22aa0cb5b9"
     },
     {
       "path": "docs/RELEASE-1.0.0.md",
@@ -609,6 +653,10 @@
       "sha256": "c3cc8f2347bbcd3b67857ec376f42c85564ecdcf47b940287e1a02cd94ec8ff9"
     },
     {
+      "path": "docs/RELEASE-1.1.3.md",
+      "sha256": "66d5b061c16d74b66baa5d9b468d3929d432bb40178c150677c582d3067360ae"
+    },
+    {
       "path": "docs/RELEASE-AUDIT.md",
       "sha256": "819a5fec88e5944ebec07708c737b536a863d8719c0b835941a587ccf4d496b5"
     },
@@ -638,15 +686,15 @@
     },
     {
       "path": "frontend/usr/share/luci/menu.d/network-panel.json",
-      "sha256": "814d62a3c20ce444744b27ca54220a6b401e56e58842e4d32a0ed6ccbdc47b3d"
+      "sha256": "c1c75c6ecfe4df1aa45e21ce244060258633311cff92d616e8829472de7ef848"
     },
     {
       "path": "frontend/usr/share/rpcd/acl.d/network-panel.json",
       "sha256": "079da3f7d880afb45f5b3954db5a7f934fd163a357637a903ba71043e9f6e4b4"
     },
     {
-      "path": "frontend/www/luci-static/resources/view/wlmb-server/index-v1_1_2_release.js",
-      "sha256": "a34edfb20647498752c4e22a8596649cbf69da20cfc2e66ed367b79a89e6a5e9"
+      "path": "frontend/www/luci-static/resources/view/wlmb-server/index-v1_1_3_release.js",
+      "sha256": "b937ec5c6fc79999b254ef2a16c39f1779b5ced27eb02164e8fa44df6a0d099f"
     },
     {
       "path": "frontend/www/luci-static/resources/wlmb-server/guide.css",
@@ -654,7 +702,7 @@
     },
     {
       "path": "frontend/www/luci-static/resources/wlmb-server/guide.html",
-      "sha256": "01e5b1843d911c9181e35d3e584d8265ba0d8d31ff99fdc756ad73cdb6af2e3a"
+      "sha256": "769197802fe29f03a9c8f83ae914dfaa39c27da94923026940db4e8f85df5706"
     },
     {
       "path": "frontend/www/luci-static/resources/wlmb-server/guide.js",
@@ -666,19 +714,19 @@
     },
     {
       "path": "frontend/www/luci-static/resources/wlmb-server/ui-notices.html",
-      "sha256": "4a046815beb7c5f1da3400f01c4db4d4221bf66dab680bbec5ea6b3176a73aa4"
+      "sha256": "809d1a85d9a9c46342011269329b281bbb6404cbb19b933a5bb45c00a8db48ec"
     },
     {
-      "path": "frontend/www/luci-static/resources/wlmb-server/webui-data-1.1.2.js",
-      "sha256": "cc3abf50dad674fa8d10b02a9e774ff42a3f64a9ca1be5862708de26111edf8e"
+      "path": "frontend/www/luci-static/resources/wlmb-server/webui-data-1.1.3.js",
+      "sha256": "1ba221a09849d0d3d193a7c85aad8cba6c7ef6ef17ba8ffb2bd92fb3dba8430f"
     },
     {
-      "path": "frontend/www/luci-static/resources/wlmb-server/webui-icons-1.1.2.js",
-      "sha256": "d09a0215749141147ed1705fffc72dfd2eee99631edb0e83d925872e4ca3229e"
+      "path": "frontend/www/luci-static/resources/wlmb-server/webui-icons-1.1.3.js",
+      "sha256": "489dd8fc97001d98efc4cecefa4027ef6ba56bec991e188bab38b585148ac188"
     },
     {
-      "path": "frontend/www/luci-static/resources/wlmb-server/webui-shell-1.1.2.js",
-      "sha256": "31c053ac0a96122ae7bc0c6892edc17ece827ec06fa23c2995d6107afca59f88"
+      "path": "frontend/www/luci-static/resources/wlmb-server/webui-shell-1.1.3.js",
+      "sha256": "915a7c4dea9e0b12e7f97727d0e965dc5c01380c75a3a8e3f8cb884cee372650"
     },
     {
       "path": "LICENSE",
@@ -686,7 +734,7 @@
     },
     {
       "path": "packaging/files/etc/config/network_panel",
-      "sha256": "b3f46bfdcb88ea6d400ec5a2eebed98f03a3a604f6f7d1d7b091c5589152bd9c"
+      "sha256": "09f7dcfd5f06073941f51e59d2be089acad0c8b90283db01d77e64e153f8a820"
     },
     {
       "path": "packaging/files/etc/init.d/wlmb-server",
@@ -698,11 +746,11 @@
     },
     {
       "path": "README.en.md",
-      "sha256": "a9172399645289a8d1c950acce76755e3602e25fc06314e29b0d6a8878498edf"
+      "sha256": "7b16dc0db9259c21d02aad3fa7b4f8560df5282839e3eea66795d0b9751b4a44"
     },
     {
       "path": "README.md",
-      "sha256": "bafe4ba3ac0a40a16bd785aba61121023d3094dd0c0d98ef3a27faab21a3b421"
+      "sha256": "cb55e39cd73fa757270e28309905a25b213278d71a852ce04d78d871253df5be"
     },
     {
       "path": "tools/audit-release-boundary.cjs",
@@ -730,7 +778,7 @@
     },
     {
       "path": "tools/check-luci.cjs",
-      "sha256": "ed6e9d0c4eb31ed5783548ac2ebe2def7a305cdaa6e62bf2ec4d9b50f87a13db"
+      "sha256": "90c69e9ba86f8371987d90b29c1a24c252569930358013670f00c9fe7d1f4585"
     },
     {
       "path": "tools/check-package.cjs",
@@ -762,7 +810,7 @@
     },
     {
       "path": "tools/check-webui.cjs",
-      "sha256": "7b4270479da202e89f9df6a84664c7a7eae314198fc401448fbaac9ccb0f1b5c"
+      "sha256": "b36264c27104908fabb26d168292f6d52f076fdf445384005eb465130b535c62"
     },
     {
       "path": "tools/compatibility-report.cjs",
@@ -790,7 +838,7 @@
     },
     {
       "path": "tools/package-source.cjs",
-      "sha256": "06da2b5b58ff69f99ed132b4d53db690f326039a747a60a780a70f0b12797cf8"
+      "sha256": "2d326c94f1e8321fc2fd1420cc9ce495782535cedd9014ec673e91cd779125d6"
     },
     {
       "path": "tools/platforms.cjs",

@@ -21,6 +21,8 @@ pub mod independent_at;
 pub mod lan;
 pub mod lan_ports;
 pub mod lock_protocol;
+pub mod luoye;
+pub mod luoye_info;
 pub mod modem_inventory;
 #[cfg(unix)]
 pub mod native_host;
@@ -29,6 +31,7 @@ pub mod native_ubus;
 pub mod network_operator;
 #[cfg(unix)]
 pub mod private_store;
+pub mod qmodem_at;
 pub mod qmodem_info;
 #[cfg(unix)]
 pub mod qmodem_queue;
@@ -67,11 +70,11 @@ pub const API_PORT: u16 = 1117;
 pub const MAX_BODY: usize = 16_384;
 pub const MAX_AT_RESPONSE: usize = 65_536;
 pub const MAX_SAMPLE_QUERIES: usize = 10;
-pub const VERSION: &str = "1.1.2";
+pub const VERSION: &str = "1.1.3";
 pub const BUILD_MARKER: &str = if cfg!(feature = "pushplus-https") {
-    "WLMB_BUILD=1.1.2;pushplus-https=1"
+    "WLMB_BUILD=1.1.3;pushplus-https=1"
 } else {
-    "WLMB_BUILD=1.1.2;pushplus-https=0"
+    "WLMB_BUILD=1.1.3;pushplus-https=0"
 };
 
 #[derive(Clone, Debug, PartialEq, Eq)]

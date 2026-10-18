@@ -8,9 +8,23 @@ pub enum Mode {
 }
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Backend {
+    Luoye,
     Qmodem,
     Glinet,
     Independent,
+}
+pub fn with_modem_cache(
+    requested: Option<bool>,
+    qmodem: bool,
+    glinet: bool,
+    modem_cache: bool,
+) -> Backend {
+    // 已安装的原 modem 管理器拥有事务通道，缓存失败不能触发另一套串口驱动。
+    if modem_cache {
+        Backend::Luoye
+    } else {
+        backend(requested, qmodem, glinet)
+    }
 }
 pub fn backend(requested_standalone: Option<bool>, qmodem: bool, glinet: bool) -> Backend {
     if requested_standalone == Some(true) {

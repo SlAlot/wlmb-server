@@ -1,10 +1,16 @@
 # Network Panel 1.0 API
 
+The Luoye Xiaotong modified modem provider uses `infoTransport=luoye-modem-cache` with the existing login/status API. It reads published local snapshots and borrows the original transaction tool for allowlisted passive neighbor queries. Parameter timestamps identify source-file publication, not exact modem observation. Unknown transaction results pause automatic neighbor retries. Modem writes and SMS remain disabled for this provider; this is not hardware acceptance.
+
 Service wlmb-server, port 1117, protocol NETWORK-PANEL-OPENWRT/1, contract 1. Plugin source is available under a non-commercial attribution license; independent commercial clients are excluded. [Machine-readable contract](api-contract.json) lists every endpoint and parameter.
 
 Use the actual trusted LAN address, not an assumed default. GET /health is public; other endpoints use JSON POST. /api/login accepts the user's root username/password and returns a plugin token. Send Authorization: Bearer token, logout when done. Tokens expire after 1800 seconds and are peer-IP-bound, not system root sessions. Requests are limited to 16384 bytes. HTTP is unencrypted; never expose this service publicly.
 
 Responses are ok/data or ok=false/error. Capabilities, explicit error semantics and field freshness govern behavior. Missing data is not zero. A serving measurement is not another carrier; preserve carrier role, frequency type and candidate bands. A reported API does not prove support on every modem.
+
+Native QModem snapshots expose radio.carrierState and radio.neighborState. serving-only means additional carriers were not reported; empty neighbors do not prove there are no nearby cells. queryStatus may be pending or error while identity-bound history remains visible with its original timestamps and expiry. The native neighbors capability permits verified passive reads only, not active network searches or cell locking.
+
+modems[].infoInventorySource=qmodem.send_at means QModem transports fixed read commands while the plugin independently parses radio data using its standalone protocols. This grants no arbitrary AT, SMS-write or locking capability. Payloads follow the detected ubus string/table signature. radio.infoSupplementDeferred=true stops further queries in an uncertain round, without immediate retries or transport fallback.
 
 radio.refreshDeferred means the primary query was deferred by transient channel contention. An unexpired 15-second measurement retains its original timestamp and partial=true; this does not renew freshness. Expiry, changed identities and parsing failures still invalidate the data.
 

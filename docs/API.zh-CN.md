@@ -4,6 +4,8 @@
 
 ## 地址、认证与响应
 
+落叶小通魔改的modem数据源使用`modems[].infoTransport=luoye-modem-cache`，仍走原登录和状态接口，不依赖管理地址缺省值。参数时间基于原文件发布时刻，标记`observationTimeBasis=source-file-publication`；邻区有独立时间戳，未知事务结果时`radio.neighborState.automaticRetryPaused=true`。短信、AT控制台和锁定能力在此来源关闭，客户端必须遵循capabilities，详见[接入说明](LUOYE-MODEM.md)。
+
 使用设备实际LAN管理地址，例如 `http://192.168.1.1:1117`；访客网络可能隔离LAN。不要把默认地址当成所有设备地址，不应公开暴露端口。
 
 `GET /health`无需认证，返回backend/version/protocol等公开状态。其他接口为JSON POST；根账户通过系统登录核验后获取插件令牌，后续用 `Authorization: Bearer <token>`。令牌1800秒过期并绑定连接IP，不是系统root会话，客户端不应持久保存路由器密码。
@@ -35,9 +37,13 @@ radio.refreshDeferred表示主测量查询因通道暂忙而延后；仍在15秒
 
 radio.serving是服务测量；radio.carriers是已报告载波库存，两者不能简单合并成额外载波。role／roleKnown、channelType以及bandCandidates应保留；NR服务SSB频点不是CA中心频点。邻区带候选频段时，不应直接视为确定频段用于锁定。
 
+原生 QModem 查询通过 radio.carrierState／neighborState 区分服务载波、已报告库存、空测量和查询错误。serving-only 不表示已读取全部聚合载波；neighborState.status=empty 不表示附近没有基站。queryStatus=error 时可能保留同一驻留身份下的历史记录，必须遵守各记录原 observedAtMs／stale，不将其当作新测量。capabilities.neighbors 在原生路径仅表示经核验的被动读取，不授予主动搜网或锁定权限。详见 [QModem 接入说明](QMODEM.md)。
+
 签约速率、APN、QCI、模组温度、运营商按对应字段及stale状态呈现。capabilities按功能逐项控制，接口存在并不等于能力已开放。
 
 1.1.2新增`modems[].infoTransport=qmodem-rpc`表示使用QModem原生信息查询，不授予AT写入权限。原生快照的`providerCached`和`sourceCacheAgeUnknown`说明上游缓存年龄无法确认。
+
+`modems[].infoInventorySource=qmodem.send_at` 表示借用 QModem 共享 AT 传输，由插件独立解析信号、载波及邻区；不表示可任意发送 AT、锁定或操作短信。参数编码按实际 ubus 签名检测。原始测量及独立有效期继续适用；`radio.infoSupplementDeferred=true` 表示本轮通道不确定，已停止追加查询，没有自动重试。
 
 `system.lan.deviceBlockReason`说明上网控制不可用原因：`FLOW_OFFLOAD_ENABLED`为已启用流量加速，`FLOW_OFFLOAD_UNCONFIRMED`为加速状态未确认，`FIREWALL_UNAVAILABLE`为防火墙不可读，`LAN_INTERFACE_UNCONFIRMED`／`WAN_INTERFACE_UNCONFIRMED`为接口未确认，`FORWARD_PATH_AMBIGUOUS`为转发路径不明确，`HOST_STATE_STALE`为控制快照过期。能力可用时为null；客户端仍以`deviceBlockSupported`及过期标记控制操作，不自行更改加速设置。
 

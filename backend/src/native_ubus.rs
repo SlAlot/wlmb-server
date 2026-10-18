@@ -444,6 +444,9 @@ impl Bus for NativeBus {
             || timeout > Duration::from_secs(30)
             || !params.is_object()
             || !crate::transport::allowed(object, method)
+            || object == "qmodem"
+                && method == "send_at"
+                && !crate::qmodem_at::request_valid(&params)
             || crate::glinet::object_name(object) && !crate::glinet::request_valid(&params)
         {
             return Err(fail());

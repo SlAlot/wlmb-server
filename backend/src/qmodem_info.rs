@@ -2,14 +2,18 @@
 use crate::{PanelError, Result, radio};
 use serde_json::{Value, json};
 use std::collections::BTreeMap;
+mod inventory;
+pub use inventory::{attach_carriers, attach_neighbors, neighbor_query_safe, retain_inventory};
 
 pub fn supported(schema: &Value) -> bool {
     schema["cell_info"]["config_section"] == 3
 }
 
 pub fn method_supported(schema: &Value, method: &str) -> bool {
-    matches!(method, "cell_info" | "network_info" | "base_info")
-        && schema[method]["config_section"] == 3
+    matches!(
+        method,
+        "cell_info" | "network_info" | "base_info" | "get_current_band" | "get_neighborcell"
+    ) && schema[method]["config_section"] == 3
 }
 
 fn entries(value: &Value) -> Result<&[Value]> {
@@ -234,6 +238,14 @@ pub fn parse(cell: &Value, network: Option<&Value>, at: u64) -> Result<Value> {
     }
     if let Some(network) = network {
         attach_network(network, &mut result, at)?;
+    }
+    if result["carriers"].as_array().is_some_and(Vec::is_empty) {
+        result["carriers"] = result["serving"].clone();
+        result["carrierState"] = json!({"status":"serving-only","inventoryComplete":false,
+            "reason":"ADDITIONAL_CARRIERS_NOT_REPORTED","source":source,"observedAtMs":at,"stale":false});
+    } else {
+        result["carrierState"] = json!({"status":"reported","inventoryComplete":false,
+            "source":source,"observedAtMs":at,"stale":false});
     }
     Ok(result)
 }
