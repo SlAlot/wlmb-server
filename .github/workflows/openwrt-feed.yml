@@ -1,0 +1,46 @@
+# 标准 Feed 的真实 SDK 构建独立于正式安装包发布，不读取签名密钥。
+name: OpenWrt feed SDK build
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  sdk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [x86_64-openwrt-24.10, aarch64_generic-openwrt-24.10]
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '24'
+      - run: node tools/check-openwrt-feed.cjs
+      - run: mkdir -p "$RUNNER_TEMP/wlmb-feed-artifacts"
+      - name: Build current feed through the official OpenWrt SDK
+        uses: openwrt/gh-action-sdk@f5813d30eeef3534b58ac7e79c5d8842b6035434
+        env:
+          ARCH: ${{ matrix.arch }}
+          CONTAINER: ghcr.io/openwrt/sdk
+          FEEDNAME: wlmb
+          PACKAGES: wlmb-server
+          ARTIFACTS_DIR: ${{ runner.temp }}/wlmb-feed-artifacts
+          V: s
+      - name: Require an actual plugin package
+        shell: bash
+        run: |
+          shopt -s globstar nullglob
+          packages=("$RUNNER_TEMP"/wlmb-feed-artifacts/bin/packages/**/wlmb-server_*.ipk "$RUNNER_TEMP"/wlmb-feed-artifacts/bin/packages/**/wlmb-server-*.apk)
+          test "${#packages[@]}" -gt 0
+          printf '%s\n' "${packages[@]}"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: feed-sdk-${{ matrix.arch }}
+          path: |
+            ${{ runner.temp }}/wlmb-feed-artifacts/bin/
+            ${{ runner.temp }}/wlmb-feed-artifacts/logs/
+          if-no-files-found: warn
+          retention-days: 7

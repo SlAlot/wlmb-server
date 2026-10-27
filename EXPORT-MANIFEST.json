@@ -14,7 +14,11 @@
     },
     {
       "path": ".github/workflows/check.yml",
-      "sha256": "54410cdb08500a66a302185284d44d1808310285c2da093546d70aadbf7f1f00"
+      "sha256": "465cf06dc2145d16ec0fecdde2e2e2b48b68b123d4bb2cd8851b14443475615d"
+    },
+    {
+      "path": ".github/workflows/openwrt-feed.yml",
+      "sha256": "30f48a77984699dfd7c74c6df7b5460f771415cb32a20ec706f36612709e84c5"
     },
     {
       "path": ".github/workflows/qmodem-audit.yml",
@@ -558,7 +562,7 @@
     },
     {
       "path": "docs/BUILD.md",
-      "sha256": "3fe8b36d0842aa5ab2a673713465452d43f6e404570aaced66836e6b0fb5578c"
+      "sha256": "99f4ae3572bd09002f951fb9af76e0997678809a306ec42d6181a24126c6196c"
     },
     {
       "path": "docs/FEATURES.md",
@@ -566,7 +570,7 @@
     },
     {
       "path": "docs/FIRMWARE-INTEGRATION.zh-CN.md",
-      "sha256": "4b5b4bb3f4b6e70821d4f40a10096564d1bdbb3be27f07d330a2200c68b2778f"
+      "sha256": "f857950d0efa99d2412cd6ea0c3e1d18c8f4fcf0c56dc3fbffe31970c72138df"
     },
     {
       "path": "docs/FRONTEND-SOURCES.md",
@@ -737,6 +741,10 @@
       "sha256": "fddd66971e5dd6f6fc25289669309572e1baa8828427d1287558e147fec21f06"
     },
     {
+      "path": "openwrt/wlmb-server/Makefile",
+      "sha256": "1c976d12c712caafcc8daa26e2920091f0e3fea4626d9604afe90a591e7be0bd"
+    },
+    {
       "path": "packaging/files/etc/config/network_panel",
       "sha256": "09f7dcfd5f06073941f51e59d2be089acad0c8b90283db01d77e64e153f8a820"
     },
@@ -750,11 +758,11 @@
     },
     {
       "path": "README.en.md",
-      "sha256": "cc4f58917d5e1e2f20dfc6193a145d4a7e2b80e751eaec8bdffff99497c2db85"
+      "sha256": "fcdef43b1216734dac4103fa2c74dae701a327d4e709138e7bed371bc7c4ac35"
     },
     {
       "path": "README.md",
-      "sha256": "0c7ddb5a01abaf890c7c2467eaa5d2410907009938ff7520bbe636251e49a1cb"
+      "sha256": "f2c7d2f95dece3cee472917069159e14a32260e55b619cd7d2c7e88317f514e2"
     },
     {
       "path": "tools/audit-release-boundary.cjs",
@@ -783,6 +791,10 @@
     {
       "path": "tools/check-luci.cjs",
       "sha256": "90c69e9ba86f8371987d90b29c1a24c252569930358013670f00c9fe7d1f4585"
+    },
+    {
+      "path": "tools/check-openwrt-feed.cjs",
+      "sha256": "c7a49b564bcd4f2add6b45d048db9b0a6f069e0e439637b518c7aa922e81c205"
     },
     {
       "path": "tools/check-package.cjs",

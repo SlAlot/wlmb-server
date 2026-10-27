@@ -76,7 +76,19 @@ GL.iNet按实际服务及模组身份识别CPU／USB共享通道，不限定Mudi
 
 `backend/` Rust；`frontend/` WebUI；`packaging/`安装配置与第三方声明；`tools/`构建和测试；`docs/`API及兼容文档。
 
-固件开发者希望出厂预装插件，请看[编译进 OpenWrt 固件](docs/FIRMWARE-INTEGRATION.zh-CN.md)：包括 ImageBuilder 预装、完整源码树的本地包配方、架构与签名处理、开机启动和验收。仓库目前不是可直接放入 `package/` 的 feed，教程提供具体集成步骤。
+固件开发者可通过标准 Feed 从源码编译并预装。在生效的 `feeds.conf.default`（或 `feeds.conf`）中添加：
+
+```text
+src-git wlmb https://github.com/SlAlot/wlmb-server.git;main
+```
+
+```sh
+./scripts/feeds update -a
+./scripts/feeds install -a
+make menuconfig
+```
+
+在 **LuCI → Applications → wlmb-server** 选择 `<*>`，然后编译固件。已有完整构建环境时也可只运行 `./scripts/feeds update wlmb` 与 `./scripts/feeds install -a -p wlmb`。支持 ARM64／x86_64，使用 OpenWrt 的 Rust 工具链编译，不需要解包 Release。完整步骤与依赖条件见[固件集成教程](docs/FIRMWARE-INTEGRATION.zh-CN.md)。
 
 ```sh
 cargo test --locked --all-features --manifest-path backend/Cargo.toml

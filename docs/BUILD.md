@@ -1,6 +1,6 @@
 # 构建、下载与发布
 
-如果目标是将插件出厂预装到固件，而不是单独生成安装包，请先看[编译进 OpenWrt 固件教程](FIRMWARE-INTEGRATION.zh-CN.md)。其中区分 ImageBuilder、完整源码树载荷集成和修改 Rust 源码，不把仓库直接当作 OpenWrt feed。
+如果目标是将插件预装到固件，请看[标准 Feed 集成教程](FIRMWARE-INTEGRATION.zh-CN.md)：添加 `wlmb` Feed，在 `LuCI → Applications` 选择 `wlmb-server`，使用 OpenWrt 的 Rust 工具链从当前 Feed 源码编译，不依赖 Release 安装包。
 
 [正式版下载](https://github.com/SlAlot/wlmb-server/releases/latest)提供ARM64／x86_64的IPK、APK；两个架构均不是all包。附SHA256SUMS、release.json、安装文件清单和逐型号兼容报告。版本、完整提交和摘要以本次Release资产为准。
 
@@ -8,7 +8,9 @@ IPK用于opkg，APK用于apk；包ABI包括aarch64_cortex-a53、aarch64_generic�
 
 ## GitHub Actions
 
-已参考[OpenWrt官方SDK Action](https://github.com/openwrt/gh-action-sdk)及[SDK容器](https://github.com/openwrt/docker)。本项目直接用锁定Cargo依赖交叉编译静态musl二进制，再用校验过的打包工具生成IPK／APK，不构建完整固件；没有声称使用SDK Action构建本项目。
+正式 Release 流程直接用锁定 Cargo 依赖交叉编译静态 musl 二进制，再用校验过的打包工具生成 IPK／APK，不构建完整固件。标准 Feed 则走目标固件的 `rust/host` 与 `rust-package.mk`；两条构建路径分开，不能把独立安装包测试当作 Feed 构建成功。
+
+每次源码检查包含 `tools/check-openwrt-feed.cjs`，在 Linux 通过 GNU Make 验证 Feed 符号链接、规则展开、Cargo 参数、文件布局、权限及钩子保护；其中 Cargo 替身仅用于安装规则测试。另提供可手动运行的 [OpenWrt feed SDK build](../.github/workflows/openwrt-feed.yml)，使用官方 SDK Action 对 ARM64／x86_64 进行真实 Feed 构建，产物和日志仅上传为 Actions 附件，不发布 Release、不读取项目签名密钥。首次 SDK Rust 工具链构建可能较慢；以对应运行结果为准，不能将规则测试冒充 SDK 编译成功。
 
 1. main推送或PR执行检查、Rust测试、Clippy及两架构打包，只产生Actions附件。
 2. 推送与源码版本一致的vX.Y.Z标签，或发布对应Release，自动执行相同检查。
@@ -28,6 +30,7 @@ Actions可手动运行：运行引用必须选择现有v标签，填写同一标
 ```sh
 npm ci --prefix tools/ui-tests --ignore-scripts --no-audit --no-fund
 node tools/check-project.cjs
+node tools/check-openwrt-feed.cjs
 node tools/check-comments.cjs
 node tools/check-webui.cjs
 node tools/check-release-workflow.cjs

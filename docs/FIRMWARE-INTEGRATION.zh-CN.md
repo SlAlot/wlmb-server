@@ -1,221 +1,96 @@
-# 将网络面板预装进 OpenWrt 固件
+# 通过标准 Feed 编译进 OpenWrt 固件
 
-面向自行构建 OpenWrt／ImmortalWrt 固件的开发者。预装后，用户可直接进入 **LuCI → 服务 → 网络面板**，无需再执行一键安装脚本。插件仍不接管拨号，也不需要小程序才能使用 WebUI。
+本仓库提供 OpenWrt 标准包配方：添加 Feed、更新并安装包索引，在 menuconfig 中选中 `wlmb-server`，即可随固件编译。**直接从当前 Feed 的 Rust 源码编译，不下载或解包 Release，不需要手写 Makefile。**
 
-**先说明：本仓库目前不是 OpenWrt feed，没有可直接被 menuconfig 识别的包 Makefile。仅把本仓库克隆到 `package/` 并不能完成集成。** 本文提供两条可操作路径：
+插件后端、LuCI WebUI、rpcd 入口、ACL、初始化脚本、默认配置及许可声明一起打包。继续使用 `wlmb-server` 包名，避免与原有一体安装包产生前后端文件归属冲突；不是单独叫 `luci-app-wlmb-server` 的第二个包。
 
-- 已有匹配的 ImageBuilder：将正式安装包加入镜像，适合不修改插件的固件作者。
-- 已有完整固件源码树：使用本文的本地包配方，将已核验的插件文件交给固件构建系统重新打包，适合需要 menuconfig 选项的项目。
+## 快速开始
 
-两条路径默认复用正式版 Rust 二进制，**不等于在固件构建过程中重新编译 Rust 源码**。需要修改插件实现时，见后面的“修改 Rust 源码”。
+### 1. 添加 Feed
 
-## 一、准备与版本选择
+在 **OpenWrt／ImmortalWrt 完整源码树根目录**的 `feeds.conf.default` 中追加一行；如果项目已经有生效的 `feeds.conf`，则添加到该文件。两者不要重复配置：
 
-在 Linux 构建环境中操作；Windows 开发者请使用 Linux 虚拟机或配置好的 WSL2。不要在路由器上编译完整固件。准备目标固件要求的构建依赖，以及 `curl`、`tar`、`sha256sum`；以下下载命令使用 Bash。
-
-1. 固定 OpenWrt 分支、设备 Target／Subtarget／Profile 和插件版本，保留构建记录；不要在可复现构建中使用 `releases/latest`。
-2. 以目标固件的**包 ABI**选包，而非只看 CPU 商品名。已有同款运行设备时，可参考 `opkg print-architecture`，或 APK 固件的 `/etc/apk/arch`；同时核对构建配置。
-3. 包管理器以目标固件为准，不以系统版本号猜测。ImageBuilder 必须与目标固件、设备和包格式匹配，不混入其他分支的软件源或内核模块。
-
-当前正式包的对应关系如下；本文以 `1.1.3` 为固定示例，更新时同步修改版本、下载包和构建记录。
-
-| 目标包 ABI | 发布文件名后缀 | Rust 目标 |
-| --- | --- | --- |
-| `aarch64_cortex-a53` | `aarch64` | `aarch64-unknown-linux-musl` |
-| `aarch64_generic`，常见于 armsr/armv8 | `aarch64_generic` | `aarch64-unknown-linux-musl` |
-| `x86_64` | `x86_64` | `x86_64-unknown-linux-musl` |
-
-两个 ARM64 包使用通用 ARM64 程序，但包元数据不同。其他 ABI 暂无对应正式包，不能强制安装或把包声明成 `all` 来绕过检查。
-
-### 下载并校验所选安装包
-
-以下变量需要按目标修改：`WLMB_SUFFIX` 取上表的文件名后缀；ImageBuilder 的 `WLMB_FORMAT` 选 `ipk` 或 `apk`。完整源码树方案统一选 `ipk`，仅用于提取文件，原因见第三节。
-
-```bash
-set -euo pipefail
-WLMB_VERSION=1.1.3
-WLMB_SUFFIX=aarch64
-WLMB_FORMAT=ipk
-WLMB_ASSETS="$(mktemp -d)"
-WLMB_BASE="https://github.com/SlAlot/wlmb-server/releases/download/v${WLMB_VERSION}"
-WLMB_FILE="wlmb-server-${WLMB_VERSION}-${WLMB_SUFFIX}.${WLMB_FORMAT}"
-cd "$WLMB_ASSETS"
-curl -fL --retry 3 "$WLMB_BASE/$WLMB_FILE" -o "$WLMB_FILE"
-curl -fL --retry 3 "$WLMB_BASE/SHA256SUMS" -o SHA256SUMS
-awk -v name="$WLMB_FILE" '$2 == name { print; found=1 } END { if (!found) exit 1 }' SHA256SUMS | sha256sum -c -
+```text
+src-git wlmb https://github.com/SlAlot/wlmb-server.git;main
 ```
 
-只有校验显示 `OK` 才继续。摘要用于发现文件损坏，不能代替对发布来源的信任。安装包、摘要来自同一个固定版本；不要执行下载失败后留下的文件。
+### 2. 更新与安装 Feed
 
-## 二、ImageBuilder 预装
+首次准备源码树时，更新并安装全部已有 Feed，让 `packages` 中的 Rust 构建辅助、`luci` 和系统依赖一并就绪：
 
-### 1. 加入本地软件包
-
-进入已解压的、与目标设备匹配的 ImageBuilder 根目录；以下命令沿用上一步 Bash 会话中的变量：
-
-```bash
-mkdir -p packages
-cp "$WLMB_ASSETS/$WLMB_FILE" packages/
-make info
-```
-
-从 `make info` 的结果中选取真实 Profile，不要照抄其他设备的名称。`packages/` 中只保留本次目标需要的网络面板版本和 ABI，避免多版本候选互相干扰。
-
-### 2. APK 的额外信任步骤
-
-**IPK 跳过本小节。** APK ImageBuilder 在构建时也需要信任插件发布公钥，不能只把公钥放进最终镜像的 `FILES` 目录。
-
-```bash
-curl -fL --retry 3 "$WLMB_BASE/wlmb-server-signing.pem" -o "$WLMB_ASSETS/wlmb-server-signing.pem"
-printf '%s  %s\n' '402d9e009fb2064df25dfccec6855b037c039c22c61a95febc9f400d4b53d8ec' "$WLMB_ASSETS/wlmb-server-signing.pem" | sha256sum -c -
-mkdir -p keys files/etc/apk/keys
-cp "$WLMB_ASSETS/wlmb-server-signing.pem" keys/wlmb-server-signing.pem
-cp "$WLMB_ASSETS/wlmb-server-signing.pem" files/etc/apk/keys/wlmb-server-signing.pem
-chmod 644 keys/wlmb-server-signing.pem files/etc/apk/keys/wlmb-server-signing.pem
-```
-
-上面的 `keys/` 用于构建时验证，`files/etc/apk/keys/` 用于刷机后验证同一发布密钥签名的升级包。保留固件原有公钥，不替换整个密钥目录。不同分支若调整了 ImageBuilder 的密钥目录，应按该分支的 `APK_KEYS` 设置处理，见本节末尾的上游参考。
-
-公钥指纹以本仓库 [APK 安装说明](APK-INSTALL.zh-CN.md)和[公钥元数据](apk-signing-key.json)为准；将来换钥时重新核对，不盲目沿用示例。不使用 `--allow-untrusted` 或关闭全局签名校验解决错误。
-
-### 3. 生成固件
-
-将 `实际设备Profile` 替换成 `make info` 列出的值：
-
-```bash
-WLMB_PROFILE='实际设备Profile'
-mkdir -p files
-make image PROFILE="$WLMB_PROFILE" \
-  PACKAGES="wlmb-server luci rpcd rpcd-mod-iwinfo uci" \
-  FILES="$PWD/files"
-```
-
-IPK 场景不需要额外文件时也可省略 `FILES` 参数。已有 overlay 时请使用自己的完整目录，合并上述公钥文件，不要覆盖原有文件。已有 `PACKAGES` 清单则追加这些包，保留原有驱动、拨号及网络配置；完整 LuCI 已由固件其他包提供时可按固件方案选择对应 LuCI 集合。
-
-依赖必须来自该 ImageBuilder 对应的软件源。不要将一键安装脚本塞进首次启动任务，也不要在镜像生成失败时改为忽略依赖、架构或签名。输出位于 `bin/targets/`；检查镜像的 manifest 确实包含 `wlmb-server` 和所需依赖。
-
-## 三、完整固件源码树集成
-
-这个方案使用本地包配方，最终由**目标固件自己的构建系统**生成 IPK 或 APK。这里下载 IPK 只是为了取得插件文件树，不是在 APK 固件里安装 IPK，也不会沿用其他系统的软件包数据库。
-
-### 1. 提取插件文件
-
-先按第一节以 `WLMB_FORMAT=ipk` 下载、校验。然后进入你已有的 OpenWrt 源码树根目录，在同一个 Bash 会话执行：
-
-```bash
-test "$WLMB_FORMAT" = ipk
-test ! -e package/wlmb-server
-mkdir -p package/wlmb-server/files
-tar -xOf "$WLMB_ASSETS/$WLMB_FILE" data.tar.gz | tar -xz -C package/wlmb-server/files
-test -x package/wlmb-server/files/usr/sbin/wlmb-server
-test -f package/wlmb-server/files/etc/init.d/wlmb-server
-test -f package/wlmb-server/files/etc/config/network_panel
-test -L package/wlmb-server/files/usr/libexec/rpcd/network-panel
-```
-
-本项目 `1.1.3` 的 IPK 外层是 gzip tar，包含 `data.tar.gz`，不是 `ar` 格式；不要对其执行 `ar x`。未来格式变化时先检查归档结构。仅提取已校验的官方包，不执行未知归档中的程序。
-
-保留整个文件树，包括 LuCI 静态资源、菜单、ACL、rpcd 入口、UCI 默认配置、初始化脚本、项目许可和第三方声明；不要只复制二进制。
-
-### 2. 添加包配方
-
-新建 `package/wlmb-server/Makefile`，内容如下。**命令行开头必须使用 Tab，不是空格**；如果更换了载荷版本，同时修改 `PKG_VERSION`。
-
-```makefile
-include $(TOPDIR)/rules.mk
-
-PKG_NAME:=wlmb-server
-PKG_VERSION:=1.1.3
-PKG_RELEASE:=1
-PKG_LICENSE:=LicenseRef-WLMB-NonCommercial
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
-
-include $(INCLUDE_DIR)/package.mk
-
-define Package/wlmb-server
-  SECTION:=net
-  CATEGORY:=Network
-  SUBMENU:=WWAN
-  TITLE:=Network Panel modem WebUI
-  DEPENDS:=+rpcd +rpcd-mod-iwinfo +luci-base +uci
-endef
-
-define Package/wlmb-server/description
-  Rust modem information service and LuCI WebUI.
-endef
-
-define Package/wlmb-server/conffiles
-/etc/config/network_panel
-endef
-
-define Build/Prepare
-	$(INSTALL_DIR) $(PKG_BUILD_DIR)
-endef
-
-define Build/Configure
-endef
-
-define Build/Compile
-endef
-
-define Package/wlmb-server/install
-	$(INSTALL_DIR) $(1)
-	$(CP) ./files/. $(1)/
-	$(INSTALL_DIR) $(1)/etc/rc.d
-	$(LN) ../init.d/wlmb-server $(1)/etc/rc.d/S95wlmb-server
-	$(LN) ../init.d/wlmb-server $(1)/etc/rc.d/K10wlmb-server
-endef
-
-$(eval $(call BuildPackage,wlmb-server))
-```
-
-该配方不下载新版本、不执行主机上的插件程序、不重编译 Rust。提取的二进制必须匹配当前 Target 的架构和上述 ABI；默认包架构由固件构建系统确定，不能改成 `all`。切换 Target 时重新选择载荷，不要把同一目录直接用于不兼容的平台。
-
-### 3. 选择并编译
-
-在固件原有 feeds 配置和目标配置上操作，不要覆盖 `.config`：
-
-```bash
+```sh
+./scripts/feeds update -a
+./scripts/feeds install -a
 make menuconfig
 ```
 
-在 **Network → WWAN → wlmb-server** 选择 `<*>`。`<M>` 只构建安装包，不会预装进固件。另确认已选适合设备的 LuCI、模组驱动和拨号管理组件；本插件不替代这些组件。
+已有完整构建环境、只是新增本插件时，可以只更新该 Feed：
 
-```bash
+```sh
+./scripts/feeds update wlmb
+./scripts/feeds install -a -p wlmb
+make menuconfig
+```
+
+第二种写法以其他 Feed 已更新、依赖可解析为前提。若出现缺少 `rust/host`、`luci-base` 或 Rust 辅助文件，请按首次准备流程更新依赖，不忽略错误。
+
+### 3. 选择插件
+
+先选择真实设备的 **Target System／Subtarget／Target Profile**，再进入：
+
+```text
+LuCI → Applications → wlmb-server
+```
+
+将网络面板设为 **`<*>`**，保存配置。`<M>` 只生成安装包，不会把插件预装进固件。包配方会选择 `luci-base`、`rpcd`、`rpcd-mod-iwinfo`、`ubus`、`uci` 和运行库；固件还需有自己的 LuCI 登录／Web 服务方案，例如原有的 `luci` 或 `luci-ssl` 集合。
+
+### 4. 编译固件
+
+```sh
 make defconfig
-make package/wlmb-server/compile V=s
+make download -j8
 make -j"$(nproc)"
 ```
 
-包编译失败时先查看 `V=s` 的实际错误；并行构建失败时可单线程重试定位，不通过强制跳过错误发布镜像。最终检查 `bin/targets/` 的固件及 manifest。
+只想先验证插件包，可以运行：
 
-这个配方将服务的启动链接一并预装；默认配置 `network_panel.main.boot_enabled='1'` 允许开机启动。若固件作者有意关闭开机启动，同时设置该配置并调整自己的服务策略。不要在构建主机上执行 `/etc/init.d/wlmb-server start`。
-
-本地重打包版本由固件作者维护，签名使用其构建系统的密钥，不是本项目的发布私钥。用户后续通过官方 APK 升级时，仍需按安装说明导入官方公钥，并确认包版本排序；自行打包不自动获得官方升级源。
-
-## 四、修改 Rust 源码
-
-若只想预装原版，跳过本节。若修改实现，应重新编译并验证，不能把主机程序改名当作路由器程序。
-
-1. 从本仓库固定标签检出源码，例如 `v1.1.3`；编译和打包版本、前端入口与 API 契约保持一致。
-2. 当前源码使用 Rust 2024 edition，最低 Rust `1.85`。准备 Node.js `24`、对应 Rust 目标及目标 C 工具链；旧固件 SDK 的 Rust 版本不一定够用。
-3. 按[构建说明](BUILD.md)运行检查与测试，并参考[实际 CI 工具链配置](../.github/workflows/check.yml)。仅执行 `rustup target add` 不会自动装好目标 C 编译器及链接器。
-4. 配置好对应工具链后编译，例如 ARM64：
-
-```bash
-cargo build --manifest-path backend/Cargo.toml \
-  --release --all-features --locked --target aarch64-unknown-linux-musl
+```sh
+make package/feeds/wlmb/wlmb-server/compile V=s
 ```
 
-x86_64 改为 `x86_64-unknown-linux-musl`。保留 `--all-features`，其中包含短信转发需要的 HTTPS 能力。编译完成后，把对应 `backend/target/<Rust目标>/release/wlmb-server` 替换到第三节的 `files/usr/sbin/wlmb-server`，保留可执行权限；前端、配置或资源有修改时也应同步对应文件，而不是沿用旧载荷。
+最终固件位于 `bin/targets/`；检查镜像的 manifest 包含 `wlmb-server`。IPK／APK 格式、包 ABI、依赖及签名由**目标固件自己的构建系统**决定，不使用项目 Release 的签名私钥，也不需要先导入项目的 APK 公钥才能从源码构建。
 
-对改版重新执行项目检查、目标架构运行测试及真机验收。当前教程不提供未经验证的、直接在任意 OpenWrt Rust feed 下构建的配方；第三节是预编译载荷集成，不应宣传为完整 Rust 源码交叉编译。
+## 构建条件
 
-## 五、刷机后的验收
+- 使用 Linux 或配置好的 WSL2／Linux 虚拟机，按目标固件的开发文档准备完整构建环境，不在路由器本机编译固件。
+- 当前配方仅开放 **ARM64（`aarch64`）和 x86_64**。ARM64 的具体 ABI 由目标决定，包括常见的 Cortex-A53、armsr/armv8；不要把 Rust 二进制包改成 `all`，也不宣称其他 CPU 已经过验证。
+- 源码采用 Rust 2024 edition，`Cargo.toml` 声明最低 Rust 1.85；同时需满足锁定依赖要求。配方使用 OpenWrt `packages/lang/rust/rust-package.mk` 与 `rust/host`，启用 `pushplus-https`、保留 Cargo.lock。Rust/Cargo 是构建主机依赖，不会安装到路由器。
+- 保留与固件分支匹配的默认 `packages`、`luci` Feed。旧快照若自带过时 Rust，请先更新同分支工具链；不混用其他分支的系统库、内核驱动，不自动改用主机 rustup 或预编译程序掩盖错误。
+- 首次构建 Rust 工具链与下载 Cargo 依赖可能耗时较长；首次构建需要网络，不承诺离线缓存尚未准备时可直接编译。
+- 模组仍需适配当前内核的 USB、串口、QMI、MBIM、MHI 等驱动及拨号组件。插件不替代驱动，不接管拨号；QModem 不是硬依赖，存在已适配共享接口时复用，否则按独立模式的保护规则发现端点。
 
-先保留设备救援和配置备份方案，确认镜像适用于该硬件，再按固件自己的流程刷机。不要为了验收自动锁频、重启模组、切飞行模式或改拨号。
+## 配方与源码对应
 
-在目标设备检查：
+[包配方](../openwrt/wlmb-server/Makefile)位于 `openwrt/wlmb-server/Makefile`。Feed 安装后的包目录是符号链接，配方会解析真实 Feed 根目录，再从仓库的 `backend/`、`frontend/`、`packaging/` 和所需数据文件准备源码。
+
+修改实现后，修改的是这份 Feed 中的源码，不是另行下载的发布载荷。需要强制重建时：
+
+```sh
+make package/feeds/wlmb/wlmb-server/clean
+make package/feeds/wlmb/wlmb-server/compile V=s
+```
+
+`main` 会持续变化；对外发布固件前，记录 OpenWrt 提交、各 Feed 提交、`.config` 和构建日志。使用 `src-git` 的固定提交形式可提高可复现性：
+
+```text
+src-git wlmb https://github.com/SlAlot/wlmb-server.git^完整提交SHA
+```
+
+选择包含本配方的实际提交，不要照抄占位符；旧 `v1.1.3` 标签早于标准 Feed 配方，不能用旧标签验证新集成方式。更新源码版本时保持 Cargo、配方、前端资源与 API 契约一致，见[构建与发布](BUILD.md)。
+
+## 刷机验收
+
+先确认镜像与硬件匹配，保留设备救援与配置备份方案，再按目标固件的刷机流程操作。首次启动后，进入 **LuCI → 服务 → 网络面板**。
 
 ```sh
 wlmb-server --version
@@ -225,27 +100,23 @@ ubus -v list network-panel
 logread -e wlmb-server
 ```
 
-- LuCI 中出现“服务 → 网络面板”，页面、图标、深浅主题及刷新正常；LuCI 若不在 80 端口，使用该固件真实端口访问。
-- 小程序或其他 API 客户端使用设备真实 LAN 地址与插件的 `1117` 端口，不把 LuCI 端口当作 API 端口；只向可信局域网开放。
-- 检查本机真实支持的信号、载波、邻区、WiFi和短信能力；没有可靠数据时不应伪造数值。存在 QModem 时复用现有接口，不额外抢占其 AT 串口。
-- 重启整机后验证服务按配置自启；缺少 rpcd 方法时检查 rpcd 入口、ACL、依赖及启动日志，不先重启模组。
-- 确认出厂镜像不含作者自己的密码、短信、Token、设备标识或测试缓存。不要把运行设备的整个 `/etc/wlmb-server` 打包给用户。
+默认 `boot_enabled='1'`，初始化脚本交给 procd 管理；固件根文件系统生成阶段不会在构建主机上启动服务。检查服务与页面正常、整机重启后可自启。LuCI 使用该固件自己的管理端口，API／小程序接入使用真实 LAN 地址和插件的 `1117` 端口，只向可信局域网开放。
 
-内置到只读固件的包与运行后安装的包不同：卸载不能从只读层回收空间，恢复出厂通常会恢复内置版本。固件作者应测试升级、配置保留和恢复出厂后的行为。
+按本机真实能力验收信号、载波、邻区、WiFi和短信，不为测试自动锁频、切飞行模式或重启模组。编译成功不代表所有模组、所有接口模式已通过实机验证，见[兼容说明](MODEM-COMPATIBILITY.md)。
 
-## 六、分发边界与常见错误
+内置到只读固件后，卸载不会回收只读层空间，恢复出厂通常会恢复内置版本。请测试后续升级、配置保留和恢复出厂行为，不打包个人密码、短信、Token 或运行缓存。
 
-- **menuconfig 找不到插件**：本仓库本身不是 feed，使用第三节的本地包配方，并确认目录位于固件源码树中。
-- **缺依赖／架构不符**：核对 Target、包 ABI、包格式和固件自身软件源；不使用忽略依赖或强制架构选项。
-- **APK `UNTRUSTED signature`**：ImageBuilder 的构建密钥目录和最终系统密钥目录分别处理；完整源码树重打包则按固件自己的签名机制处理。
-- **有菜单但没有信息**：先检查服务、rpcd、模组通道及原管理组件；预装成功不代表每种模组固件的全部能力都已验证。见[系统接口边界](SYSTEM-INTERFACES.md)与[模组兼容说明](MODEM-COMPATIBILITY.md)。
-- **分发固件**：保留 SlAlot 作者署名、项目来源、[项目许可](../LICENSE)及第三方声明。当前允许免费非商业使用及分发，未经授权不得用于商业固件或产品；不是 MIT／GPL 许可。小程序不在本仓库中，也不需要打包进固件。
+## 常见问题
 
-本教程已按当前发布包结构及上游构建入口核对；不代表已在每个 ImageBuilder、固件分支或硬件上完成整机编译与刷机测试。首次集成应走完整验收，再对外分发。
+- **menuconfig 中找不到包**：确认当前生效的 Feed 配置正确，已更新并安装 `wlmb`，目标架构为 ARM64 或 x86_64，并查看 Feed 索引报错。
+- **Rust 辅助或构建依赖缺失**：检查 `feeds/packages/lang/rust/rust-package.mk`，重新更新匹配分支的 `packages` Feed 并安装依赖。
+- **Rust 版本不足／Cargo 下载失败**：按实际日志处理工具链或网络问题，不删除 Cargo.lock，不静默切换 Release 二进制。
+- **只生成安装包，没有进入固件**：确认配置为 `CONFIG_PACKAGE_wlmb-server=y`，不是 `=m`，并查看固件 manifest。
+- **包已内置但没有页面**：检查固件自身的 LuCI Web 服务、菜单、ACL、rpcd 和初始化日志；插件没有强制替换固件的 Web 服务。
+- **其他 Feed 也提供同名包**：先确认文件来源，只保留一个 `wlmb-server` 配方，不靠强制覆盖掩盖冲突。
 
-## 参考
+## 许可与参考
 
-- [OpenWrt ImageBuilder 使用说明](https://openwrt.org/docs/guide-user/additional-software/imagebuilder)
-- [OpenWrt ImageBuilder 实现：本地包、密钥目录与镜像生成参数](https://github.com/openwrt/openwrt/blob/main/target/imagebuilder/files/Makefile)
-- [OpenWrt 软件包定义](https://openwrt.org/docs/guide-developer/packages)
-- [网络面板构建与发布](BUILD.md) · [安装与升级](INSTALL.zh-CN.md) · [API 文档](API.zh-CN.md)
+集成及分发时保留 SlAlot 署名、项目来源、[项目许可](../LICENSE)和第三方声明。允许免费非商业使用，未经授权不得用于商业固件或产品；不是 MIT／GPL 许可。微信小程序源码不属于本仓库，不参与固件构建。
+
+Feed 接入形式参考 [QModem 快速开始](https://github.com/FUjr/QModem/blob/main/README.zh-cn.md)；包规则和 Rust 构建采用 [OpenWrt 软件包体系](https://openwrt.org/docs/guide-developer/packages)与[官方 Rust 辅助](https://github.com/openwrt/packages/blob/openwrt-24.10/lang/rust/rust-package.mk)。这不表示复制 QModem 的拨号或模组控制逻辑。

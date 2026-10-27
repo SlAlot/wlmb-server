@@ -64,7 +64,7 @@ This repository contains **only the OpenWrt plugin**, excluding the mini-program
 
 ## Build and release
 
-Firmware developers: see the [firmware integration guide (Chinese)](docs/FIRMWARE-INTEGRATION.zh-CN.md) for ImageBuilder and a local package recipe. This repository is not directly installable as an OpenWrt feed.
+Firmware developers: add `src-git wlmb https://github.com/SlAlot/wlmb-server.git;main` to the active feed configuration, update/install feeds, then select `wlmb-server` under **LuCI → Applications** as built-in. The standard recipe builds Rust from source for ARM64/x86_64 using OpenWrt's Rust tooling. See the [firmware integration guide (Chinese)](docs/FIRMWARE-INTEGRATION.zh-CN.md) for prerequisites and commands.
 
 ```sh
 cargo test --locked --all-features --manifest-path backend/Cargo.toml

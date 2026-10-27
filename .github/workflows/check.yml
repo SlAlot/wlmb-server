@@ -38,6 +38,7 @@ jobs:
       - run: node tools/check-project.cjs
       - run: node tools/audit-release-boundary.cjs --summary
       - run: node tools/check-package.cjs
+      - run: node tools/check-openwrt-feed.cjs
       - run: node tools/check-luci.cjs
       - run: npm ci --prefix tools/ui-tests --ignore-scripts --no-audit --no-fund
       - run: node tools/check-comments.cjs
