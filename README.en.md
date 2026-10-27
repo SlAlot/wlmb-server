@@ -64,6 +64,8 @@ This repository contains **only the OpenWrt plugin**, excluding the mini-program
 
 ## Build and release
 
+Firmware developers: see the [firmware integration guide (Chinese)](docs/FIRMWARE-INTEGRATION.zh-CN.md) for ImageBuilder and a local package recipe. This repository is not directly installable as an OpenWrt feed.
+
 ```sh
 cargo test --locked --all-features --manifest-path backend/Cargo.toml
 cargo clippy --locked --all-targets --all-features --manifest-path backend/Cargo.toml -- -D warnings

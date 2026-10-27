@@ -558,11 +558,15 @@
     },
     {
       "path": "docs/BUILD.md",
-      "sha256": "42bf0441917eed3e1ce535479db8b03525e18086505fb29afce3215b515cbdfe"
+      "sha256": "3fe8b36d0842aa5ab2a673713465452d43f6e404570aaced66836e6b0fb5578c"
     },
     {
       "path": "docs/FEATURES.md",
       "sha256": "68134b91a69421ab1a3ec6931330f9a5a1ffa819cab2f3f78796df5235fbbbe8"
+    },
+    {
+      "path": "docs/FIRMWARE-INTEGRATION.zh-CN.md",
+      "sha256": "4b5b4bb3f4b6e70821d4f40a10096564d1bdbb3be27f07d330a2200c68b2778f"
     },
     {
       "path": "docs/FRONTEND-SOURCES.md",
@@ -746,11 +750,11 @@
     },
     {
       "path": "README.en.md",
-      "sha256": "7b16dc0db9259c21d02aad3fa7b4f8560df5282839e3eea66795d0b9751b4a44"
+      "sha256": "cc4f58917d5e1e2f20dfc6193a145d4a7e2b80e751eaec8bdffff99497c2db85"
     },
     {
       "path": "README.md",
-      "sha256": "cb55e39cd73fa757270e28309905a25b213278d71a852ce04d78d871253df5be"
+      "sha256": "0c7ddb5a01abaf890c7c2467eaa5d2410907009938ff7520bbe636251e49a1cb"
     },
     {
       "path": "tools/audit-release-boundary.cjs",

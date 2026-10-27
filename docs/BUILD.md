@@ -1,5 +1,7 @@
 # 构建、下载与发布
 
+如果目标是将插件出厂预装到固件，而不是单独生成安装包，请先看[编译进 OpenWrt 固件教程](FIRMWARE-INTEGRATION.zh-CN.md)。其中区分 ImageBuilder、完整源码树载荷集成和修改 Rust 源码，不把仓库直接当作 OpenWrt feed。
+
 [正式版下载](https://github.com/SlAlot/wlmb-server/releases/latest)提供ARM64／x86_64的IPK、APK；两个架构均不是all包。附SHA256SUMS、release.json、安装文件清单和逐型号兼容报告。版本、完整提交和摘要以本次Release资产为准。
 
 IPK用于opkg，APK用于apk；包ABI包括aarch64_cortex-a53、aarch64_generic（armsr/armv8）和x86_64。两种ARM64包使用同一通用aarch64-unknown-linux-musl程序，包元数据分别匹配固件ABI，不使用Cortex-A53专用编译指令。其他ABI不可强装。APK首次安装先核对并导入公钥，见[安装说明](APK-INSTALL.zh-CN.md)。摘要不能替代可信来源。

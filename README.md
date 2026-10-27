@@ -1,6 +1,6 @@
 # 网络面板 · wlmb-server
 
-[English](README.en.md) · [下载正式版](https://github.com/SlAlot/wlmb-server/releases/latest) · [API](docs/API.zh-CN.md)
+[English](README.en.md) · [下载正式版](https://github.com/SlAlot/wlmb-server/releases/latest) · [固件集成教程](docs/FIRMWARE-INTEGRATION.zh-CN.md) · [API](docs/API.zh-CN.md)
 
 面向OpenWrt的轻量模组信息与管理插件，作者 **SlAlot**。**Rust后端＋独立LuCI WebUI**，默认端口 **1117**，不接管拨号。根据qmodem为参考开发接入，自动选择已适配的模组协议及共享／独立通道。
 
@@ -75,6 +75,8 @@ GL.iNet按实际服务及模组身份识别CPU／USB共享通道，不限定Mudi
 ## 开发与自动发布
 
 `backend/` Rust；`frontend/` WebUI；`packaging/`安装配置与第三方声明；`tools/`构建和测试；`docs/`API及兼容文档。
+
+固件开发者希望出厂预装插件，请看[编译进 OpenWrt 固件](docs/FIRMWARE-INTEGRATION.zh-CN.md)：包括 ImageBuilder 预装、完整源码树的本地包配方、架构与签名处理、开机启动和验收。仓库目前不是可直接放入 `package/` 的 feed，教程提供具体集成步骤。
 
 ```sh
 cargo test --locked --all-features --manifest-path backend/Cargo.toml
