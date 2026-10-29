@@ -61,11 +61,11 @@ jobs:
           PY
           cd dist
           ./fnpack build --directory fnos-native
-          mv wlmb-fnos.fpk wlmb-fnos-0.1.1-${{ matrix.platform }}.fpk
-          sha256sum wlmb-fnos-0.1.1-${{ matrix.platform }}.fpk > SHA256SUMS
+          mv wlmb-fnos.fpk wlmb-fnos-0.1.2-${{ matrix.platform }}.fpk
+          sha256sum wlmb-fnos-0.1.2-${{ matrix.platform }}.fpk > SHA256SUMS
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: wlmb-fnos-0.1.1-${{ matrix.platform }}
+          name: wlmb-fnos-0.1.2-${{ matrix.platform }}
           path: |
             dist/*.fpk
             dist/SHA256SUMS

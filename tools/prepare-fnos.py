@@ -16,7 +16,10 @@ def prepare(binary, destination):
     shutil.copy2(binary,app/'bin/wlmb-fnos')
     (app/'bin/wlmb-fnos').chmod(0o755)
     for size,name in ((64,'ICON.PNG'),(256,'ICON_256.PNG')):
-        shutil.copy2(app/'ui/images'/f'icon_{size}.png',destination/name)
+        logo=app/'ui/images'/f'wlmb-logo-v2_{size}.png'
+        shutil.copy2(logo,destination/name)
+        # Retain the old path while the desktop metadata refreshes after upgrade.
+        shutil.copy2(logo,app/'ui/images'/f'icon_{size}.png')
     for name in ('install_init','install_callback','upgrade_callback','config_init','config_callback','uninstall_callback'):
         (destination/'cmd'/name).write_text('#!/bin/bash\nexit 0\n',encoding='utf-8',newline='\n')
     for name in ('uninstall_init','upgrade_init'):
