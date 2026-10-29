@@ -1,0 +1,16 @@
+appname=wlmb-fnos
+version=0.1.0
+display_name=网络面板
+desc=查看蜂窝模组信号、服务小区、载波和邻区信息。Rust 后端，不接管拨号。
+source=thirdparty
+platform=arm
+maintainer=SlAlot
+maintainer_url=https://github.com/SlAlot/wlmb-server/tree/fnos
+os_min_version=1.1.31
+install_type=root
+desktop_uidir=ui
+desktop_applaunchname=wlmb-fnos.main
+service_port=1117
+ctl_stop=true
+checkport=true
+disable_authorization_path=true

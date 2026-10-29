@@ -1,0 +1,62 @@
+#!/bin/bash
+set -eu
+: "${TRIM_APPDEST:?Missing app directory}"
+: "${TRIM_PKGVAR:?Missing app data directory}"
+: "${TRIM_USERNAME:?Missing app user}"
+: "${TRIM_GROUPNAME:?Missing app group}"
+state="$TRIM_PKGVAR/runtime"
+port="${TRIM_SERVICE_PORT:-1117}"
+fail() { printf '%s\n' "$1" > "${TRIM_TEMP_LOGFILE:-/dev/stderr}"; exit 1; }
+valid_pid() {
+    local file="$1" marker="$2" pid
+    [ -r "$file" ] || return 1
+    read -r pid < "$file"
+    [[ "$pid" =~ ^[0-9]+$ ]] || return 1
+    [ -r "/proc/$pid/cmdline" ] || return 1
+    tr '\0' '\n' < "/proc/$pid/cmdline" | grep -Fqx -- "$marker" || return 1
+    kill -0 "$pid" 2>/dev/null
+}
+stop_services() {
+    local file marker pid
+    for file in web backend; do
+        if [ "$file" = web ]; then marker="$TRIM_APPDEST/server.py"; else marker="$TRIM_APPDEST/bin/wlmb-fnos"; fi
+        if valid_pid "$state/$file.pid" "$marker"; then
+            read -r pid < "$state/$file.pid"
+            kill -TERM "$pid" 2>/dev/null || true
+        fi
+    done
+    for _ in {1..40}; do
+        if ! valid_pid "$state/backend.pid" "$TRIM_APPDEST/bin/wlmb-fnos" && ! valid_pid "$state/web.pid" "$TRIM_APPDEST/server.py"; then return 0; fi
+        sleep .5
+    done
+    return 1
+}
+case "${1:-}" in
+    start)
+        [[ "$port" =~ ^[0-9]+$ ]] && [ "$port" -ge 1024 ] && [ "$port" -le 65535 ] || fail '网络面板端口无效'
+        if valid_pid "$state/backend.pid" "$TRIM_APPDEST/bin/wlmb-fnos" && valid_pid "$state/web.pid" "$TRIM_APPDEST/server.py"; then exit 0; fi
+        stop_services || fail '旧进程尚未退出，请稍后重试'
+        install -d -m 750 -o root -g "$TRIM_GROUPNAME" "$state"
+        umask 027
+        "$TRIM_APPDEST/bin/wlmb-fnos" "$state/backend.sock" "$TRIM_APPDEST/auth.py" >> "$state/backend.log" 2>&1 &
+        echo "$!" > "$state/backend.pid"
+        ready=false
+        for _ in {1..60}; do
+            if [ -S "$state/backend.sock" ]; then ready=true; break; fi
+            sleep .1
+        done
+        [ "$ready" = true ] || { stop_services || true; fail '模组采集服务启动失败'; }
+        chgrp "$TRIM_GROUPNAME" "$state/backend.sock"
+        chmod 660 "$state/backend.sock"
+        runuser -u "$TRIM_USERNAME" -- /usr/bin/python3 "$TRIM_APPDEST/server.py" "$state/backend.sock" "$port" >> "$state/web.log" 2>&1 &
+        echo "$!" > "$state/web.pid"
+        sleep 1
+        valid_pid "$state/web.pid" "$TRIM_APPDEST/server.py" || { stop_services || true; fail '网络面板网页服务启动失败，请检查端口'; }
+        ;;
+    status)
+        valid_pid "$state/backend.pid" "$TRIM_APPDEST/bin/wlmb-fnos" && valid_pid "$state/web.pid" "$TRIM_APPDEST/server.py" && exit 0
+        exit 3
+        ;;
+    stop) stop_services || fail '网络面板进程尚未退出' ;;
+    *) exit 1 ;;
+esac

@@ -118,7 +118,7 @@
         function showSms(){
             var cache=bridge.sms()||{},snapshot=bridge.snapshot||{},supported=!!snapshot.capabilities?.sms,items=D.recentSms(cache),stamp=JSON.stringify([items,cache.loaded,cache.stale,cache.error,supported]);
             readButton.disabled=reading||!bridge.canReadSms();readButton.textContent=reading?'正在读取…':'读取短信';readButton.setAttribute('aria-busy',String(reading));
-            if(smsStamp===stamp)return;smsStamp=stamp;
+            recentCard.hidden=!supported;if(smsStamp===stamp)return;smsStamp=stamp;
             var nodes=items.length?items.map(function(item){
                 var article=n('article',{'class':'np-recent-sms-item'},[n('div',{'class':'np-recent-sms-head'},[n('strong',{},item.phone),badge(item.direction!=='incoming'?'未分类':item.unread?'未读':'已读',item.direction==='incoming'&&item.unread?'blue':'neutral')]),n('div',{'class':'np-hint'},item.timestamp),n('p',{'class':'np-recent-sms-preview'},item.content||'（空内容）')]);
                 if(!item.complete)article.appendChild(n('p',{'class':'np-hint'},'长短信接收中，暂不识别验证码'));
@@ -137,13 +137,13 @@
         [['','全部'],['NR','5G'],['LTE','4G']].forEach(function(item){var node=action(item[1],function(){filter=item[0];showNeighbors();});filterButtons.push({value:item[0],node:node});filterRow.appendChild(node);});
         searchInput.addEventListener('input',function(){search=searchInput.value;showNeighbors();});filterRow.appendChild(searchInput);filterRow.appendChild(count);
         var neighborNotice=n('p',{'class':'np-hint',role:'status'}),neighbors=n('div',{'class':'np-neighbor-presentation'},[filterRow,neighborRows,neighborNotice]),subnav=n('nav',{'class':'np-section-tabs','aria-label':'当前功能分组'}),mobile=n('nav',{'class':'np-mobile-navigation','aria-label':'主要功能导航'});
-        var brand=n('div',{'class':'np-navigation-brand'},[n('strong',{},'网络面板'),n('span',{},'免费 OpenWrt 插件 · 1117')]),service=n('div',{'class':'np-navigation-status',role:'status'});
+        var brand=n('div',{'class':'np-navigation-brand'},[n('strong',{},'网络面板'),n('span',{},bridge.platformLabel||'免费 OpenWrt 插件 · 1117')]),service=n('div',{'class':'np-navigation-status',role:'status'});
         nav.id='np-primary-navigation';
         var collapseButton=action('',function(){collapsed=!collapsed;applyCollapse();try{global.sessionStorage.setItem('wlmb-server.sidebar',collapsed?'collapsed':'expanded');}catch(_){} });collapseButton.appendChild(sidebarIcon());collapseButton.classList.add('np-collapse-toggle');collapseButton.setAttribute('aria-controls',nav.id);
         aside.appendChild(n('div',{'class':'np-navigation-top'},[brand,collapseButton]));aside.appendChild(service);aside.appendChild(nav);aside.appendChild(tutorial('连接小程序','#connect','np-navigation-guide'));
         content.appendChild(n('div',{'class':'np-page-heading'},[n('div',{},[title,description]),n('div',{'class':'np-heading-actions'},[themeButton,refreshButton])]));
         content.appendChild(subnav);content.appendChild(management);content.appendChild(bridge.toolbar);content.appendChild(body);content.appendChild(bridge.pages);
-        content.appendChild(n('div',{'class':'np-client-entry'},[n('strong',{},'网络面板助手 · 微信小程序'),tutorial('连接教程','#connect')]));content.appendChild(bridge.footer);
+        if(!bridge.hideClientEntry)content.appendChild(n('div',{'class':'np-client-entry'},[n('strong',{},'网络面板助手 · 微信小程序'),tutorial('连接教程','#connect')]));content.appendChild(bridge.footer);
         workspace.appendChild(aside);workspace.appendChild(content);workspace.appendChild(mobile);target.appendChild(workspace);
         var navFrame=0;
         function positionNavigation(){navFrame=0;if(disposed||!workspace.isConnected)return;var rect=workspace.getBoundingClientRect(),padding=parseFloat(global.getComputedStyle(workspace).paddingLeft)||0;workspace.style.setProperty('--np-navigation-left',(rect.left+padding)+'px');}
@@ -187,7 +187,7 @@
                 if(!entries.some(function(entry){return entry.key===current;})){current=0;bridge.select(0);}
                 lastGroup[definitions.find(function(entry){return entry.key===current;}).group]=current;
                 updateNavigation(entries);applyTheme();applyCollapse();var page=definitions.find(function(entry){return entry.key===current;});title.textContent=page.name;
-                description.textContent=(snapshot.system?.board?.model||snapshot.system?.board?.board_name||'OpenWrt 设备')+' · 根据qmodem为参考开发接入';
+                description.textContent=(snapshot.system?.board?.model||snapshot.system?.board?.board_name||'OpenWrt 设备')+(bridge.description?' · '+bridge.description:' · 根据qmodem为参考开发接入');
                 service.replaceChildren(n('span',{'class':'np-service-dot'+(runtime.running&&runtime.controlReady?' ready':'')}),doc.createTextNode((runtime.failure?'状态未确认':runtime.running?runtime.controlReady?'运行中':'启动中':'已停止')+' · '+(snapshot.connection?.sharedService==='luoye-modem-cache'?'modem 缓存':snapshot.connection?.mode==='shared'?'共享通道':snapshot.connection?.mode==='independent'?'独立通道':'通道待核对')));
                 refreshButton.disabled=refreshing||!bridge.canRefresh();refreshButton.textContent=refreshing?'正在刷新…':'刷新数据';refreshButton.setAttribute('aria-busy',String(refreshing));management.hidden=current!==3;
                 var selector=bridge.toolbar.querySelector('select');if(selector)selector.hidden=(snapshot.modems||[]).length<=1;

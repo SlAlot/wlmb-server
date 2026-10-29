@@ -12,6 +12,8 @@ pub mod connection_mode;
 pub mod control_runtime;
 pub mod controls;
 pub mod events;
+#[cfg(all(unix, feature = "fnos"))]
+pub mod fnos;
 #[cfg(unix)]
 pub mod glinet;
 pub mod host_controls;

@@ -24,6 +24,12 @@ signal-hook = "0.3"
 
 [features]
 pushplus-https = ["dep:ureq"]
+fnos = []
+
+[[bin]]
+name = "wlmb-fnos"
+path = "src/bin/wlmb-fnos.rs"
+required-features = ["fnos"]
 
 [profile.release]
 opt-level = "s"

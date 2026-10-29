@@ -1,100 +1,54 @@
-# 网络面板 · wlmb-server
+# 网络面板 · fnOS 分支
 
-[English](README.en.md) · [下载正式版](https://github.com/SlAlot/wlmb-server/releases/latest) · [固件集成教程](docs/FIRMWARE-INTEGRATION.zh-CN.md) · [API](docs/API.zh-CN.md)
+飞牛原生应用，由 **SlAlot** 维护。复用本项目 Rust 模组采集、协议解析和信号面板，提供独立的飞牛应用入口。
 
-面向OpenWrt的轻量模组信息与管理插件，作者 **SlAlot**。**Rust后端＋独立LuCI WebUI**，默认端口 **1117**，不接管拨号。根据qmodem为参考开发接入，自动选择已适配的模组协议及共享／独立通道。
+本分支为 `fnos`；[OpenWrt 版在 main 分支](https://github.com/SlAlot/wlmb-server/tree/main)，互不替代。当前原生包版本 **0.1.0**，基于核心 1.1.3。
 
-**当前版本1.1.3，1.0.0为首个公开版本**。源码公开，允许免费非商业使用，使用及分发须保留作者和来源；**不允许未经授权的商用**。采用[自定义非商业许可](LICENSE)，不是MIT／GPL或OSI认可的开源许可。第三方组件保留各自原有许可。
+## 当前功能
 
-1.1.3适配落叶小通魔改的modem，并改善QModem共享模式的被动邻区与载波读取、缓存身份和异常退避。参数与控制能力分开，不抢占串口、不改拨号或WiFi。保留多ABI安装回退、GL.iNet兼容及Cortex-A53、armsr/armv8、x86_64安装包；官方与加速入口同步更新。
+- 模组识别、实时信号、服务小区、频段、载波和邻区查看。
+- RSRP、RSRQ、SINR、PCI、频点、带宽和温度按模组实际返回显示；未返回或过期数据不会伪造。
+- 复用网络面板的深浅主题、手机布局和信号图表。
+- 从飞牛桌面或应用中心打开，使用现有飞牛管理员账号验证。
+- 在飞牛应用中心启动、停止、升级和卸载。
 
-## 一键安装（推荐）
+当前为参数查看版，未开放短信、锁频、锁小区、任意 AT 指令、拨号和主机 Wi-Fi 设置。Wi-Fi AP 使用设备自己的热点管理应用。应用不修改 LAN 地址、路由、DNS 或模组拨号配置。
 
-在路由器SSH／终端以root登录，复制一条命令，阅读提示后输入`y`确认：
+## 安装与使用
 
-```sh
-wget -O /tmp/wlmb-install.sh https://github.com/SlAlot/wlmb-server/releases/latest/download/install.sh && sh /tmp/wlmb-install.sh
-```
+1. 从本分支 Actions 下载对应架构的 `.fpk` 测试包，解压构建附件后在飞牛应用中心手动安装。
+2. 打开桌面的 **网络面板**，输入现有飞牛管理员账号和密码。
+3. 等待自动识别模组并读取参数。默认访问端口为 **1117**，与 OpenWrt 版使用相同端口号。
 
-自动选择APK／IPK及匹配ABI，APK优先读取固件/etc/apk/arch，校验包摘要，自动核对并导入公钥后严格验签安装。不重启，不改拨号和WiFi，保留已有插件配置。未知ABI不强装。后续同钥签名APK可直接在LuCI上传升级。
+已在一台 Photonicat 1、fnOS 1.1.31、RM500U-CNV NCM 模式下读取到实时信号与温度。其他机型、模组及系统版本需要继续验证；通用协议目录不等于所有型号均完成实测。
 
-路由器访问不了GitHub可用离线目录；也可加`--check`仅检查、不安装。详见[一键／离线安装教程](docs/INSTALL.zh-CN.md)。只从本项目正式发布获取安装器，首次运行仍需信任其来源。
+串口由其他程序占用时停止读取，不抢占端口。普通 NAS 上若未发现唯一且可核验的 AT 端点，会显示尚未识别，而不会探测未知诊断或 GPS 通道。
 
-可选的第三方加速入口（gh-proxy.com，非项目自营；只用于公开发行文件下载）：
-
-```sh
-wget -O /tmp/wlmb-install-gh-proxy.sh https://gh-proxy.com/https://github.com/SlAlot/wlmb-server/releases/latest/download/install-gh-proxy.sh && sh /tmp/wlmb-install-gh-proxy.sh
-```
-
-该脚本固定下载自身版本，继续校验摘要及APK签名。首次下载脚本本身仍需信任来源，建议通过官方Release的SHA256SUMS独立核对；代理不是永久备份或可用性保证。代理异常时用官方入口或离线方式，不关闭校验。
-
-## 手动安装
-
-1. 在[Releases](https://github.com/SlAlot/wlmb-server/releases/latest)下载与设备匹配的包。当前提供ARM64（`aarch64_cortex-a53`、`aarch64_generic`）和x86_64（`x86_64`），不适用于所有CPU／ABI。`armsr/armv8`请选择文件名含`aarch64_generic`的包；不要仅根据CPU名称选包，推荐使用一键安装器。
-2. 按实际包管理器选择：24.10通常为IPK／opkg，25.12通常为APK／apk；自定义固件以自身配置为准。APK不是安卓应用，不要强制忽略架构检查。
-3. APK用户先按[首次安装教程](docs/APK-INSTALL.zh-CN.md)核对并导入发布公钥，然后校对`SHA256SUMS`，通过LuCI上传安装。IPK用户按原流程安装。进入 **LuCI → 服务 → 网络面板**，安装默认启用服务及开机启动。
-
-1.0.3起正式APK已签名，但新设备不会自动信任我们的公钥。首次导入后才能正常上传；不要永久关闭签名检查。公钥文件SHA-256：`402d9e009fb2064df25dfccec6855b037c039c22c61a95febc9f400d4b53d8ec`。
-
-命令行示例，文件名按实际下载内容替换：
+## 开发与打包
 
 ```sh
-# IPK固件
-opkg install /tmp/wlmb-server-1.1.3-aarch64.ipk
-
-# APK固件：先按教程导入固定公钥，不跳过验签
-apk add /tmp/wlmb-server-1.1.3-aarch64.apk
+cargo build --manifest-path backend/Cargo.toml --bin wlmb-fnos --features fnos --locked --release --target aarch64-unknown-linux-musl
+python3 tools/prepare-fnos.py backend/target/aarch64-unknown-linux-musl/release/wlmb-fnos dist/fnos-native
+fnpack build --directory dist/fnos-native
 ```
 
-缺少依赖时使用固件自身软件源安装LuCI、rpcd、rpcd-mod-iwinfo和uci，不要混用不同固件的软件源。仅在可信局域网使用，不向公网开放1117。
+`fnos/` 是原生应用结构；`backend/src/fnos.rs` 提供飞牛适配；`tools/prepare-fnos.py` 汇集二进制、现有前端、图标和许可。构建工具需安装 Rust 对应 target 和链接器。
 
-## 功能
+本分支推送后运行 **Build fnOS native app**，检查权限和前端后生成 ARM64 与 x86_64 测试包附件，不自动宣称商店审核通过。
 
-- USB／PCIe模组发现及身份核验；识别落叶小通魔改的modem后使用其缓存与受限邻区事务，否则优先QModem、其次GL.iNet共享AT服务，最后使用自己的空闲AT端点，不抢占串口。
-- 信号、服务小区、载波聚合、邻区、运营商、签约速率、QCI及温度，按真实返回和有效期展示。
-- 点选锁频／锁小区，也可直接手填PCI与服务频点；按协议自动补齐唯一频段，只有必需且未报告的参数才补填。操作确认和保存回读，不自动飞行模式、拨号或重启。
-- WiFi名称／密码／启停、制式／加密／带宽／信道、双频同名同密码；在线设备与上网限制。
-- 实时速率、今日／周期流量、起始日和限额；没有可靠计数的字段留空。
-- 短信收取／发送／删除、独立已读、PushPlus转发；事件优先、默认10秒兜底，关闭相应任务后停止后台收取／投递。
-- 深浅主题、手机布局、PC折叠侧栏、统一弹窗与减少动态效果支持。
+## 飞牛开发规范
 
-目录覆盖91个身份、131份总线配置；**不等于全部功能或固件均已实测**。当前温度协议89个、锁频81个、锁小区63个、邻区64个、载波聚合71个，仍受固件和通道限制。见[兼容说明](docs/MODEM-COMPATIBILITY.md)和[逐项复查](docs/RELEASE-AUDIT.md)。
+按[飞牛应用开放平台](https://developer.fnnas.com/docs/guide)准备 manifest、应用权限、资源、桌面入口和完整生命周期脚本。
 
-共享模式只复用现有QModem接口，不接管或修补QModem。旧版／定制固件混用直连和共享通道时，仍可能争用或延迟；插件不会抢口或自动更改QModem配置，过期数据如实标记，详见[系统接口兼容边界](docs/SYSTEM-INTERFACES.md)。
+- 应用 ID 为 `wlmb-fnos`，桌面入口仅管理员可见。
+- 使用飞牛提供的应用目录、数据目录及用户环境变量。
+- HTTP 网页进程以专用应用用户运行。需要串口占用核验及管理员验证的 Rust 后端独立运行，通过私有 Unix Socket 提供受限读取接口，不直接监听网络端口。
+- 不请求用户文件授权，不添加系统软件源，不安装 OpenWrt ubus/UCI，不覆盖飞牛原生网页或网络配置。
+- 升级与卸载先停止自身进程；不卸载设备驱动，不清除 NAS 网络配置。
+- 已生成原生测试包；上架商店仍需完成审核材料、更多系统版本及硬件兼容性测试。
 
-GL.iNet按实际服务及模组身份识别CPU／USB共享通道，不限定Mudi7型号；支持已知PDU模式的短信读取与转发，但未核验的事件、短信发送／删除及锁定写入不开放。无线运行接口不足时保留只读展示，不伪装WiFi已关闭。LuCI使用8080不影响插件独立的1117接入端口。此适配不等于全系列硬件认证，详见[GL.iNet兼容说明](docs/GLINET.md)。
+详见 [fnOS 适配与验证](docs/FNOS.md)。
 
-## 配合微信小程序
+## 许可
 
-适配落叶小通魔改的 modem：自动识别原组件，信号与载波读取既有快照，邻区借用原事务工具；不写死管理地址，不直接打开串口。该数据源暂不开放短信和锁定操作，详见[接入范围与限制](docs/LUOYE-MODEM.md)。适配仍需原固件真机验收。
-
-微信打开「**网络面板助手**」，连接设备WiFi，选择 **openwrt**，填写自己的管理地址，例如`192.168.1.1:1117`，再登录设备。
-
-小程序是独立闭源商业客户端，免费／专业功能以客户端说明为准。插件WebUI不依赖小程序付费授权。本仓库**仅包含OpenWrt插件**，不含小程序、商业Web、授权服务、授权WASM或签名密钥。其他客户端可依据[API](docs/API.zh-CN.md)独立接入；商业使用本插件需另行授权。
-
-## 开发与自动发布
-
-`backend/` Rust；`frontend/` WebUI；`packaging/`安装配置与第三方声明；`tools/`构建和测试；`docs/`API及兼容文档。
-
-固件开发者可通过标准 Feed 从源码编译并预装。在生效的 `feeds.conf.default`（或 `feeds.conf`）中添加：
-
-```text
-src-git wlmb https://github.com/SlAlot/wlmb-server.git;main
-```
-
-```sh
-./scripts/feeds update -a
-./scripts/feeds install -a
-make menuconfig
-```
-
-在 **LuCI → Applications → wlmb-server** 选择 `<*>`，然后编译固件。已有完整构建环境时也可只运行 `./scripts/feeds update wlmb` 与 `./scripts/feeds install -a -p wlmb`。支持 ARM64／x86_64，使用 OpenWrt 的 Rust 工具链编译，不需要解包 Release。完整步骤与依赖条件见[固件集成教程](docs/FIRMWARE-INTEGRATION.zh-CN.md)。
-
-```sh
-cargo test --locked --all-features --manifest-path backend/Cargo.toml
-cargo clippy --locked --all-targets --all-features --manifest-path backend/Cargo.toml -- -D warnings
-```
-
-推送与源码版本一致的`vX.Y.Z`标签后，Actions自动检查、交叉编译并生成两架构IPK／APK，核对清单后上传Release，同时提供SHA-256、构建提交和逐型号报告。失败不发布新资产，不覆盖同名资产。见[构建与发布](docs/BUILD.md)。
-
-[更新记录](CHANGELOG.md) · [1.1.3说明](docs/RELEASE-1.1.3.md) · [安全](docs/SECURITY.md) · [性能](docs/PERFORMANCE.md) · [QModem来源](docs/QMODEM.md) · [图标许可](docs/FRONTEND-SOURCES.md)
+继续使用项目原有[非商业使用与来源声明许可](LICENSE)，保留 SlAlot 作者署名和第三方声明。本分支是网络面板的飞牛适配版，不是飞牛官方应用。

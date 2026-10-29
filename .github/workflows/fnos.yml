@@ -1,0 +1,72 @@
+name: Build fnOS native app
+on:
+  push:
+    branches: [fnos]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: wlmb-fnos-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '24'
+      - run: |
+          python3 tools/test-fnos.py -v
+          python3 -m compileall -q fnos tools/prepare-fnos.py
+          node --check fnos/app/www/app.js
+          npm ci --prefix tools/ui-tests --ignore-scripts --no-audit --no-fund
+          node tools/test-fnos-ui.cjs
+          bash -n fnos/cmd/main
+          git diff --check
+  build:
+    needs: check
+    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        include:
+          - target: aarch64-unknown-linux-musl
+            platform: arm
+          - target: x86_64-unknown-linux-musl
+            platform: x86
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249
+        with:
+          targets: ${{ matrix.target }}
+          components: rustfmt,clippy
+      - name: Check and compile Rust adapter
+        run: |
+          linker="$(find "$(rustc --print sysroot)/lib/rustlib" -type f -name rust-lld -print -quit)"
+          test -n "$linker"
+          export CARGO_TARGET_AARCH64_UNKNOWN_LINUX_MUSL_LINKER="$linker"
+          export CARGO_TARGET_X86_64_UNKNOWN_LINUX_MUSL_LINKER="$linker"
+          cargo clippy --manifest-path backend/Cargo.toml --features fnos --bin wlmb-fnos --locked --target ${{ matrix.target }} -- -D warnings
+          cargo build --manifest-path backend/Cargo.toml --bin wlmb-fnos --features fnos --locked --release --target ${{ matrix.target }}
+      - name: Stage native app and use official fnpack
+        run: |
+          python3 tools/prepare-fnos.py backend/target/${{ matrix.target }}/release/wlmb-fnos dist/fnos-native
+          sed -i 's/^platform=.*/platform=${{ matrix.platform }}/' dist/fnos-native/manifest
+          python3 - <<'PY'
+          import hashlib,json,pathlib,urllib.request
+          pin=json.loads(pathlib.Path('fnos/fnpack.lock.json').read_text())['linux-amd64']
+          data=urllib.request.urlopen(pin['url'],timeout=60).read()
+          assert hashlib.sha256(data).hexdigest()==pin['sha256']
+          tool=pathlib.Path('dist/fnpack');tool.write_bytes(data);tool.chmod(0o755)
+          PY
+          cd dist
+          ./fnpack build --directory fnos-native
+          mv wlmb-fnos.fpk wlmb-fnos-0.1.0-${{ matrix.platform }}.fpk
+          sha256sum wlmb-fnos-0.1.0-${{ matrix.platform }}.fpk > SHA256SUMS
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: wlmb-fnos-0.1.0-${{ matrix.platform }}
+          path: |
+            dist/*.fpk
+            dist/SHA256SUMS
+          if-no-files-found: error

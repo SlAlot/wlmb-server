@@ -1,0 +1,12 @@
+{
+  "linux-amd64": {
+    "version": "1.2.3",
+    "url": "https://static2.fnnas.com/fnpack/fnpack-1.2.3-linux-amd64",
+    "sha256": "54b97fa7b70968c4d05c79840f5daeff508957d0bb2062fdb0376d00d9615c93"
+  },
+  "linux-arm64": {
+    "version": "1.2.1",
+    "url": "https://static2.fnnas.com/fnpack/fnpack-1.2.1-linux-arm64",
+    "sha256": "aad9e16b101267d30017f39ab969e3c085fbce209716f8bd3b1e167eaf15e0cf"
+  }
+}
