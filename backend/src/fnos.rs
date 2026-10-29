@@ -166,7 +166,7 @@ fn authenticate(auth: &Path, request: &Value) -> Result<Value> {
     let output = child.wait_with_output().map_err(|_| unavailable())?;
     let value: Value = serde_json::from_slice(&output.stdout).map_err(|_| unavailable())?;
     if output.status.success() && value["ok"] == true {
-        Ok(json!({"verified":true}))
+        Ok(value)
     } else {
         Err(PanelError::new("LOGIN_FAILED", 401))
     }
@@ -195,7 +195,7 @@ fn answer(mut channel: UnixStream, service: &Arc<NativeService>, auth: &Path) ->
         "refresh" => service
             .sampler
             .refresh(request["modem"].as_str().unwrap_or("")),
-        "health" => Ok(json!({"platform":"fnOS","version":"0.1.0","backend":"rust"})),
+        "health" => Ok(json!({"platform":"fnOS","version":"0.1.3","backend":"rust"})),
         _ => Err(PanelError::new("FEATURE_NOT_READY", 501)),
     };
     let response = match result {

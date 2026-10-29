@@ -18,10 +18,12 @@ jobs:
           node-version: '24'
       - run: |
           python3 tools/test-fnos.py -v
+          python3 tools/test-fnos-remember.py -v
           python3 -m compileall -q fnos tools/prepare-fnos.py
           node --check fnos/app/www/app.js
           npm ci --prefix tools/ui-tests --ignore-scripts --no-audit --no-fund
           node tools/test-fnos-ui.cjs
+          node tools/test-fnos-login.cjs
           bash -n fnos/cmd/main
           git diff --check
   build:
@@ -61,11 +63,11 @@ jobs:
           PY
           cd dist
           ./fnpack build --directory fnos-native
-          mv wlmb-fnos.fpk wlmb-fnos-0.1.2-${{ matrix.platform }}.fpk
-          sha256sum wlmb-fnos-0.1.2-${{ matrix.platform }}.fpk > SHA256SUMS
+          mv wlmb-fnos.fpk wlmb-fnos-0.1.3-${{ matrix.platform }}.fpk
+          sha256sum wlmb-fnos-0.1.3-${{ matrix.platform }}.fpk > SHA256SUMS
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: wlmb-fnos-0.1.2-${{ matrix.platform }}
+          name: wlmb-fnos-0.1.3-${{ matrix.platform }}
           path: |
             dist/*.fpk
             dist/SHA256SUMS

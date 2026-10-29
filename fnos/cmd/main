@@ -36,7 +36,7 @@ case "${1:-}" in
         [[ "$port" =~ ^[0-9]+$ ]] && [ "$port" -ge 1024 ] && [ "$port" -le 65535 ] || fail '网络面板端口无效'
         if valid_pid "$state/backend.pid" "$TRIM_APPDEST/bin/wlmb-fnos" && valid_pid "$state/web.pid" "$TRIM_APPDEST/server.py"; then exit 0; fi
         stop_services || fail '旧进程尚未退出，请稍后重试'
-        install -d -m 750 -o root -g "$TRIM_GROUPNAME" "$state"
+        install -d -m 750 -o root -g "$TRIM_GROUPNAME" "$TRIM_PKGVAR" "$state"
         umask 027
         "$TRIM_APPDEST/bin/wlmb-fnos" "$state/backend.sock" "$TRIM_APPDEST/auth.py" >> "$state/backend.log" 2>&1 &
         echo "$!" > "$state/backend.pid"

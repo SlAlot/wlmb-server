@@ -11,3 +11,6 @@ node_modules/
 *.ipk
 *.log
 .wlmb-export-state.json
+
+__pycache__/
+*.pyc

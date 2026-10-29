@@ -1,5 +1,5 @@
 appname=wlmb-fnos
-version=0.1.2
+version=0.1.3
 display_name=网络面板
 desc=查看蜂窝模组信号、服务小区、载波和邻区信息。Rust 后端，不接管拨号。
 source=thirdparty

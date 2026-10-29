@@ -12,11 +12,13 @@ import sys
 import threading
 import time
 from urllib.parse import urlsplit
+sys.path.insert(0,str(Path(__file__).resolve().parent))
+from login import LoginMixin,LoginState
 
 ROOT = Path(__file__).resolve().parent
 SOCKET = Path(sys.argv[1]) if __name__ == '__main__' else Path('/nonexistent')
-SESSIONS, ATTEMPTS = {}, {}
-LOCK = threading.Lock()
+LOGIN = LoginState('wlmb_fnos','/')
+SESSIONS, ATTEMPTS, LOCK = LOGIN.sessions,LOGIN.attempts,LOGIN.lock
 
 
 def backend(request):
@@ -33,11 +35,14 @@ def backend(request):
         return json.loads(b''.join(chunks))
 
 
-class Handler(BaseHTTPRequestHandler):
+class Handler(LoginMixin,BaseHTTPRequestHandler):
+    login_state = LOGIN
+    def setup(self):
+        super().setup();self.connection.settimeout(10)
     def log_message(self, *_):
         pass
 
-    def reply(self, status, payload, mime='application/json', cookie=None):
+    def reply(self, status, payload, mime='application/json', cookie=None, cookies=()):
         data = payload if isinstance(payload, bytes) else json.dumps(payload, ensure_ascii=False).encode()
         self.send_response(status)
         for key, value in {'Content-Type': mime + '; charset=utf-8', 'Content-Length': str(len(data)),
@@ -46,18 +51,23 @@ class Handler(BaseHTTPRequestHandler):
             self.send_header(key, value)
         if cookie:
             self.send_header('Set-Cookie', cookie)
+        for value in cookies:self.send_header('Set-Cookie',value)
         self.end_headers()
         self.wfile.write(data)
 
-    def admin(self):
-        try:
-            jar = SimpleCookie(self.headers.get('Cookie', ''))
-            token = jar['wlmb_fnos'].value
-            with LOCK:
-                entry = SESSIONS.get(token)
-                return bool(entry and entry[0] == self.client_address[0] and entry[1] > time.monotonic())
-        except (KeyError, ValueError):
-            return False
+    def auth_peer(self):return self.client_address[0]
+
+    def auth_secure(self):
+        return ipaddress.ip_address(self.client_address[0]).is_loopback and self.headers.get('X-Forwarded-Proto')=='https'
+
+    def auth_backend(self, request):
+        value=backend(request)
+        return dict(value.get('data',{}),ok=value.get('ok') is True)
+
+    def auth_reply(self,status,value,cookies):
+        if value.get('ok'):payload={'ok':True,'data':{k:v for k,v in value.items() if k!='ok'}}
+        else:payload={'ok':False,'error':{'message':value.get('error','登录失败')}}
+        self.reply(status,payload,cookies=cookies)
 
     def local(self):
         address = ipaddress.ip_address(self.client_address[0])
@@ -68,9 +78,12 @@ class Handler(BaseHTTPRequestHandler):
             self.reply(403, {'ok': False})
             return
         path = urlsplit(self.path).path
+        if path=='/logo.png':
+            self.reply(200,(ROOT/'ui/images/wlmb-logo-v2_256.png').read_bytes(),'image/png')
+            return
         relative = 'index.html' if path == '/' else path.lstrip('/')
         allowed = {'index.html', 'app.js', 'fnos.css', 'help.html', 'panel.css',
-                   'webui-data-1.1.3.js', 'webui-icons-1.1.3.js', 'webui-shell-1.1.3.js'}
+                   'webui-data-1.1.3.js', 'webui-icons-1.1.3.js', 'webui-shell-1.1.3.js','login.js','login.css'}
         if relative not in allowed:
             self.reply(404, {'ok': False})
             return
@@ -98,30 +111,8 @@ class Handler(BaseHTTPRequestHandler):
             request = json.loads(self.rfile.read(length))
             if not isinstance(request, dict):
                 raise ValueError('Invalid request')
-            if self.path == '/login':
-                now, peer = time.monotonic(), self.client_address[0]
-                with LOCK:
-                    attempts = [at for at in ATTEMPTS.get(peer, []) if now - at < 60]
-                    ATTEMPTS[peer] = attempts
-                    if len(attempts) >= 5:
-                        self.reply(429, {'ok': False, 'error': {'message': '请一分钟后重试'}})
-                        return
-                    attempts.append(now)
-                value = backend({'operation': 'authenticate', 'username': request.get('username'), 'password': request.get('password')})
-                if not value.get('ok'):
-                    self.reply(401, {'ok': False, 'error': {'message': '管理员账号或密码错误'}})
-                    return
-                token = secrets.token_urlsafe(32)
-                with LOCK:
-                    for key, (_, until) in list(SESSIONS.items()):
-                        if until < now:
-                            SESSIONS.pop(key, None)
-                    if len(SESSIONS) >= 32:
-                        self.reply(429, {'ok': False})
-                        return
-                    SESSIONS[token] = (peer, now + 1800)
-                    ATTEMPTS[peer] = []
-                self.reply(200, {'ok': True}, cookie='wlmb_fnos=' + token + '; Path=/; HttpOnly; SameSite=Strict; Max-Age=1800')
+            if self.path in {'/'+action for action in ('login','resume','forget','logout','login-state')}:
+                self.login_action(self.path[1:],request)
                 return
             if not self.admin():
                 self.reply(401, {'ok': False, 'error': {'message': '请先验证飞牛管理员身份'}})
