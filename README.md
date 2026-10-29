@@ -2,7 +2,7 @@
 
 飞牛原生应用，由 **SlAlot** 维护。复用本项目 Rust 模组采集、协议解析和信号面板，提供独立的飞牛应用入口。
 
-本分支为 `fnos`；[OpenWrt 版在 main 分支](https://github.com/SlAlot/wlmb-server/tree/main)，互不替代。当前原生包版本 **0.1.0**，基于核心 1.1.3。
+本分支为 `fnos`；[OpenWrt 版在 main 分支](https://github.com/SlAlot/wlmb-server/tree/main)，互不替代。当前原生包版本 **0.1.1**，基于核心 1.1.3。
 
 ## 当前功能
 
