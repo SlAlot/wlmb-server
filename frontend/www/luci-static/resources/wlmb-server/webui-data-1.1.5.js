@@ -127,8 +127,12 @@ function lockFeedback(receipts, radio, modem) {
   if (matched === receipts.length) return '配置回读一致，新的驻留信息符合所选条件；不代表已验证重启后保持。'
   return uncertain
 }
-    global.WLMBUIData={version:'1.1.3',band:band,known:known,lockFeedback:lockFeedback,resolveCellDraft:resolveCellDraft,
+    global.WLMBUIData={version:'1.1.5',band:band,known:known,lockFeedback:lockFeedback,resolveCellDraft:resolveCellDraft,
         verificationCode:verificationCode,messageTime:messageTime,recentSms:recentSms,
+        battery:function(snapshot){
+            var b=snapshot.system?.battery||{},available=snapshot.system?.stale!==true&&b.available===true&&b.stale===false&&Number.isInteger(b.percent)&&b.percent>=0&&b.percent<=100;
+            return {supported:b.supported===true,available:available,label:available?b.percent+'%'+(b.charging===true?' · 充电中':b.charging===false?' · 未充电':' · 充电状态未知'):'暂未读到'};
+        },
         rsrpQuality:function(value){return quality(value,[-80,-90,-100]);},
         rsrqQuality:function(value){return quality(value,[-10,-15,-20]);},
         sinrQuality:function(value){return quality(value,[20,10,0]);},

@@ -1,4 +1,4 @@
-# 网络面板 1.0 接入 API
+# 网络面板接入 API
 
 服务：wlmb-server；协议：NETWORK-PANEL-OPENWRT/1；契约版本1；端口1117。1.0.0插件源码按非商业使用及来源声明许可公开，兼容现有小程序接入；客户端实现和商业授权不在公开范围。机器可读定义见[api-contract.json](api-contract.json)。
 
@@ -30,6 +30,8 @@
 | /api/sms_forward_settings | 无 | 开关、有效间隔、tokenSet与运行状态，绝不返回Token |
 
 status的modems含id、model、platform和通道信息；selectedModem指定当前模组。路由器名称取system.board.model，不用模组型号代替。未知、过期或未支持的数据不得填假零或借用其他载波的信号。
+
+1.1.5 起，`system.battery` 提供统一电量、充电状态、来源与新鲜度，`capabilities.battery` 表示当前有可用读数。特殊固件可由开发者按固定规范提供数据；无电池或过期不返回假零。字段与示例见[OpenWrt 电池接入](BATTERY.zh-CN.md)。这是原状态接口的向后兼容扩展，不新增远程写入入口。
 
 频段预设source=reviewed-model-supplement表示型号补充清单，supplement.NR列出统一NR增补项；不改变NRSA、NRNSA的核验范围，不等同于negotiated-firmware。
 

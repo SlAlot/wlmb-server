@@ -3,9 +3,9 @@
     'use strict';
     var definitions=[{key:0,name:'网络信息',icon:'home',group:0},{key:1,name:'邻区扫描',icon:'neighbors',group:1},{key:4,name:'WiFi 与设备',icon:'wifi',group:2},{key:5,name:'频段与小区',icon:'bands',group:1},{key:6,name:'短信',icon:'sms',group:3},{key:7,name:'短信转发',icon:'sms',group:3},{key:8,name:'设备与流量',icon:'chart',group:4},{key:2,name:'AT 控制台',icon:'terminal',group:4},{key:3,name:'插件设置',icon:'settings',group:4}];
     var groups=[{name:'概览',icon:'home',keys:[0]},{name:'网络',icon:'neighbors',keys:[1,5]},{name:'WiFi',icon:'wifi',keys:[4]},{name:'短信',icon:'sms',keys:[6,7]},{name:'设置',icon:'settings',keys:[3,8,2]}];
-    global.WLMBWebUI={version:'1.1.3',mount:function(target,bridge){
+    global.WLMBWebUI={version:'1.1.5',mount:function(target,bridge){
         var D=global.WLMBUIData,I=global.WLMBIcons,doc=target.ownerDocument;
-        if(!D||D.version!=='1.1.3'||!I||I.version!=='1.1.3')throw new Error('独立前端资源版本不一致');
+        if(!D||D.version!=='1.1.5'||!I||I.version!=='1.1.5')throw new Error('独立前端资源版本不一致');
         var disposed=false,failed=false,current=bridge.active||0,filter='',search='',refreshing=false,reading=false,copying=false,smsStamp='',overviewStamp='',neighborStamp='';
         var panelRoot=target.closest('#wlmb-panel'),theme='auto',collapsed=false,lastGroup={};
         var motion=typeof global.matchMedia==='function'?global.matchMedia('(prefers-reduced-motion: reduce)'):null,animations=new Set(),paintedPage=-1,carrierDetails=new Set();
@@ -95,9 +95,11 @@
                 n('div',{'class':'np-connection-rates'},[field('↓ 实时下载',rate(rates.downloadBytesPerSecond)),field('↑ 实时上传',rate(rates.uploadBytesPerSecond)),field('签约下行',D.known(sub.dlKbps)?val(sub.dlKbps/1000,' Mbps'):null),field('签约上行',D.known(sub.ulKbps)?val(sub.ulKbps/1000,' Mbps'):null)]),
                 n('div',{'class':'np-info-grid np-connection-fields'},[field('运营商',op.name),field('APN',sub.apn),field('PCI',net.pci),field('ARFCN',net.channel),field('MCC / MNC',net.mcc==='—'?'—':net.mcc+' / '+net.mnc),field('TAC',net.lac),field('CELL ID',net.cid),field('服务质量',q.qci==null?null:'QCI '+q.qci+' · 上下文 '+q.cid)]),
                 n('p',{'class':'np-hint np-interface-hint'},s.network?.interface?'上网接口 '+s.network.interface:'上网接口尚未确认')],'chart','green');connection.classList.add('np-connection-card');
+            var power=D.battery(snapshot);
             var device=card('设备状态',n('div',{'class':'np-device-status-grid'},[
                 field('设备温度',s.stale?null:temperature(s.temperature?.celsius)),field('5G 模组温度',r.stale||r.temperature?.stale?null:temperature(r.temperature?.celsius)),
-                field('CPU 占用',!s.stale&&D.known(s.cpuUsage)?s.cpuUsage.toFixed(1)+'%':null),field('内存占用',!s.stale&&D.known(s.memory?.usedPercent)?s.memory.usedPercent.toFixed(1)+'%':null)]),'info','purple');
+                field('CPU 占用',!s.stale&&D.known(s.cpuUsage)?s.cpuUsage.toFixed(1)+'%':null),field('内存占用',!s.stale&&D.known(s.memory?.usedPercent)?s.memory.usedPercent.toFixed(1)+'%':null),
+                power.supported?field('设备电量',power.label):null]),'info','purple');
             return [signal(snapshot),carriers(snapshot),connection,device,n('div',{'class':'np-inline-notices'},[
                 snapshot.failure?n('p',{'class':'np-notice'},snapshot.failure):null,r.refreshDeferred?n('p',{'class':'np-hint',role:'status'},'模组通道暂忙，展示有效期内的上次数据。'):r.pending?n('p',{'class':'np-hint np-loading-status',role:'status'},[n('span',{'class':'np-spinner','aria-hidden':'true'}),'后台正在更新，先展示已有快照。']):null])];
         }
@@ -192,7 +194,7 @@
                 refreshButton.disabled=refreshing||!bridge.canRefresh();refreshButton.textContent=refreshing?'正在刷新…':'刷新数据';refreshButton.setAttribute('aria-busy',String(refreshing));management.hidden=current!==3;
                 var selector=bridge.toolbar.querySelector('select');if(selector)selector.hidden=(snapshot.modems||[]).length<=1;
                 body.hidden=current!==0&&current!==1;bridge.pages.hidden=current===0||current===1;
-                if(current===0){if(overview.parentNode!==body)body.replaceChildren(overview);var stamp=JSON.stringify([snapshot.radio,snapshot.system?.network,snapshot.system?.board,snapshot.system?.temperature,snapshot.system?.cpuUsage,snapshot.system?.memory?.usedPercent,snapshot.system?.stale,snapshot.failure]);if(stamp!==overviewStamp){overviewStamp=stamp;var next=summary(snapshot);if(!overviewParts.length){overviewParts=next;overview.replaceChildren(next[0],next[1],next[2],n('div',{'class':'np-overview-bottom'},[next[3],recentCard]),next[4]);}else overviewParts=overviewParts.map(function(node,index){return patchDisplay(node,next[index]);});}showSms();}
+                if(current===0){if(overview.parentNode!==body)body.replaceChildren(overview);var stamp=JSON.stringify([snapshot.radio,snapshot.system?.network,snapshot.system?.board,snapshot.system?.temperature,snapshot.system?.cpuUsage,snapshot.system?.memory?.usedPercent,snapshot.system?.battery,snapshot.system?.stale,snapshot.failure]);if(stamp!==overviewStamp){overviewStamp=stamp;var next=summary(snapshot);if(!overviewParts.length){overviewParts=next;overview.replaceChildren(next[0],next[1],next[2],n('div',{'class':'np-overview-bottom'},[next[3],recentCard]),next[4]);}else overviewParts=overviewParts.map(function(node,index){return patchDisplay(node,next[index]);});}showSms();}
                 if(current===1){if(neighbors.parentNode!==body)body.replaceChildren(neighbors);showNeighbors();}
                 if(paintedPage!==current){cancelMotion();paintedPage=current;enter(title);enter(subnav);enter(body.hidden?Array.from(bridge.pages.children).find(function(node){return !node.hidden;}):body);}
             }catch(error){failed=true;release();bridge.fail(error);}

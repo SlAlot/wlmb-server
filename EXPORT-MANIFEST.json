@@ -5,7 +5,7 @@
   "license": "LicenseRef-WLMB-NonCommercial",
   "commercialClientSourceIncluded": false,
   "protocol": "NETWORK-PANEL-OPENWRT/1",
-  "pluginVersion": "1.1.3",
+  "pluginVersion": "1.1.5",
   "backendLanguage": "Rust",
   "files": [
     {
@@ -14,7 +14,7 @@
     },
     {
       "path": ".github/workflows/check.yml",
-      "sha256": "465cf06dc2145d16ec0fecdde2e2e2b48b68b123d4bb2cd8851b14443475615d"
+      "sha256": "c3b4f0c8bbf09ebc03520928c20db8e01a40b07d03ce53bc5075bdeea9d66bf3"
     },
     {
       "path": ".github/workflows/openwrt-feed.yml",
@@ -33,12 +33,28 @@
       "sha256": "7d7b4d1be20e988064d0e7a05cde5a1031da1d78a1d5d30d09289a1396ce3043"
     },
     {
+      "path": "CHANGELOG.md",
+      "sha256": "1669158f86ce8a07cf63393682f281300c795991ff30ea788d8122e40d6ca7a8"
+    },
+    {
+      "path": "LICENSE",
+      "sha256": "fddd66971e5dd6f6fc25289669309572e1baa8828427d1287558e147fec21f06"
+    },
+    {
+      "path": "README.en.md",
+      "sha256": "dc7e20923671562e6466e6cb880b405c1a7374041eeda728d9ef9c2e0ddcd8ca"
+    },
+    {
+      "path": "README.md",
+      "sha256": "06fab8984277cb3d1a5f7a6a39690500e3ad2d513d1bd41154deb61311794f96"
+    },
+    {
       "path": "backend/Cargo.lock",
-      "sha256": "9cfa10e690aff7ac1193b4e91df97eb852539a9c8c7ff31fca07edda79f917f2"
+      "sha256": "4204ee971b82d9d10b2769012b37163a020f3af802c4ed35152dee0b90f8dc2f"
     },
     {
       "path": "backend/Cargo.toml",
-      "sha256": "86eb99235704648bc24c1527317fd3fff9a0bd66bb95892306375a73edd99c15"
+      "sha256": "4b14200432f15725578b49417c05196b6898292f4d9a87d71a2765f57cb915df"
     },
     {
       "path": "backend/src/actions.rs",
@@ -59,6 +75,10 @@
     {
       "path": "backend/src/band_locks/templates.rs",
       "sha256": "9b18f29b49ddb3a06ebae15a584d0f54c70c220dbabb534131d85438dd2e6184"
+    },
+    {
+      "path": "backend/src/battery.rs",
+      "sha256": "114dc4e52f1cab265ed0e1c8c29f00f1a28ab22b874ccb512f8fd3805cc9dcce"
     },
     {
       "path": "backend/src/blob.rs",
@@ -109,24 +129,20 @@
       "sha256": "16b0bf0f04ffc41238604f3a36726328c64043418206abf0e1e60dc4868dbe09"
     },
     {
-      "path": "backend/src/lan_ports.rs",
-      "sha256": "58cbc07dbcdc48033b5017f0d15a79761047c375162c1c0110f75bd4d6160b68"
-    },
-    {
       "path": "backend/src/lan.rs",
       "sha256": "e35bc1c9b3e19aaeb19889d3330c5167e9b36b1e56df8c9e98ae8ec90b46bffc"
     },
     {
+      "path": "backend/src/lan_ports.rs",
+      "sha256": "58cbc07dbcdc48033b5017f0d15a79761047c375162c1c0110f75bd4d6160b68"
+    },
+    {
       "path": "backend/src/lib.rs",
-      "sha256": "762a13e1028d455d8b96154f6571f8fde7783d02342eac1a28b9201d3234e42b"
+      "sha256": "1b327e9a4a2ec50dba1b1b63ae416dc01df2606da08a27ae06a405b0140622a7"
     },
     {
       "path": "backend/src/lock_protocol.rs",
       "sha256": "19b819bc89ef83358234ed480368a50f26dac4f50b7dc7275e9d1782b2b3877e"
-    },
-    {
-      "path": "backend/src/luoye_info.rs",
-      "sha256": "25b4a014ff61c9a9ad8a35a8df9cc12ae8039af0029117c27bfbf9d8d079617d"
     },
     {
       "path": "backend/src/luoye.rs",
@@ -135,6 +151,10 @@
     {
       "path": "backend/src/luoye/native.rs",
       "sha256": "317ccad6055459652894ec1289ff93e4a28d7b867cf56943d68a3770e325cb54"
+    },
+    {
+      "path": "backend/src/luoye_info.rs",
+      "sha256": "25b4a014ff61c9a9ad8a35a8df9cc12ae8039af0029117c27bfbf9d8d079617d"
     },
     {
       "path": "backend/src/main.rs",
@@ -185,10 +205,6 @@
       "sha256": "b52f69bc837d352609694a1c835e484173a3a6417820fb4d76bace52d0a4321e"
     },
     {
-      "path": "backend/src/radio_controls.rs",
-      "sha256": "3e45cf3c3c804bbcd40baeb339e0251d9d503bb8f9591f6d964ef986f76194f4"
-    },
-    {
       "path": "backend/src/radio.rs",
       "sha256": "4917d37a82391987c4adb38121d39c056e4f7d56bef118b5860f349b9595278c"
     },
@@ -201,12 +217,12 @@
       "sha256": "3eac0a5056e00d3512b7413adff802f9292e467e28252658942075cc0834b275"
     },
     {
-      "path": "backend/src/radio/sierra_lte.rs",
-      "sha256": "9906a3c56d9e517cd81234ea7fd9df3fd9201170fa25dc572338f15c1ce6a074"
-    },
-    {
       "path": "backend/src/radio/sierra.rs",
       "sha256": "39c2de4d83ffcf3ad4c98d427808149ca69c53e9abbab11c6910f73645916ced"
+    },
+    {
+      "path": "backend/src/radio/sierra_lte.rs",
+      "sha256": "9906a3c56d9e517cd81234ea7fd9df3fd9201170fa25dc572338f15c1ce6a074"
     },
     {
       "path": "backend/src/radio/vendor_csv.rs",
@@ -215,6 +231,10 @@
     {
       "path": "backend/src/radio/vendor_labels.rs",
       "sha256": "0621ab4c4ba11b9f268f0fe21563ddc8de7a18f01404711d6aa74990b109e34d"
+    },
+    {
+      "path": "backend/src/radio_controls.rs",
+      "sha256": "3e45cf3c3c804bbcd40baeb339e0251d9d503bb8f9591f6d964ef986f76194f4"
     },
     {
       "path": "backend/src/rpc.rs",
@@ -234,7 +254,7 @@
     },
     {
       "path": "backend/src/service.rs",
-      "sha256": "7c4043d12a8fa4b31b76b9cf04ec6f87aecc1ebc2f66fb313e78d4fba5d0862a"
+      "sha256": "78cba2cd6fd783b90e656ef4d0b5ee7254bae3c1b9f015630f01e38d461cb3c5"
     },
     {
       "path": "backend/src/session_qos.rs",
@@ -243,6 +263,10 @@
     {
       "path": "backend/src/shared_sms.rs",
       "sha256": "10fe99d9f434dac235f11bb1e145e940318145398b62fdf145c41da0acda9960"
+    },
+    {
+      "path": "backend/src/sms.rs",
+      "sha256": "2f73c9f1914303e301e2aad0c02349d8fa4eab4b6dba8525450467d89f4cf31a"
     },
     {
       "path": "backend/src/sms_forward.rs",
@@ -275,10 +299,6 @@
     {
       "path": "backend/src/sms_text.rs",
       "sha256": "07da3a36c6c9ed4a20c751471bf17b3c9c08401a5111abd5d8bed13b08f6c261"
-    },
-    {
-      "path": "backend/src/sms.rs",
-      "sha256": "2f73c9f1914303e301e2aad0c02349d8fa4eab4b6dba8525450467d89f4cf31a"
     },
     {
       "path": "backend/src/telemetry.rs",
@@ -337,12 +357,12 @@
       "sha256": "19877ee52c9f0225a86499c8a3603d542df4f4ce14745ea671dd9a05912f78e9"
     },
     {
-      "path": "backend/tests/glinet_wifi.rs",
-      "sha256": "9a9f4af4f3143284df5a77a8b4495f9642043b329f341510dd83e5f5364df9cc"
-    },
-    {
       "path": "backend/tests/glinet.rs",
       "sha256": "b561f527753871c3cd7496909028bfd8a36f67749c2dda30ba09c22dd7dd42c0"
+    },
+    {
+      "path": "backend/tests/glinet_wifi.rs",
+      "sha256": "9a9f4af4f3143284df5a77a8b4495f9642043b329f341510dd83e5f5364df9cc"
     },
     {
       "path": "backend/tests/host_controls.rs",
@@ -357,12 +377,12 @@
       "sha256": "90985a033defac4cc6d1f798936e1d1b4e2d9907ef37215acccd81c76f7d7485"
     },
     {
-      "path": "backend/tests/lan_ports.rs",
-      "sha256": "adacbe506cc29fe714e9a2ed7868e751b65c47e21976e91539bc230e47373834"
-    },
-    {
       "path": "backend/tests/lan.rs",
       "sha256": "75ad37559d55176a88eabfc25d25b73c4d2d1fe2b7346cfa08d4b0fe5f69c7bb"
+    },
+    {
+      "path": "backend/tests/lan_ports.rs",
+      "sha256": "adacbe506cc29fe714e9a2ed7868e751b65c47e21976e91539bc230e47373834"
     },
     {
       "path": "backend/tests/lock_presets.rs",
@@ -389,24 +409,28 @@
       "sha256": "a66d93f9e5c4e22ad79d269b40ca7b20f2947a344b596408b4e86a3b65394168"
     },
     {
-      "path": "backend/tests/native_host.rs",
-      "sha256": "0a45ed8f3f1f55b0f30a1e44bdfad1f841c02c9a2642ee73bb5db4270e06fc96"
-    },
-    {
       "path": "backend/tests/native.rs",
       "sha256": "6c88dac3d6b4644fc4a882b48ebffb184111f7bbd4334b9498200c6b8618aaf2"
+    },
+    {
+      "path": "backend/tests/native_host.rs",
+      "sha256": "0a45ed8f3f1f55b0f30a1e44bdfad1f841c02c9a2642ee73bb5db4270e06fc96"
     },
     {
       "path": "backend/tests/network_operator.rs",
       "sha256": "2761c1233d7dc9ce7b4378240104b5c1fba44768ea1c95fcff8a1d0e83cad41e"
     },
     {
+      "path": "backend/tests/qmodem_at.rs",
+      "sha256": "5673e0c3fe0e041c6ca6d3ee8060a2470a6459047840cc707df822f7912eda95"
+    },
+    {
       "path": "backend/tests/qmodem_at_transport.rs",
       "sha256": "1048fbcee2ed8b3903b9d09f20a31393999e3f2d89c7c9b37f68ceee8a73514a"
     },
     {
-      "path": "backend/tests/qmodem_at.rs",
-      "sha256": "5673e0c3fe0e041c6ca6d3ee8060a2470a6459047840cc707df822f7912eda95"
+      "path": "backend/tests/qmodem_info.rs",
+      "sha256": "d6f4fa688dda6713a52e950ad9c6d3d356ce38ba31603613b76351bb992973a5"
     },
     {
       "path": "backend/tests/qmodem_info_sampler.rs",
@@ -415,10 +439,6 @@
     {
       "path": "backend/tests/qmodem_info_transport.rs",
       "sha256": "434f291e55073646c8f27f472c754b5065d20f721ca73a68e3d9403f25580bab"
-    },
-    {
-      "path": "backend/tests/qmodem_info.rs",
-      "sha256": "d6f4fa688dda6713a52e950ad9c6d3d356ce38ba31603613b76351bb992973a5"
     },
     {
       "path": "backend/tests/qmodem_inventory.rs",
@@ -437,12 +457,12 @@
       "sha256": "b04bf7f4ae1c61ae77d5be79b99fe48119202c006251dad5bfab1109a7b3864d"
     },
     {
-      "path": "backend/tests/quectel_lock.rs",
-      "sha256": "8878910bb5136163df9cfb521f4a1ddc8f83172989a865a181168b3b074f706f"
-    },
-    {
       "path": "backend/tests/quectel.rs",
       "sha256": "c99e9be0a9d78e23e23dab573ef73465877be241e4a510a7cc3713c1c7468021"
+    },
+    {
+      "path": "backend/tests/quectel_lock.rs",
+      "sha256": "8878910bb5136163df9cfb521f4a1ddc8f83172989a865a181168b3b074f706f"
     },
     {
       "path": "backend/tests/rpc.rs",
@@ -471,6 +491,10 @@
     {
       "path": "backend/tests/simcom.rs",
       "sha256": "ca7794cb0d7aa73bb7a31467a070efd9223a04ee6e42f956249ded301498ec4d"
+    },
+    {
+      "path": "backend/tests/sms.rs",
+      "sha256": "3a31d9075caead848405c2d0418b62f7a607ac468f182b851e26263777249f52"
     },
     {
       "path": "backend/tests/sms_notice.rs",
@@ -505,10 +529,6 @@
       "sha256": "5331157c050955e85a5fd35ddc33287ea4b929c7a02cff0418b851b676fc31bc"
     },
     {
-      "path": "backend/tests/sms.rs",
-      "sha256": "3a31d9075caead848405c2d0418b62f7a607ac468f182b851e26263777249f52"
-    },
-    {
       "path": "backend/tests/support/band_templates.rs",
       "sha256": "134743094bd43fd1f9bc794a51eaee61627b60521aebeaccc661c4d1af318991"
     },
@@ -537,28 +557,20 @@
       "sha256": "c8765718347e3871bf4d2da277cd3bd9934f502c355b1f1cc51b83065f1d416c"
     },
     {
-      "path": "CHANGELOG.md",
-      "sha256": "671d96b57d66fed407bdd9bcb2dff2f4580fc52cea145ae6dafa38c6d5bce49a"
-    },
-    {
-      "path": "docs/api-contract.json",
-      "sha256": "2d625abeb77718a059f52560ddc6d41e2ebbe557bffbdc721dea841636d7a00a"
-    },
-    {
       "path": "docs/API.en.md",
-      "sha256": "84b7d238984e9fd8eab4957b53a3aebbf221d3da18b8f5c203796ad3ebdfd5f6"
+      "sha256": "879f8f8a9313430fec3a9ff0dfe93c32b741d5d0be5dc10053574b024f033301"
     },
     {
       "path": "docs/API.zh-CN.md",
-      "sha256": "efde21cbdcc6d5c8732566cba06b864c5ac8961afe17d612dc04c0cec237d04f"
+      "sha256": "cfa901c7b321926fa87e9025f474136e524e38449d3a38f4ad90168b971dd118"
     },
     {
       "path": "docs/APK-INSTALL.zh-CN.md",
       "sha256": "0f61f54d393a854881146e2235277f1b36f5954b4b414d77a5b5fc3e12d3336f"
     },
     {
-      "path": "docs/apk-signing-key.json",
-      "sha256": "caa11ff7b75d38b8c0345362e21e72e0086fd95379f7cea70982aca654a0a7dd"
+      "path": "docs/BATTERY.zh-CN.md",
+      "sha256": "f8038553bea085d7023f417ed3e845eea239a2a6cadfae095f596e9cf7c6e252"
     },
     {
       "path": "docs/BUILD.md",
@@ -570,7 +582,7 @@
     },
     {
       "path": "docs/FIRMWARE-INTEGRATION.zh-CN.md",
-      "sha256": "f857950d0efa99d2412cd6ea0c3e1d18c8f4fcf0c56dc3fbffe31970c72138df"
+      "sha256": "8d7266669c031e46cdb32e413a2b9e7d3b78bb7fdefd75dcc78b7069661dd440"
     },
     {
       "path": "docs/FRONTEND-SOURCES.md",
@@ -597,20 +609,12 @@
       "sha256": "b07b7a415ee0e3c6bd1c98a735de1402ef7df04d30c00241b547c548f763df42"
     },
     {
-      "path": "docs/model-bands.json",
-      "sha256": "41ba9a73d1474354deaca1db8783d5937682ce40e8168abb277ea9812481ae36"
-    },
-    {
       "path": "docs/MODEM-COMPATIBILITY.md",
       "sha256": "694e2b299df624262382c88eef3b1a52d107452d5c09a2025e32150db388fecd"
     },
     {
       "path": "docs/PERFORMANCE.md",
       "sha256": "cf1f1819f09a54119677e59330119648f19724baaa4488b00876f5d227d76786"
-    },
-    {
-      "path": "docs/qmodem-upstream.json",
-      "sha256": "df105ef4034313b9624b430808077733e0d8b0865794e6145369bc66999b77a6"
     },
     {
       "path": "docs/QMODEM.md",
@@ -665,6 +669,10 @@
       "sha256": "66d5b061c16d74b66baa5d9b468d3929d432bb40178c150677c582d3067360ae"
     },
     {
+      "path": "docs/RELEASE-1.1.5.md",
+      "sha256": "578288bd9f4f9e5f441b832563f67e5a41f8346f8b5ec50164541fda35619b9e"
+    },
+    {
       "path": "docs/RELEASE-AUDIT.md",
       "sha256": "819a5fec88e5944ebec07708c737b536a863d8719c0b835941a587ccf4d496b5"
     },
@@ -693,16 +701,32 @@
       "sha256": "a5072b44639991cd1db4a5d0043401a19cb17915615b45b26a83eb8a2dbd708e"
     },
     {
+      "path": "docs/api-contract.json",
+      "sha256": "4e2e8f7bdd8d8640b091b08f7e3698f296f0eac5558d5178eb3844d985645422"
+    },
+    {
+      "path": "docs/apk-signing-key.json",
+      "sha256": "caa11ff7b75d38b8c0345362e21e72e0086fd95379f7cea70982aca654a0a7dd"
+    },
+    {
+      "path": "docs/model-bands.json",
+      "sha256": "41ba9a73d1474354deaca1db8783d5937682ce40e8168abb277ea9812481ae36"
+    },
+    {
+      "path": "docs/qmodem-upstream.json",
+      "sha256": "df105ef4034313b9624b430808077733e0d8b0865794e6145369bc66999b77a6"
+    },
+    {
       "path": "frontend/usr/share/luci/menu.d/network-panel.json",
-      "sha256": "c1c75c6ecfe4df1aa45e21ce244060258633311cff92d616e8829472de7ef848"
+      "sha256": "154e8cc0e90a60f0a642245417e333b67942a4bd4eb9642c6cf821197a6d821e"
     },
     {
       "path": "frontend/usr/share/rpcd/acl.d/network-panel.json",
       "sha256": "079da3f7d880afb45f5b3954db5a7f934fd163a357637a903ba71043e9f6e4b4"
     },
     {
-      "path": "frontend/www/luci-static/resources/view/wlmb-server/index-v1_1_3_release.js",
-      "sha256": "b937ec5c6fc79999b254ef2a16c39f1779b5ced27eb02164e8fa44df6a0d099f"
+      "path": "frontend/www/luci-static/resources/view/wlmb-server/index-v1_1_5_release.js",
+      "sha256": "b7fdf947566e729021737de9894e2494705f26f13786020a1f1d4492a768e69e"
     },
     {
       "path": "frontend/www/luci-static/resources/wlmb-server/guide.css",
@@ -710,7 +734,7 @@
     },
     {
       "path": "frontend/www/luci-static/resources/wlmb-server/guide.html",
-      "sha256": "769197802fe29f03a9c8f83ae914dfaa39c27da94923026940db4e8f85df5706"
+      "sha256": "5e46ca9cd05c405b109d77be3996a6eca6233f7c87598e61a7ccd35ac31ec474"
     },
     {
       "path": "frontend/www/luci-static/resources/wlmb-server/guide.js",
@@ -722,27 +746,23 @@
     },
     {
       "path": "frontend/www/luci-static/resources/wlmb-server/ui-notices.html",
-      "sha256": "809d1a85d9a9c46342011269329b281bbb6404cbb19b933a5bb45c00a8db48ec"
+      "sha256": "ea13c6d6067796f62acb27085f8b888cbf74d69c53317db35dcdd4200f09da96"
     },
     {
-      "path": "frontend/www/luci-static/resources/wlmb-server/webui-data-1.1.3.js",
-      "sha256": "1ba221a09849d0d3d193a7c85aad8cba6c7ef6ef17ba8ffb2bd92fb3dba8430f"
+      "path": "frontend/www/luci-static/resources/wlmb-server/webui-data-1.1.5.js",
+      "sha256": "10d2b248d3ba5e61b03f52acfcb93945af6eea02b28702e891078628efd35ba1"
     },
     {
-      "path": "frontend/www/luci-static/resources/wlmb-server/webui-icons-1.1.3.js",
-      "sha256": "489dd8fc97001d98efc4cecefa4027ef6ba56bec991e188bab38b585148ac188"
+      "path": "frontend/www/luci-static/resources/wlmb-server/webui-icons-1.1.5.js",
+      "sha256": "59d34cd481c43743eeaefc5f704f736f1cb3b12cfdf9e130fea42fb1420b34a6"
     },
     {
-      "path": "frontend/www/luci-static/resources/wlmb-server/webui-shell-1.1.3.js",
-      "sha256": "915a7c4dea9e0b12e7f97727d0e965dc5c01380c75a3a8e3f8cb884cee372650"
-    },
-    {
-      "path": "LICENSE",
-      "sha256": "fddd66971e5dd6f6fc25289669309572e1baa8828427d1287558e147fec21f06"
+      "path": "frontend/www/luci-static/resources/wlmb-server/webui-shell-1.1.5.js",
+      "sha256": "703f0bdee186ca9abc279c7abea8d15b9958848aa5b0c3cdbe7ed2ba1d4fa942"
     },
     {
       "path": "openwrt/wlmb-server/Makefile",
-      "sha256": "1c976d12c712caafcc8daa26e2920091f0e3fea4626d9604afe90a591e7be0bd"
+      "sha256": "d60c8fe52863e16c45ef579decd01a1b2485ef2fe500cbc9f36d0d8b346ca59b"
     },
     {
       "path": "packaging/files/etc/config/network_panel",
@@ -754,15 +774,7 @@
     },
     {
       "path": "packaging/files/usr/share/wlmb-server/THIRD-PARTY-NOTICES",
-      "sha256": "5941cfe97d09bb9951094dab580589331c76031e448b8690871075e1254d1b90"
-    },
-    {
-      "path": "README.en.md",
-      "sha256": "fcdef43b1216734dac4103fa2c74dae701a327d4e709138e7bed371bc7c4ac35"
-    },
-    {
-      "path": "README.md",
-      "sha256": "f2c7d2f95dece3cee472917069159e14a32260e55b619cd7d2c7e88317f514e2"
+      "sha256": "6533c1c07e139a04f3769a7bd93858a9e808fde5151641869d2a996e6eb876ef"
     },
     {
       "path": "tools/audit-release-boundary.cjs",
@@ -771,6 +783,10 @@
     {
       "path": "tools/check-apk-signing.cjs",
       "sha256": "ec951253c768605026ba9b2317c2a674771bc178e8ae7d80ef8eddb9168b84d8"
+    },
+    {
+      "path": "tools/check-battery.cjs",
+      "sha256": "302abc22723cbf483f0c258b8dc1600adb2820c96a4d6207295808da9d9048b5"
     },
     {
       "path": "tools/check-cell-draft.cjs",
@@ -826,7 +842,7 @@
     },
     {
       "path": "tools/check-webui.cjs",
-      "sha256": "b36264c27104908fabb26d168292f6d52f076fdf445384005eb465130b535c62"
+      "sha256": "06fde79de921955dc783358b2e113c6afcf4d939db88f419d6227018b1ee0593"
     },
     {
       "path": "tools/compatibility-report.cjs",
@@ -854,7 +870,7 @@
     },
     {
       "path": "tools/package-source.cjs",
-      "sha256": "2d326c94f1e8321fc2fd1420cc9ce495782535cedd9014ec673e91cd779125d6"
+      "sha256": "5457a519b6532dd12c74e0cb2b8c01ca54ca6df20437ecd3409e763ed7252a14"
     },
     {
       "path": "tools/platforms.cjs",

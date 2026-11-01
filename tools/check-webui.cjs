@@ -180,6 +180,17 @@ async function main() {
   assert.equal(overview.querySelectorAll('.np-connection-rates .np-info-field').length,4)
   assert.equal(overview.querySelectorAll('.np-connection-fields .np-info-field').length,8)
   assert.ok(overview.querySelector('.np-device-status-grid').textContent.includes('CPU 占用'))
+  status.system.battery={supported:true,available:true,percent:76,charging:true,stale:false};
+  await page.update(true);await pause();
+  assert.ok(overview.querySelector('.np-device-status-grid').textContent.includes('76% · 充电中'));
+  status.system.battery.percent=0;status.system.battery.charging=false;
+  await page.update(true);await pause();
+  assert.ok(overview.querySelector('.np-device-status-grid').textContent.includes('0% · 未充电'));
+  status.system.battery.stale=true;
+  await page.update(true);await pause();
+  assert.ok(overview.querySelector('.np-device-status-grid').textContent.includes('暂未读到'));
+  delete status.system.battery;await page.update(true);await pause();
+  assert.ok(!overview.querySelector('.np-device-status-grid').textContent.includes('设备电量'));
   assert.ok(!overview.textContent.includes('共用短信缓存 · 不额外轮询模组；复制不会标为已读。'))
   assert.ok(!root.textContent.includes('独立客户端，授权与界面单独管理')&&!overview.textContent.includes('点击读取，不额外轮询模组'),'首版移除多余介绍文案，不留空提示行')
   assert.equal(overview.querySelector('.np-recent-sms .np-empty-state .np-hint'),null)

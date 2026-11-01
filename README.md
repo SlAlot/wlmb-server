@@ -4,9 +4,9 @@
 
 面向OpenWrt的轻量模组信息与管理插件，作者 **SlAlot**。**Rust后端＋独立LuCI WebUI**，默认端口 **1117**，不接管拨号。根据qmodem为参考开发接入，自动选择已适配的模组协议及共享／独立通道。
 
-**当前版本1.1.3，1.0.0为首个公开版本**。源码公开，允许免费非商业使用，使用及分发须保留作者和来源；**不允许未经授权的商用**。采用[自定义非商业许可](LICENSE)，不是MIT／GPL或OSI认可的开源许可。第三方组件保留各自原有许可。
+**当前版本1.1.5，1.0.0为首个公开版本**。源码公开，允许免费非商业使用，使用及分发须保留作者和来源；**不允许未经授权的商用**。采用[自定义非商业许可](LICENSE)，不是MIT／GPL或OSI认可的开源许可。第三方组件保留各自原有许可。
 
-1.1.3适配落叶小通魔改的modem，并改善QModem共享模式的被动邻区与载波读取、缓存身份和异常退避。参数与控制能力分开，不抢占串口、不改拨号或WiFi。保留多ABI安装回退、GL.iNet兼容及Cortex-A53、armsr/armv8、x86_64安装包；官方与加速入口同步更新。
+1.1.5适配落叶小通魔改的modem，并改善QModem共享模式的被动邻区与载波读取、缓存身份和异常退避。参数与控制能力分开，不抢占串口、不改拨号或WiFi。保留多ABI安装回退、GL.iNet兼容及Cortex-A53、armsr/armv8、x86_64安装包；官方与加速入口同步更新。
 
 ## 一键安装（推荐）
 
@@ -40,10 +40,10 @@ wget -O /tmp/wlmb-install-gh-proxy.sh https://gh-proxy.com/https://github.com/Sl
 
 ```sh
 # IPK固件
-opkg install /tmp/wlmb-server-1.1.3-aarch64.ipk
+opkg install /tmp/wlmb-server-1.1.5-aarch64.ipk
 
 # APK固件：先按教程导入固定公钥，不跳过验签
-apk add /tmp/wlmb-server-1.1.3-aarch64.apk
+apk add /tmp/wlmb-server-1.1.5-aarch64.apk
 ```
 
 缺少依赖时使用固件自身软件源安装LuCI、rpcd、rpcd-mod-iwinfo和uci，不要混用不同固件的软件源。仅在可信局域网使用，不向公网开放1117。
@@ -74,6 +74,8 @@ GL.iNet按实际服务及模组身份识别CPU／USB共享通道，不限定Mudi
 
 ## 开发与自动发布
 
+1.1.5 新增[OpenWrt 电池接入规范](docs/BATTERY.zh-CN.md)：标准节点自动识别，特殊固件可由开发者提供固定格式数据，通过已有 `/api/status` 和 1117 端口统一供客户端读取。
+
 `backend/` Rust；`frontend/` WebUI；`packaging/`安装配置与第三方声明；`tools/`构建和测试；`docs/`API及兼容文档。
 
 固件开发者可通过标准 Feed 从源码编译并预装。在生效的 `feeds.conf.default`（或 `feeds.conf`）中添加：
@@ -97,4 +99,4 @@ cargo clippy --locked --all-targets --all-features --manifest-path backend/Cargo
 
 推送与源码版本一致的`vX.Y.Z`标签后，Actions自动检查、交叉编译并生成两架构IPK／APK，核对清单后上传Release，同时提供SHA-256、构建提交和逐型号报告。失败不发布新资产，不覆盖同名资产。见[构建与发布](docs/BUILD.md)。
 
-[更新记录](CHANGELOG.md) · [1.1.3说明](docs/RELEASE-1.1.3.md) · [安全](docs/SECURITY.md) · [性能](docs/PERFORMANCE.md) · [QModem来源](docs/QMODEM.md) · [图标许可](docs/FRONTEND-SOURCES.md)
+[更新记录](CHANGELOG.md) · [1.1.5说明](docs/RELEASE-1.1.5.md) · [安全](docs/SECURITY.md) · [性能](docs/PERFORMANCE.md) · [QModem来源](docs/QMODEM.md) · [图标许可](docs/FRONTEND-SOURCES.md)

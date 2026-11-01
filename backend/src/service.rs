@@ -72,6 +72,10 @@ impl NativeService {
                         .as_u64()
                         .is_none_or(|old| at < old || at - old > 15000)
                 );
+                let system_stale = system["stale"] == true;
+                if let Some(battery) = system.get_mut("battery") {
+                    crate::battery::age(battery, at, system_stale);
+                }
                 if system["lan"].is_object() {
                     crate::lan::age_snapshot(&mut system["lan"], at);
                 }
@@ -203,6 +207,10 @@ impl NativeService {
                     "compat-read-only"
                 });
                 status["capabilities"]["smsReadState"] = json!(sms_ready);
+                status["capabilities"]["battery"] = json!(
+                    status["system"]["battery"]["available"] == true
+                        && status["system"]["battery"]["stale"] == false
+                );
                 if let Some(sms) = &self.sms {
                     status["smsBackend"] = sms.device.source_info(&key);
                 }
@@ -640,6 +648,7 @@ impl NativeService {
                     .and_then(|s| telemetry::memory(&s))
                     .unwrap_or(Value::Null);
                 value["temperature"] = crate::temperature::device().unwrap_or(Value::Null);
+                value["battery"] = crate::battery::snapshot(wall_ms());
                 value["uptimeSeconds"] = json!(
                     bounded_read(Path::new("/proc/uptime"), 256)
                         .ok()

@@ -3,7 +3,7 @@
   "protocol": "NETWORK-PANEL-OPENWRT/1",
   "contractVersion": 1,
   "port": 1117,
-  "pluginVersion": "1.1.3",
+  "pluginVersion": "1.1.5",
   "backendLanguage": "Rust",
   "releaseStatus": "stable",
   "hardwareValidation": "capability-gated-not-universal-firmware-certification",
@@ -34,6 +34,16 @@
     "sms_execute": {"verb": "POST", "path": "/api/sms_execute", "auth": true, "params": ["modem", "operation", "confirmation"], "safeRetry": false, "implemented": true, "requires": "smsSend-or-smsDelete,one-use-instance-bound-confirmation"},
     "sms_forward_settings": {"verb": "POST", "path": "/api/sms_forward_settings", "auth": true, "params": [], "safeRetry": true, "implemented": true, "requires": "standalone-or-compat-verified-sms-readonly"},
     "sms_forward_configure": {"verb": "POST", "path": "/api/sms_forward_configure", "auth": true, "params": ["enabled", "modem", "pollSeconds", "token", "clearToken", "receiveEnabled"], "safeRetry": false, "implemented": true, "requires": "sms; pushplus-https only when forwarding is enabled; receiveEnabled is optional for legacy HTTP clients"}
+  },
+  "statusExtensions": {
+    "battery": {
+      "since": "1.1.5",
+      "path": "system.battery",
+      "capability": "battery",
+      "fields": {"supported":"boolean","available":"boolean","percent":"integer 0..100 or null","charging":"boolean or null","source":"provider or power-supply","observedAtMs":"Unix milliseconds or null","stale":"boolean","reason":"string or null"},
+      "provider": {"path":"/var/run/wlmb-server/battery.json","version":1,"maxBytes":1024,"maxAgeSeconds":60,"fields":{"version":"1","percent":"integer 0..100 or null","charging":"boolean or null; optional","updatedAt":"Unix seconds"}},
+      "notes": "Authenticated status and LuCI RPC only; bounded local reads, no remote producer configuration or arbitrary command execution. Show percent only when system and battery are fresh and available."
+    }
   },
   "reservedFeatures": ["networkMode", "mlo"],
   "lockOperation": {"rat": ["NR", "NR_NSA", "LTE"], "mode": ["auto", "band", "cell"], "optionalTarget": "band", "notes": "NR_NSA is band preference only. Explicit target=band separates band reset from cell unlock. Missing firmware inventories and unknown reply variants fail closed. Read state has groups for cells, bandGroups for preferences, presets for refreshed inventories. Protocol mapping is not hardware acceptance."},

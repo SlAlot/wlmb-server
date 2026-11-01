@@ -51,6 +51,7 @@ jobs:
           node tools/check-apk-signing.cjs "$RUNNER_TEMP/wlmb-sign-test-compiler.apk"
       - run: node tools/dependency-notices.cjs --check
       - run: node tools/check-webui.cjs
+      - run: node tools/check-battery.cjs
       - run: node tools/check-ui-layout.cjs
       - run: node tools/check-qmodem-audit.cjs
       - run: node tools/check-release-readiness.cjs

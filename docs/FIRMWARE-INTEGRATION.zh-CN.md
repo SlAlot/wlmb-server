@@ -86,7 +86,7 @@ make package/feeds/wlmb/wlmb-server/compile V=s
 src-git wlmb https://github.com/SlAlot/wlmb-server.git^完整提交SHA
 ```
 
-选择包含本配方的实际提交，不要照抄占位符；旧 `v1.1.3` 标签早于标准 Feed 配方，不能用旧标签验证新集成方式。更新源码版本时保持 Cargo、配方、前端资源与 API 契约一致，见[构建与发布](BUILD.md)。
+选择包含本配方的实际提交，不要照抄占位符；旧 `v1.1.5` 标签早于标准 Feed 配方，不能用旧标签验证新集成方式。更新源码版本时保持 Cargo、配方、前端资源与 API 契约一致，见[构建与发布](BUILD.md)。
 
 ## 刷机验收
 
