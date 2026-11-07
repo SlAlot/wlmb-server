@@ -7,6 +7,23 @@ use std::{
     sync::Mutex,
     time::{Duration, Instant},
 };
+fn network_preference_valid(method: &str, params: &Value) -> bool {
+    params
+        .as_object()
+        .is_some_and(|p| p.len() == if method == "get_network_prefer" { 1 } else { 2 })
+        && params["config_section"].as_str().is_some_and(|key| {
+            !key.is_empty()
+                && key.len() <= 64
+                && key
+                    .bytes()
+                    .all(|b| b.is_ascii_alphanumeric() || matches!(b, b'_' | b'-'))
+        })
+        && (method == "get_network_prefer"
+            || crate::radio_controls::QMODEM_MODES.iter().any(|mode| {
+                crate::radio_controls::qmodem_params(mode) == params["params"].as_str()
+            }))
+}
+
 fn fail() -> PanelError {
     PanelError::new("SYSTEM_UNAVAILABLE", 503)
 }
@@ -447,6 +464,9 @@ impl Bus for NativeBus {
             || object == "qmodem"
                 && method == "send_at"
                 && !crate::qmodem_at::request_valid(&params)
+            || object == "qmodem"
+                && matches!(method, "get_network_prefer" | "set_network_prefer")
+                && !network_preference_valid(method, &params)
             || crate::glinet::object_name(object) && !crate::glinet::request_valid(&params)
         {
             return Err(fail());

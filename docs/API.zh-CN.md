@@ -56,6 +56,8 @@ radio.serving是服务测量；radio.carriers是已报告载波库存，两者�
 - refresh：显式刷新模组，仍遵循后端限流。
 - lock_status：modem、force，读取配置。1.0.1追加`cellFields.NR/LTE`（`bandRequired`／`scsRequired`），`presets.cellRanges.NR/LTE`提供与写入校验一致的`band/first/last`候选范围。客户端仅在候选唯一时补齐频段，SCS只能使用明确测量或用户确认值。旧服务缺少字段时保守保留必填项，不能因此开放新写协议。
 - lock_prepare → lock_execute：modem、operation；execute附revision、confirmation。
+- network_mode_status：modem，读取已保存的选网配置，不是当前实际驻留制式。仅当 status 的 `capabilities.networkMode` 为 true 时查询。
+- network_mode_prepare → network_mode_execute：modem、mode、revision；execute 附 confirmation。仅提交状态所列选项；不因失败自动重发。
 - host_prepare → host_execute：operation；execute附revision、confirmation。
 - at_prepare → at_execute：modem、command；execute附confirmation。
 - sms_refresh：modem，手动刷新，通常有30秒保护；后台收取缓存优先复用。
@@ -65,6 +67,8 @@ radio.serving是服务测量；radio.carriers是已报告载波库存，两者�
 - sms_forward_configure：enabled、receiveEnabled、modem、pollSeconds、token、clearToken，需认证，返回异步回执。
 
 prepare的确认绑定会话、内容、身份，通常30秒有效、只能消费一次；回执也绑定原会话。需要重新读取和确认才能再次执行。
+
+制式状态返回 `modem`、`mode`、`label`、`options`、`writable`、`revision`。模式可为 `auto`、`5g`、`4g`、`3g`、`2g`；若已保存的是其他组合，`mode` 为 null，仍按 `label` 展示。执行回读一致才返回 `verified: true`。旧版或不安全的通道不会开放写入；切换可能中断供网，不自动拨号、重启或改变频段／小区锁定。
 
 ## 锁定与主机操作
 

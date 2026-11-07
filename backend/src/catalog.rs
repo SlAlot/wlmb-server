@@ -297,7 +297,7 @@ pub fn inventory() -> Value {
             "sessionQos": if qos_query { "implemented-firmware-dependent" } else { "pending" },
             "temperature": if crate::temperature::query(model).is_some() { "implemented-firmware-dependent" } else { "pending" },
             "sms": "standard-pdu-needs-firmware-negotiation",
-            "networkPreference":"pending",
+            "networkPreference":if crate::radio_controls::RadioControls::network_mode_profile(model) { "implemented-firmware-dependent" } else { "pending" },
             "cellularEnable":"pending",
             "smsSharedTransactions":"requires-reviewed-owner-contract",
             "smsNotifications":"bounded-owned-endpoint-cmti-or-poll-fallback"

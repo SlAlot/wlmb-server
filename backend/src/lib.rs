@@ -71,11 +71,11 @@ pub const API_PORT: u16 = 1117;
 pub const MAX_BODY: usize = 16_384;
 pub const MAX_AT_RESPONSE: usize = 65_536;
 pub const MAX_SAMPLE_QUERIES: usize = 10;
-pub const VERSION: &str = "1.1.5";
+pub const VERSION: &str = "1.1.6";
 pub const BUILD_MARKER: &str = if cfg!(feature = "pushplus-https") {
-    "WLMB_BUILD=1.1.5;pushplus-https=1"
+    "WLMB_BUILD=1.1.6;pushplus-https=1"
 } else {
-    "WLMB_BUILD=1.1.5;pushplus-https=0"
+    "WLMB_BUILD=1.1.6;pushplus-https=0"
 };
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -97,6 +97,7 @@ impl PanelError {
                 | "AT_TIMEOUT"
                 | "AT_WRITE_UNKNOWN"
                 | "LOCK_RESULT_UNKNOWN"
+                | "NETWORK_MODE_UNKNOWN"
                 | "WIFI_RELOAD_UNKNOWN"
                 | "WIFI_NETWORK_CHANGED"
                 | "WIFI_READBACK_MISMATCH"
@@ -112,6 +113,7 @@ impl PanelError {
                 | "SMS_SETTINGS_UNSUPPORTED"
                 | "FEATURE_NOT_READY" => "pending",
                 "AT_UNSUPPORTED"
+                | "NETWORK_MODE_UNSUPPORTED"
                 | "LOCK_REJECTED"
                 | "SMS_PRESERVE_UNSUPPORTED"
                 | "SMS_ENCODING_UNSUPPORTED"
@@ -125,6 +127,7 @@ impl PanelError {
                 | "SMS_REFRESH_COOLDOWN" => "busy",
                 "HOST_CHANGED"
                 | "LOCK_CHANGED"
+                | "NETWORK_MODE_CHANGED"
                 | "MODEM_CHANGED"
                 | "SMS_CHANGED"
                 | "SMS_STORAGE_CHANGED"
@@ -179,6 +182,10 @@ impl PanelError {
             "LOCK_CONFIRMATION_REQUIRED" => "操作确认已失效，请重新读取并确认，不会自动重发",
             "LOCK_REJECTED" => "模组拒绝了锁定命令，未自动切换协议、重启或重试",
             "LOCK_RESULT_UNKNOWN" => "锁定命令结果未确认；请先读取状态，不要重复提交",
+            "NETWORK_MODE_UNSUPPORTED" => "此模组或固件未开放所选网络制式，未执行切换",
+            "NETWORK_MODE_UNVERIFIED" => "未能确认模组保存的网络制式，未执行切换",
+            "NETWORK_MODE_CHANGED" => "模组或选网配置已变化，请重新读取后再确认",
+            "NETWORK_MODE_UNKNOWN" => "切换结果未确认；请先重新读取配置，不要重复提交",
             "MODEM_CHANGED" | "MODEM_NOT_FOUND" => "模组已更换或离线，请刷新设备列表后重新选择",
             "AT_NOT_READY" | "AT_CHANNEL_UNAVAILABLE" => {
                 "模组通道暂不可用，请检查接口状态；插件不会抢占供网端口"

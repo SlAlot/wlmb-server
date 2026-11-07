@@ -126,6 +126,8 @@ pub(crate) fn allowed(object: &str, method: &str) -> bool {
             "get_current_band",
             "get_neighborcell",
             "send_at",
+            "get_network_prefer",
+            "set_network_prefer",
         ]
         .contains(&method),
         "qmodem.sms" => [
@@ -153,7 +155,7 @@ pub(crate) fn allowed(object: &str, method: &str) -> bool {
 #[cfg(test)]
 mod feature_allowlist_tests {
     #[test]
-    fn native_qmodem_read_access_does_not_expose_write_methods() {
+    fn native_qmodem_access_does_not_expose_general_write_methods() {
         for method in [
             "cell_info",
             "network_info",
@@ -161,6 +163,8 @@ mod feature_allowlist_tests {
             "get_current_band",
             "get_neighborcell",
             "send_at",
+            "get_network_prefer",
+            "set_network_prefer",
         ] {
             assert!(super::allowed("qmodem", method));
         }
@@ -649,6 +653,19 @@ impl Broker {
                     row["infoInventorySource"] = json!("qmodem.send_at");
                 }
             }
+            // 旧版 rpcd 自己管理串口；仅对已审查为单独制式写入的移远协议开放。
+            if unique
+                && row["shared"] != true
+                && row["controlReadOnly"] != true
+                && crate::radio_controls::qmodem_model(row["model"].as_str().unwrap_or(""))
+                && row["platform"] == "qualcomm"
+                && row["manufacturer"] == "quectel"
+                && self.info_schema["get_network_prefer"]["config_section"] == 3
+                && self.info_schema["set_network_prefer"]["config_section"] == 3
+                && self.info_schema["set_network_prefer"]["params"] == 3
+            {
+                row["qmodemNetworkMode"] = json!(true);
+            }
         }
         let mut ports = self.ports.lock().map_err(|_| unavailable())?;
         let now = Instant::now();
@@ -950,6 +967,57 @@ impl Broker {
             seconds,
             None,
         )
+    }
+    pub fn network_preference(&self, row: &Value, mode: Option<&str>) -> Result<Value> {
+        let _info_guard = self
+            .info_gate
+            .try_lock()
+            .map_err(|_| PanelError::new("AT_BUSY", 409))?;
+        let key = row["id"].as_str().ok_or_else(unavailable)?;
+        let port = row["port"].as_str().ok_or_else(unavailable)?;
+        let lock = self
+            .ports
+            .lock()
+            .map_err(|_| unavailable())?
+            .locks
+            .entry(port.to_owned())
+            .or_default()
+            .clone();
+        let _guard = lock
+            .try_lock()
+            .map_err(|_| PanelError::new("AT_BUSY", 409))?;
+        let matches = || {
+            if !self.modems()?.iter().any(|r| {
+                r["id"] == key
+                    && r["port"] == port
+                    && r["model"] == row["model"]
+                    && r["instance"] == row["instance"]
+                    && r["qmodemNetworkMode"] == true
+                    && r["channelState"] != "sms-input-unknown"
+            }) {
+                return Err(PanelError::new("MODEM_CHANGED", 409));
+            }
+            Ok(())
+        };
+        let (method, params) = if let Some(mode) = mode {
+            let params = crate::radio_controls::qmodem_params(mode)
+                .ok_or_else(|| PanelError::new("NETWORK_MODE_UNSUPPORTED", 422))?;
+            (
+                "set_network_prefer",
+                json!({"config_section":key,"params":params}),
+            )
+        } else {
+            ("get_network_prefer", json!({"config_section":key}))
+        };
+        matches()?;
+        if !self.discovery.owners(port)?.is_empty() {
+            return Err(PanelError::new("AT_PORT_CONFLICT", 409));
+        }
+        let value = self
+            .bus
+            .call("qmodem", method, params, Duration::from_secs(12))?;
+        matches()?;
+        Ok(value)
     }
     pub fn sms_write_supported(&self) -> bool {
         self.sms_writable && self.queue.as_ref().is_none_or(|q| q.validate().is_ok())

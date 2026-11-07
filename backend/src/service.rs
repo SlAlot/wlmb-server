@@ -211,6 +211,11 @@ impl NativeService {
                     status["system"]["battery"]["available"] == true
                         && status["system"]["battery"]["stale"] == false
                 );
+                status["capabilities"]["networkMode"] = json!(
+                    self.controls.is_some()
+                        && rows.iter().any(|row| row["id"] == key
+                            && crate::radio_controls::RadioControls::network_mode_supported(row))
+                );
                 if let Some(sms) = &self.sms {
                     status["smsBackend"] = sms.device.source_info(&key);
                 }
@@ -331,6 +336,37 @@ impl NativeService {
                             &owner,
                         ),
                     })
+            }
+            "network_mode_status" | "network_mode_prepare" | "network_mode_execute" => {
+                let radio = self
+                    .controls
+                    .as_ref()
+                    .ok_or_else(|| PanelError::new("FEATURE_NOT_READY", 501))?
+                    .radio
+                    .clone();
+                let owner = owner
+                    .ok_or_else(|| PanelError::new("SESSION_EXPIRED", 401))?
+                    .to_owned();
+                let action = method.to_owned();
+                let job_owner = owner.clone();
+                self.actions.submit(&job_owner, move || {
+                    let key = body["modem"].as_str().unwrap_or("");
+                    let mode = body["mode"].as_str().unwrap_or("");
+                    let revision = body["revision"].as_str().unwrap_or("");
+                    match action.as_str() {
+                        "network_mode_status" => radio.network_mode_read(key),
+                        "network_mode_prepare" => {
+                            radio.network_mode_prepare(key, mode, revision, &owner)
+                        }
+                        _ => radio.network_mode_execute(
+                            key,
+                            mode,
+                            revision,
+                            body["confirmation"].as_str().unwrap_or(""),
+                            &owner,
+                        ),
+                    }
+                })
             }
             "host_prepare" | "host_execute" => {
                 let host = self

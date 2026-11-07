@@ -127,7 +127,7 @@ function lockFeedback(receipts, radio, modem) {
   if (matched === receipts.length) return '配置回读一致，新的驻留信息符合所选条件；不代表已验证重启后保持。'
   return uncertain
 }
-    global.WLMBUIData={version:'1.1.5',band:band,known:known,lockFeedback:lockFeedback,resolveCellDraft:resolveCellDraft,
+    global.WLMBUIData={version:'1.1.6',band:band,known:known,lockFeedback:lockFeedback,resolveCellDraft:resolveCellDraft,
         verificationCode:verificationCode,messageTime:messageTime,recentSms:recentSms,
         battery:function(snapshot){
             var b=snapshot.system?.battery||{},available=snapshot.system?.stale!==true&&b.available===true&&b.stale===false&&Number.isInteger(b.percent)&&b.percent>=0&&b.percent<=100;

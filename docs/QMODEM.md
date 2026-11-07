@@ -56,6 +56,12 @@ QModem LuCI 的手动邻区按钮调用 `get_neighborcell`，不是先启用再�
 
 接口输出增加 `radio.carrierState` 与 `radio.neighborState`：包含来源、查询时间、状态及必要的错误码。载波状态可为 `serving-only`；邻区区分 `empty`、`unavailable`、`unsupported` 与 `reported`。邻区能力指经核验的被动读取，不是主动搜网能力。可选查询失败时只在同一采集代际且服务小区身份完全一致时保留上次记录，包括制式、频点、PCI、全局小区标识、TAC 和运营商标识；同频同 PCI 不足以证明身份相同。保留原时间戳，并通过 `queryStatus=error` 与过期状态说明，不能把缓存刷新为新测量。
 
+## 网络制式
+
+独立模式和可写共享 AT 模式复用同一套类型化选网协议。制式编码参考 [QModem 厂商适配](https://github.com/FUjr/QModem/tree/c49654efc870f53712ee8e25bf181722eb1466d9/application/qmodem/files/usr/share/qmodem/vendor)，优先使用模组实际声明的选项。未知布局、无法确认恢复自动、或选网与频段共用且无法保证保留现有参数时不开放写入。
+
+旧版 QModem 没有已打开的共享 AT 端口时，仅对确认走对应厂商协议的移远高通 5G 模组，使用签名匹配的 `get_network_prefer`／`set_network_prefer`。不自行打开其串口，不通过通用 `send_at` 接受配置命令。需要实机核验的固件不能仅凭接口存在判定所有制式可用。
+
 主信号校验后立即分阶段发布，载波和邻区依次补入，签约速率或温度查询较慢时不会阻塞已读结果的首屏。每次原生调用前后均复核配置绑定，配置改变后不再读取下一项，也不复用旧实例的温度缓存；通道调用失败后暂停本轮剩余补充项。查询中使用 `queryStatus=pending`；沿用历史记录仍保留原时间，不延长其有效期。接口读取只拿缓存，不因网页或小程序刷新次数增加查询。
 
 QModem未提供可用短信服务时可使用安全共享AT；已选数据库后端遇到错误不自动切换来源。插件不会升级QModem、改其短信模式或认领其转发器队列。

@@ -17,6 +17,9 @@ var diagnosticsRPC = rpc.declare({ object: 'network-panel', method: 'diagnostics
 var lockStatusRPC = rpc.declare({ object: 'network-panel', method: 'lock_status', params: ['modem', 'force'] });
 var lockPrepareRPC = rpc.declare({ object: 'network-panel', method: 'lock_prepare', params: ['modem', 'operation'] });
 var lockExecuteRPC = rpc.declare({ object: 'network-panel', method: 'lock_execute', params: ['modem', 'operation', 'revision', 'confirmation'] });
+var modeStatusRPC = rpc.declare({ object: 'network-panel', method: 'network_mode_status', params: ['modem'] });
+var modePrepareRPC = rpc.declare({ object: 'network-panel', method: 'network_mode_prepare', params: ['modem', 'mode', 'revision'] });
+var modeExecuteRPC = rpc.declare({ object: 'network-panel', method: 'network_mode_execute', params: ['modem', 'mode', 'revision', 'confirmation'] });
 var resultRPC = rpc.declare({ object: 'network-panel', method: 'control_result', params: ['job'] });
 var hostPrepareRPC = rpc.declare({ object: 'network-panel', method: 'host_prepare', params: ['operation'] });
 var hostExecuteRPC = rpc.declare({ object: 'network-panel', method: 'host_execute', params: ['operation', 'revision', 'confirmation'] });
@@ -150,12 +153,12 @@ function copyCode(value) {
     if(window.isSecureContext&&navigator.clipboard&&navigator.clipboard.writeText)return navigator.clipboard.writeText(value).catch(fallback);
     try{fallback();return Promise.resolve();}catch(error){return Promise.reject(error);}
 }
-var guide = function(hash) { return L.resource('wlmb-server/guide.html') + '?v=1.1.5&rev=release1_1_3' + (hash || ''); };
+var guide = function(hash) { return L.resource('wlmb-server/guide.html') + '?v=1.1.6&rev=release1_1_6' + (hash || ''); };
 function webuiScript(name) {
     return new Promise(function(resolve,reject) {
         var script = document.createElement('script'), settled = false;
         var timer = setTimeout(function() { settled=true; script.remove(); reject(new Error('前端组件加载超时')); },12000);
-        script.src = L.resource('wlmb-server/' + name) + '?v=1.1.5&rev=release1_1_3';
+        script.src = L.resource('wlmb-server/' + name) + '?v=1.1.6&rev=release1_1_6';
         script.onload = function() { if (!settled) { settled=true; clearTimeout(timer); resolve(); } };
         script.onerror = function() { if (!settled) { settled=true; clearTimeout(timer); script.remove(); reject(new Error('前端组件加载失败')); } };
         document.head.appendChild(script);
@@ -169,7 +172,8 @@ return view.extend({
     },
     render: function(data) {
         var self = this;
-        this.runtime = data[0]; this.selected = data[1].selectedModem || ''; this.lastRuntime = 0;
+        this.runtime = data[0]; this.snapshot = data[1]; this.capabilities = data[1].capabilities || {};
+        this.selected = data[1].selectedModem || ''; this.lastRuntime = 0;
         this.lastGoodStatus=data[1].failure?null:data[1];this.lastGoodStatusAt=Date.now();this.updateToken=null;
         this.recentSms={modem:this.selected,loaded:false,messages:[]};this.recentSmsLast=0;this.recentSmsPending=null;this.smsGeneration={};
         this.readonly = typeof L.hasViewPermission === 'function' && !L.hasViewPermission();
@@ -211,7 +215,7 @@ return view.extend({
         this.draw(data[1]);
         poll.add(function() { return self.update(false); }, 3);
         var root = E('div', { id: 'wlmb-panel', 'class': 'np-root' }, [
-            E('link', { rel: 'stylesheet', href: L.resource('wlmb-server/panel.css') + '?v=1.1.5&rev=release1_1_3' }),
+            E('link', { rel: 'stylesheet', href: L.resource('wlmb-server/panel.css') + '?v=1.1.6&rev=release1_1_6' }),
             E('div', { 'class': 'np-head' }, [E('div', {}, [E('div', { 'class': 'np-title', role: 'heading', 'aria-level': '2' }, '网络面板'), E('p', { 'class': 'np-desc' }, 'wlmb-server · 根据qmodem为参考开发接入')]), link('新手教程', guide())]),
             E('div', { 'class': 'np-statusbar', role: 'status', 'aria-live': 'polite' }, [
                 E('span', { 'class': 'np-chip' }, [this.dot, this.state]), E('span', { 'class': 'np-chip' }, ['模组 ', this.count]),
@@ -252,10 +256,10 @@ return view.extend({
                     ui.addNotification(null,E('p',{},error.message+'；当前使用兼容界面，操作接口保持不变。'),'error');
                 }};
             self.webuiBridge = bridge;
-            (window.WLMBIcons && window.WLMBIcons.version==='1.1.5' ? Promise.resolve() : webuiScript('webui-icons-1.1.5.js')).then(function() {
-                return window.WLMBUIData && window.WLMBUIData.version==='1.1.5' ? null : webuiScript('webui-data-1.1.5.js');
+            (window.WLMBIcons && window.WLMBIcons.version==='1.1.6' ? Promise.resolve() : webuiScript('webui-icons-1.1.6.js')).then(function() {
+                return window.WLMBUIData && window.WLMBUIData.version==='1.1.6' ? null : webuiScript('webui-data-1.1.6.js');
             }).then(function() {
-                return window.WLMBWebUI && window.WLMBWebUI.version==='1.1.5' ? null : webuiScript('webui-shell-1.1.5.js');
+                return window.WLMBWebUI && window.WLMBWebUI.version==='1.1.6' ? null : webuiScript('webui-shell-1.1.6.js');
             }).then(function() {
                 if (!root.isConnected) return;
                 self.pages.forEach(function(page) { pageContainer.appendChild(page); });
@@ -452,6 +456,7 @@ return view.extend({
         var rows = status.modems || [], radio = status.radio || {}, serving = radio.serving || [];
         var primary = serving.find(function(item) { return item.rat === 'NR'; }) || serving[0] || {};
         this.selected = status.selectedModem || '';
+        if (this.syncNetworkMode) this.syncNetworkMode();
         if(this.recentSms.modem!==this.selected){
             this.smsGeneration={};this.recentSmsPending=null;this.imsOverride=null;
             this.recentSms={modem:this.selected,loaded:false,messages:[]};this.recentSmsLast=0;this.smsLoadedModem=null;
@@ -821,6 +826,93 @@ return view.extend({
             E('div',{'class':'np-lock-footer'},[E('div', { 'class': 'np-actions' }, [read, save]),resultMessage,resultDetails])
         ])]);
     },
+    networkModeCard: function() {
+        var self = this;
+        var status = E('p', { 'class': 'np-hint', 'aria-live': 'polite' }, '读取后显示模组保存的配置，不代表当前驻留制式。');
+        var picker = E('select', { 'class': 'np-input', 'aria-label': '选择网络制式', change: sync });
+        var saved = null;
+        function available() {
+            return !!(self.runtime.running && !self.runtime.failure && !self.snapshot.failure && self.selected && self.capabilities.networkMode);
+        }
+        function canSave() {
+            return available() && !self.readonly && saved && saved.modem === self.selected &&
+                saved.writable === true && picker.value !== saved.mode &&
+                saved.options.some(function(item) { return item.mode === picker.value; });
+        }
+        function paint(value, message) {
+            saved = value;
+            picker.replaceChildren(E('option', { value: '' }, '请选择'));
+            if (value) {
+                value.options.forEach(function(item) { picker.appendChild(E('option', { value: item.mode }, item.label)); });
+                picker.value = value.options.some(function(item) { return item.mode === value.mode; }) ? value.mode : '';
+            }
+            status.textContent = message;
+            sync();
+        }
+        function sync() {
+            if (saved && saved.modem !== self.selected) {
+                paint(null, '当前模组已更换，请重新读取。');
+                return;
+            }
+            read.disabled = !!read.busy || !!save.busy || !available();
+            picker.disabled = !!(self.readonly || !available() || !saved || !saved.writable);
+            save.disabled = !!save.busy || !canSave();
+        }
+        var read = button('读取设置', function() {
+            if (!available()) return;
+            var modem = self.selected;
+            paint(null, '正在读取模组选网配置…');
+            return task(modeStatusRPC(modem)).then(function(value) {
+                if (self.selected !== modem || value.modem !== modem) {
+                    paint(null, '当前模组已更换，请重新读取。');
+                    return;
+                }
+                paint(value, '已保存：' + value.label + (value.writable ? '' : ' · 当前固件暂只支持读取'));
+            }).catch(function(error) {
+                paint(null, error.message);
+                throw error;
+            });
+        }, 'outline');
+        var save = button('应用制式', function() {
+            if (!canSave()) return;
+            var before = saved, mode = picker.value, modem = before.modem;
+            var chosen = before.options.find(function(item) { return item.mode === mode; });
+            return new Promise(function(resolve, reject) {
+                panelModal('切换网络制式？', [
+                    E('p', {}, '将设置为「' + chosen.label + '」。可能短暂断网；仅 5G 通常需要 SA，部分地区已无 3G。插件不会自动拨号或重启。'),
+                    E('div', { 'class': 'np-actions' }, [
+                        E('button', { 'class': 'np-btn outline', click: function() { ui.hideModal(); resolve(); } }, '取消'),
+                        E('button', { 'class': 'np-btn danger', click: function() {
+                            ui.hideModal();
+                            if (!canSave() || saved !== before || picker.value !== mode) { reject(new Error('模组或配置已变化，请重新读取')); return; }
+                            task(modePrepareRPC(modem, mode, before.revision)).then(function(prepared) {
+                                if (self.selected !== modem || !available() || self.readonly || prepared.revision !== before.revision || !prepared.confirmation)
+                                    throw new Error('模组或配置已变化，请重新读取');
+                                return task(modeExecuteRPC(modem, mode, before.revision, prepared.confirmation));
+                            }).then(function(value) {
+                                if (self.selected !== modem || value.modem !== modem || value.verified !== true || value.mode !== mode)
+                                    throw new Error('切换结果未确认，请先重新读取');
+                                paint(value, '已回读：' + value.label + ' · 实际驻留以信号看板为准');
+                                resolve();
+                            }).catch(function(error) {
+                                paint(null, '请重新读取选网配置再操作。');
+                                reject(error);
+                            });
+                        } }, '确认切换')
+                    ])
+                ]);
+            });
+        }, 'primary');
+        read.isBlocked = function() { return !!save.busy || !available(); };
+        save.isBlocked = function() { return !canSave(); };
+        var pane = card('网络制式', [status, E('div', { 'class': 'np-actions' }, [read, picker, save])]);
+        this.syncNetworkMode = function() {
+            pane.hidden = !(self.capabilities || {}).networkMode;
+            sync();
+        };
+        this.syncNetworkMode();
+        return pane;
+    },
     settingsPage: function(settings) {
         var self = this;
         this.interval = E('input', { 'class': 'np-input np-number', type: 'number', min: 2, max: 30, value: settings.interval || 3, 'aria-label': '后台刷新间隔' });
@@ -842,6 +934,7 @@ return view.extend({
             E('div', { 'class': 'np-actions' }, [this.saveButton, button('脱敏诊断', function() { return diagnosticsRPC().then(unwrap).then(function(value) {
                 panelModal('网络面板诊断', [E('pre', { 'class': 'np-console' }, JSON.stringify(value, null, 2)), E('button', { 'class': 'np-btn outline', click: ui.hideModal }, '关闭')]);
             }); }, 'outline')])]),
+            this.networkModeCard(),
             card('更多设备功能', [
                 E('p', { 'class': 'np-desc' }, '功能按设备实际能力开放，修改前请预留恢复方式。'),
                 row('信号、载波与邻区', '按模组协议返回真实数据', E('span', { 'class': 'np-tag' }, '已接入')),
@@ -850,6 +943,6 @@ return view.extend({
                 row('锁频与锁小区', '按已核验模组协议开放保存接口；不自动切飞行模式', link('查看安全说明', guide('#locks'))),
                 row('月限额与统计起始日', '按插件累计；可靠 fw4 环境才开放停网', link('查看功能说明', guide('#features'))),
                 row('短信与转发', '内置短信与 PushPlus 按独立 AT 端点能力开放；关闭转发后不轮询', link('查看功能说明', guide('#features')))]),
-            E('p', { 'class': 'np-hint' }, '仅保存本插件配置，不自动改拨号、网络或其他插件。小程序使用 LAN 地址与 1117 连接。')]);
+            E('p', { 'class': 'np-hint' }, '不会自动改拨号或其他插件设置。小程序使用 LAN 地址与 1117 连接。')]);
     }
 });

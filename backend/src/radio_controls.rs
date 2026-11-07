@@ -10,6 +10,9 @@ use std::{
     },
     time::{Duration, Instant},
 };
+mod network_mode;
+#[cfg(unix)]
+pub(crate) use network_mode::{QMODEM_MODES, qmodem_model, qmodem_params};
 struct Cached {
     signature: (String, String, Value),
     observed: Instant,

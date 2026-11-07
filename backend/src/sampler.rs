@@ -15,6 +15,9 @@ use std::{
 pub trait Source: Send + Sync {
     fn modems(&self) -> Result<Vec<Value>>;
     fn query(&self, id: &str, command: &str, port: &str, model: &str) -> Result<String>;
+    fn network_preference(&self, _row: &Value, _mode: Option<&str>) -> Result<Value> {
+        Err(PanelError::new("NETWORK_MODE_UNSUPPORTED", 422))
+    }
     fn info_snapshot(&self, _row: &Value) -> Result<Option<Value>> {
         Ok(None)
     }
@@ -43,6 +46,9 @@ pub trait Source: Send + Sync {
 }
 #[cfg(unix)]
 impl Source for crate::transport::Broker {
+    fn network_preference(&self, row: &Value, mode: Option<&str>) -> Result<Value> {
+        self.network_preference(row, mode)
+    }
     fn info_snapshot(&self, row: &Value) -> Result<Option<Value>> {
         self.info_snapshot(row)
     }

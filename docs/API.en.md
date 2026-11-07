@@ -22,6 +22,8 @@ Writes: refresh, lock_status, lock_prepare/execute, host_prepare/execute, at_pre
 
 Locks distinguish band preferences and cell entries. NR_NSA is band-only. NR cell frequency is serving SSB, not CA center; required SCS is protocol-specific. Saved readback, current RF conditions and reboot persistence are separate. No automatic flight mode or resets.
 
+With `capabilities.networkMode`, `network_mode_status(modem)` reads the saved RAT preference. It returns `mode`, `label`, `options`, `writable` and `revision`. Mixed configurations have a label but a null mode. Use only the listed `auto` / `5g` / `4g` / `3g` / `2g` choices, then call `network_mode_prepare` and `network_mode_execute` with that revision and the one-use confirmation. `verified: true` confirms configuration readback, not registration; an uncertain result must not be replayed.
+
 1.0.1 adds `cellFields.NR/LTE` (`bandRequired`, `scsRequired`) to lock status/presets and `presets.cellRanges.NR/LTE` (`band`, `first`, `last`). These describe the selected modem protocol, not a transport-specific feature. Only unique band candidates and explicitly reported SCS may be filled automatically; ambiguous/missing mandatory fields need user input. Older servers without this metadata require conservative fields. Manual PCI/channel entry does not require the cell to appear in a scan.
 
 Host types: wifi_edit, wifi_unify, device_block, traffic_limit. Only verified ordinary LAN APs and plugin-owned rules are mutable. MLO/ambiguous configurations remain gated. Ethernet rateScope=port is not precise per-IP internet accounting.

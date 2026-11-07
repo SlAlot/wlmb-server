@@ -22,7 +22,7 @@ const calls = [], notifications = [], modals = []
 let running = false, boot = true, modal = null
 let nextReceipt = 0
 const receipts = new Map()
-const status = { capabilities:{at:true,lockBand:true,lockCell:true,configure:true},selectedModem: 'test', modems: [{ id: 'test', model: '<script>not HTML</script>', port: '/dev/ttyUSB1', shared: true }],
+const status = { capabilities:{at:true,lockBand:true,lockCell:true,configure:true,networkMode:true},selectedModem: 'test', modems: [{ id: 'test', model: '<script>not HTML</script>', port: '/dev/ttyUSB1', shared: true }],
   radio: { lockPresets:{NR:[1,28,41,78,79],LTE:[1,3,5,8,34,38,39,40,41]}, serving: [{ rat: 'NR', channel:633984, pci:505, networkMode: '5G SA', band: 'n78', rsrp: -81, rsrq: -5, sinr: 16 }], carriers: [], neighbors: [], observedAtMs: Date.now() },
   system: { cpuUsage: 10, memory: { usedPercent: 25, usedBytes: 1048576, totalBytes: 4194304 }, uptimeSeconds: 600, stale: false } }
 const runtime = () => ({ running, bootEnabled: boot, controlReady: running, version: '0.2.0-dev' })
@@ -35,6 +35,15 @@ const rpc = { declare: options => (...args) => {
     return Promise.resolve({ ok: true, data: { accepted: true, service: runtime() } })
   }
   if (!running) return Promise.resolve({ ok: false, error: { message: '插件服务尚未启动' } })
+  if (options.method.startsWith('network_mode_')) {
+    const job = 'mode-' + nextReceipt++
+    const saved = { modem:args[0], mode:null, label:'4G + 5G', writable:true, options:[{mode:'auto',label:'自动选网'},{mode:'4g',label:'仅 4G'}], revision:'mode-rev' }
+    const result = options.method === 'network_mode_status' ? saved : options.method === 'network_mode_prepare'
+      ? { revision:'mode-rev', confirmation:'mode-confirm' }
+      : { ...saved, mode:'4g', label:'仅 4G', verified:true }
+    receipts.set(job,{state:'done',result})
+    return Promise.resolve({ok:true,data:{job,state:'pending'}})
+  }
   if (['lock_status','lock_prepare','lock_execute','host_prepare','host_execute'].includes(options.method)) {
     const job = 'job-' + nextReceipt++
     receipts.set(job,{state:'done',result: options.method === 'lock_status' ? {groups:{},activation:'unverified'} : options.method.endsWith('_prepare') ? {warning:'仅保存',command:'typed-lock',revision:'r',confirmation:'c'} : {accepted:true,activation:'unverified'}})
@@ -73,7 +82,7 @@ async function main() {
   const stylesheetUrl=new URL(stylesheet.attrs.href,'http://fixture.invalid')
   assert.equal(stylesheetUrl.pathname,'/luci-static/resources/wlmb-server/panel.css','Use actual LuCI resource path validation: append query outside L.resource()')
   assert.equal(stylesheetUrl.searchParams.get('v'),VERSION)
-  assert.equal(stylesheetUrl.searchParams.get('rev'),'release1_1_3','首版候选不能读取此前同版本的缓存资源')
+  assert.equal(stylesheetUrl.searchParams.get('rev'),'release1_1_6','首版候选不能读取此前同版本的缓存资源')
   assert.ok(fs.readFileSync(path.join(root, 'www/luci-static/resources/wlmb-server/panel.css'), 'utf8').includes('.np-card{'))
   assert.ok(dom.textContent.includes('网络面板'))
   assert.ok(dom.textContent.includes('已停止'))
@@ -126,6 +135,28 @@ async function main() {
     const deadline = Date.now() + 5000
     while (!condition()) { assert.ok(Date.now() < deadline,'Fixture did not settle'); await new Promise(resolve => setTimeout(resolve,10)) }
   }
+  const networkNodes=all(view.pages[3])
+  const networkRead=networkNodes.find(node=>node.tag==='button'&&node.textContent==='读取设置')
+  const networkSave=networkNodes.find(node=>node.tag==='button'&&node.textContent==='应用制式')
+  const networkPicker=networkNodes.find(node=>node.attrs['aria-label']==='选择网络制式')
+  assert.ok(networkSave.disabled)
+  networkRead.listeners.click()
+  await waitUntil(()=>!networkRead.busy)
+  assert.equal(networkPicker.value,'','混合制式不会预选自动')
+  assert.equal(networkPicker.children.length,3,'仅显示固件支持的选项')
+  networkPicker.value='4g';networkPicker.change()
+  networkSave.listeners.click()
+  await waitUntil(()=>modals.at(-1)==='切换网络制式？')
+  all(modal).find(node=>node.textContent==='取消'&&node.tag==='button').click()
+  await waitUntil(()=>!networkSave.busy)
+  assert.ok(!calls.some(row=>row.method==='network_mode_prepare'))
+  const beforeModeConfirm=modals.length
+  networkSave.listeners.click()
+  await waitUntil(()=>modals.length===beforeModeConfirm+1)
+  all(modal).find(node=>node.textContent==='确认切换'&&node.tag==='button').click()
+  await waitUntil(()=>!networkSave.busy)
+  assert.deepEqual(calls.filter(row=>row.method==='network_mode_execute').map(row=>row.args),[['test','4g','mode-rev','mode-confirm']])
+  assert.ok(view.pages[3].textContent.includes('已回读：仅 4G'))
   view.interval.value = 7
   const beforeSave=calls.filter(call=>call.method==='configure').length
   view.saveButton.listeners.click()
