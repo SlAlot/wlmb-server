@@ -14,7 +14,7 @@
     },
     {
       "path": ".github/workflows/check.yml",
-      "sha256": "c3b4f0c8bbf09ebc03520928c20db8e01a40b07d03ce53bc5075bdeea9d66bf3"
+      "sha256": "8ec2a837df49f97fd4dfffce4454c1152088b2607515d8b29699e89a1d353243"
     },
     {
       "path": ".github/workflows/openwrt-feed.yml",
@@ -790,7 +790,7 @@
     },
     {
       "path": "tools/check-apk-signing.cjs",
-      "sha256": "ec951253c768605026ba9b2317c2a674771bc178e8ae7d80ef8eddb9168b84d8"
+      "sha256": "26fdb59a1f79eb56c48b371d04df77fadfe56c08baee5b6871905b4de29ec3af"
     },
     {
       "path": "tools/check-battery.cjs",
@@ -861,6 +861,10 @@
       "sha256": "fc355cc6b81fdc96b87d19e19fc8ba8b4cf546b6dbf4929f6a4bdb8e41ca3e47"
     },
     {
+      "path": "tools/fetch-apk-compiler.sh",
+      "sha256": "646ebe679285553c0a04c2744c55e924196eb9120f56a7181a10be0d7997d06c"
+    },
+    {
       "path": "tools/import-band-facts.cjs",
       "sha256": "f1d41b7064d77a8a108f873cac1aafa58fddb3595da05b478edf70f547733546"
     },
@@ -874,7 +878,7 @@
     },
     {
       "path": "tools/package-native.cjs",
-      "sha256": "9d47e59a25bf19f564e4020a73ebc1c9a125cf882924bf463c6ea1f5b0a895c9"
+      "sha256": "eb3d0ab879a7d207d23cb49b00ecea34bd463c97464bcc09220b7af4c894f060"
     },
     {
       "path": "tools/package-source.cjs",
@@ -902,7 +906,7 @@
     },
     {
       "path": "tools/sign-release.cjs",
-      "sha256": "a9d1d4b9cae9519238cafd48ff95cfb59abd281a8cb57ab4d9f0b11c89f3a1c5"
+      "sha256": "bd037cfa471d5ddff2612d999c38ac53539f3a0e4571ee59e8b03ab359cd44e1"
     },
     {
       "path": "tools/ui-tests/package-lock.json",

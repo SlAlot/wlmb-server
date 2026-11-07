@@ -8,7 +8,7 @@ function main(){
   const [binary,arch,abi,compilerPackage]=process.argv.slice(2)
   if(process.platform!=='linux'||!binary||!['x86_64','aarch64'].includes(arch)||!abi||!compilerPackage)throw new Error('Linux build requires binary, architecture, package ABI and pinned compiler package')
   const compilerBytes=fs.readFileSync(compilerPackage)
-  if(hash(compilerBytes)!=='2edccd3267ce540f8d2371a0f394e84b40d8348ecc28425309e6d07079ed1259')throw new Error('APK build compiler checksum mismatch')
+  if(hash(compilerBytes)!=='ea77b2533566e70c9566c03748199b79348010c3199ba02d97e0634cf0fa9ef7')throw new Error('APK build compiler checksum mismatch')
   const {tar,ipk,manifest}=build(binary,arch,abi)
   const {id}=platform(arch,abi)
   const stage=fs.mkdtempSync(path.join(os.tmpdir(),'wlmb-package-'))

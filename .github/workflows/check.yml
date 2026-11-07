@@ -47,7 +47,7 @@ jobs:
       - run: node tools/check-installer.cjs
       - name: 验证真实APK签名容器
         run: |
-          curl --fail --location --retry 2 https://dl-cdn.alpinelinux.org/alpine/v3.23/main/x86_64/apk-tools-static-3.0.8-r0.apk --output "$RUNNER_TEMP/wlmb-sign-test-compiler.apk"
+          sh tools/fetch-apk-compiler.sh "$RUNNER_TEMP/wlmb-sign-test-compiler.apk"
           node tools/check-apk-signing.cjs "$RUNNER_TEMP/wlmb-sign-test-compiler.apk"
       - run: node tools/dependency-notices.cjs --check
       - run: node tools/check-webui.cjs
@@ -109,7 +109,7 @@ jobs:
           retention-days: 7
       - name: Build verified APK and IPK containers
         run: |
-          curl --fail --location --retry 2 https://dl-cdn.alpinelinux.org/alpine/v3.23/main/x86_64/apk-tools-static-3.0.8-r0.apk --output "$RUNNER_TEMP/wlmb-apk-compiler.apk"
+          sh tools/fetch-apk-compiler.sh "$RUNNER_TEMP/wlmb-apk-compiler.apk"
           case '${{ matrix.target }}' in
             aarch64-unknown-linux-musl) arch=aarch64; abi=aarch64_cortex-a53 ;;
             x86_64-unknown-linux-musl) arch=x86_64; abi=x86_64 ;;
@@ -153,11 +153,12 @@ jobs:
           test "$RELEASE_TAG" = "$expected"
           test "$GITHUB_REF" = "refs/tags/$RELEASE_TAG"
           test "$(git rev-parse HEAD)" = "$(git rev-parse "refs/tags/$RELEASE_TAG^{commit}")"
+      - name: 下载并验证固定APK工具
+        run: sh tools/fetch-apk-compiler.sh "$RUNNER_TEMP/wlmb-signing-compiler.apk"
       - name: 签名并验证正式APK
         env:
           WLMB_APK_SIGNING_KEY: ${{ secrets.WLMB_APK_SIGNING_KEY }}
         run: |
-          curl --fail --location --retry 2 https://dl-cdn.alpinelinux.org/alpine/v3.23/main/x86_64/apk-tools-static-3.0.8-r0.apk --output "$RUNNER_TEMP/wlmb-signing-compiler.apk"
           node tools/sign-release.cjs "$RUNNER_TEMP/wlmb-artifacts" "$RUNNER_TEMP/wlmb-signing-compiler.apk"
       - name: 核对标签及全部制品
         env:

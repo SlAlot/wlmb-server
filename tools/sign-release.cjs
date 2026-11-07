@@ -4,7 +4,7 @@ const fs = require('node:fs'), os = require('node:os'), path = require('node:pat
 const { VERSION } = require('./package-source.cjs')
 const { PLATFORMS } = require('./platforms.cjs')
 const hash = bytes => crypto.createHash('sha256').update(bytes).digest('hex')
-const COMPILER_SHA256 = '2edccd3267ce540f8d2371a0f394e84b40d8348ecc28425309e6d07079ed1259'
+const COMPILER_SHA256 = 'ea77b2533566e70c9566c03748199b79348010c3199ba02d97e0634cf0fa9ef7'
 function publicKey() {
   const key = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../docs/apk-signing-key.json'), 'utf8'))
   assert.equal(key.schema, 'WLMB-APK-SIGNING-KEY/1')

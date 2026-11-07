@@ -6,7 +6,7 @@ const { PLATFORMS } = require('./platforms.cjs')
 const hash = bytes => crypto.createHash('sha256').update(bytes).digest('hex')
 const compiler = path.resolve(process.argv[2] || '')
 assert.equal(process.platform, 'linux');assert(process.argv[2])
-assert.equal(hash(fs.readFileSync(compiler)), '2edccd3267ce540f8d2371a0f394e84b40d8348ecc28425309e6d07079ed1259')
+assert.equal(hash(fs.readFileSync(compiler)), 'ea77b2533566e70c9566c03748199b79348010c3199ba02d97e0634cf0fa9ef7')
 const stage = fs.mkdtempSync(path.join(os.tmpdir(), 'wlmb-sign-test-')), saved = process.env.WLMB_APK_SIGNING_KEY
 try {
   const tool = path.join(stage, 'apk.static'), content = path.join(stage, 'files')
