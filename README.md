@@ -1,6 +1,6 @@
 # 网络面板 · wlmb-server
 
-[English](README.en.md) · [下载正式版](https://github.com/SlAlot/wlmb-server/releases/latest) · [固件集成教程](docs/FIRMWARE-INTEGRATION.zh-CN.md) · [API](docs/API.zh-CN.md)
+[English](README.en.md) · [界面预览](#界面预览) · [下载正式版](https://github.com/SlAlot/wlmb-server/releases/latest) · [固件集成教程](docs/FIRMWARE-INTEGRATION.zh-CN.md) · [API](docs/API.zh-CN.md)
 
 面向OpenWrt的轻量模组信息与管理插件，作者 **SlAlot**。**Rust后端＋独立LuCI WebUI**，默认端口 **1117**，不接管拨号。根据qmodem为参考开发接入，自动选择已适配的模组协议及共享／独立通道。
 
@@ -63,6 +63,18 @@ apk add /tmp/wlmb-server-1.1.7-aarch64.apk
 共享模式只复用现有QModem接口，不接管或修补QModem。旧版／定制固件混用直连和共享通道时，仍可能争用或延迟；插件不会抢口或自动更改QModem配置，过期数据如实标记，详见[系统接口兼容边界](docs/SYSTEM-INTERFACES.md)。
 
 GL.iNet按实际服务及模组身份识别CPU／USB共享通道，不限定Mudi7型号；支持已知PDU模式的短信读取与转发，但未核验的事件、短信发送／删除及锁定写入不开放。无线运行接口不足时保留只读展示，不伪装WiFi已关闭。LuCI使用8080不影响插件独立的1117接入端口。此适配不等于全系列硬件认证，详见[GL.iNet兼容说明](docs/GLINET.md)。
+
+## 界面预览
+
+以下为 LuCI「网络信息」页的实机截图。可显示的指标取决于模组和固件支持情况。
+
+### 桌面端
+
+![网络面板桌面端：信号评分、载波聚合、网络速率和设备状态](docs/images/luci-overview-desktop.png)
+
+### 手机端
+
+![网络面板手机端：窄屏布局下的信号、载波、设备状态和短信预览](docs/images/luci-overview-mobile.png)
 
 ## 配合微信小程序
 

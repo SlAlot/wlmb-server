@@ -2,7 +2,7 @@
 
 Version 1.1.5 adds a unified battery snapshot under `system.battery` on the authenticated status API (port 1117). Standard OpenWrt power-supply nodes are detected automatically; firmware developers can supply a bounded, timestamped report for other hardware. See the [battery integration guide](docs/BATTERY.zh-CN.md).
 
-[简体中文](README.md) · [Downloads](https://github.com/SlAlot/wlmb-server/releases/latest) · [API](docs/API.en.md)
+[简体中文](README.md) · [Interface preview](#interface-preview) · [Downloads](https://github.com/SlAlot/wlmb-server/releases/latest) · [API](docs/API.en.md)
 
 **Network Panel 1.1.7** by **SlAlot** is a bounded Rust modem service with an independent LuCI JavaScript/CSS interface for OpenWrt. The first public release is 1.0.0. Default port: **1117**. It does not take over dialing. QModem's public identity facts, AT formats and shared interfaces inform the independently implemented adapters.
 
@@ -57,6 +57,18 @@ The catalog maps 91 identities and 131 bus profiles. Implemented paths cover tem
 Shared mode reuses existing QModem interfaces; it does not take over, patch, upgrade or reconfigure QModem. Older/custom firmware mixing direct and shared AT access can still cause contention or delays. The plugin preserves bounded cache validity and rejects recognized crossed replies, but does not add special adaptations or promise to eliminate other clients' blocking.
 
 The Luoye Xiaotong modified modem adapter uses published local snapshots and allowlisted passive neighbor transactions through the original tool, without a fixed management address or direct serial access. Modem writes and SMS remain disabled for this provider pending hardware validation; see [scope and limitations](docs/LUOYE-MODEM.md). When this manager is absent, auto mode prefers QModem, then GL.iNet shared CPU/USB AT services, otherwise protected independent discovery. GL.iNet supports verified PDU reading and forwarding; unverified events, sending/deletion and modem locking writes remain disabled. Missing WiFi runtime interfaces produce read-only/unknown state, not a false disabled status. LuCI on port 8080 does not change the plugin API on 1117. This is capability-based compatibility, not certification of every GL.iNet model; see [GL.iNet](docs/GLINET.md).
+
+## Interface preview
+
+These screenshots show the LuCI Network Overview on a real device. Available metrics depend on the modem and firmware.
+
+### Desktop
+
+![Network Panel desktop view: signal score, carrier aggregation, data rates, and device status](docs/images/luci-overview-desktop.png)
+
+### Mobile
+
+![Network Panel mobile view: signal, carriers, device status, and recent messages in a narrow layout](docs/images/luci-overview-mobile.png)
 
 ## WeChat and other clients
 

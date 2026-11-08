@@ -42,11 +42,11 @@
     },
     {
       "path": "README.en.md",
-      "sha256": "a8dfb6e2d14f20a3e434894403b3a644accb8996e38d5a25351f891b30c5d043"
+      "sha256": "b49097eb303b03d22c8dcbb9295e0f12d153a24b96646f19e75997a234342f41"
     },
     {
       "path": "README.md",
-      "sha256": "d681148d0b3f67b2c051ae165eee4d52db95338b076bd10162f36e88ef2b8714"
+      "sha256": "53c92651583b6de65d32ba21421073cbc990dede83b66d581a5954f11e86c3b5"
     },
     {
       "path": "backend/Cargo.lock",
@@ -719,6 +719,14 @@
     {
       "path": "docs/apk-signing-key.json",
       "sha256": "caa11ff7b75d38b8c0345362e21e72e0086fd95379f7cea70982aca654a0a7dd"
+    },
+    {
+      "path": "docs/images/luci-overview-desktop.png",
+      "sha256": "73bd40acde879b2b6cbf28708dc4fdc61e975a1b967287bc6b5c06cb44b37120"
+    },
+    {
+      "path": "docs/images/luci-overview-mobile.png",
+      "sha256": "4f558cca44261dfd41f3a3d1989f10977fa2be8822aacb25d490986cfd66c62a"
     },
     {
       "path": "docs/model-bands.json",
