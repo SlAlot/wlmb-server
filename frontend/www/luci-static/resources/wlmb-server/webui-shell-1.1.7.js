@@ -3,11 +3,11 @@
     'use strict';
     var definitions=[{key:0,name:'网络信息',icon:'home',group:0},{key:1,name:'邻区扫描',icon:'neighbors',group:1},{key:4,name:'WiFi 与设备',icon:'wifi',group:2},{key:5,name:'频段与小区',icon:'bands',group:1},{key:6,name:'短信',icon:'sms',group:3},{key:7,name:'短信转发',icon:'sms',group:3},{key:8,name:'设备与流量',icon:'chart',group:4},{key:2,name:'AT 控制台',icon:'terminal',group:4},{key:3,name:'插件设置',icon:'settings',group:4}];
     var groups=[{name:'概览',icon:'home',keys:[0]},{name:'网络',icon:'neighbors',keys:[1,5]},{name:'WiFi',icon:'wifi',keys:[4]},{name:'短信',icon:'sms',keys:[6,7]},{name:'设置',icon:'settings',keys:[3,8,2]}];
-    global.WLMBWebUI={version:'1.1.6',mount:function(target,bridge){
+    global.WLMBWebUI={version:'1.1.7',mount:function(target,bridge){
         var D=global.WLMBUIData,I=global.WLMBIcons,doc=target.ownerDocument;
-        if(!D||D.version!=='1.1.6'||!I||I.version!=='1.1.6')throw new Error('独立前端资源版本不一致');
+        if(!D||D.version!=='1.1.7'||!I||I.version!=='1.1.7')throw new Error('独立前端资源版本不一致');
         var disposed=false,failed=false,current=bridge.active||0,filter='',search='',refreshing=false,reading=false,copying=false,smsStamp='',overviewStamp='',neighborStamp='';
-        var panelRoot=target.closest('#wlmb-panel'),theme='auto',collapsed=false,lastGroup={};
+        var panelRoot=target.closest('#wlmb-panel'),theme='auto',lastGroup={};
         var motion=typeof global.matchMedia==='function'?global.matchMedia('(prefers-reduced-motion: reduce)'):null,animations=new Set(),paintedPage=-1,carrierDetails=new Set();
         function cancelMotion(){animations.forEach(function(animation){animation.cancel();});animations.clear();}
         function enter(node){
@@ -26,10 +26,6 @@
             var svg=doc.createElementNS('http://www.w3.org/2000/svg','svg'),path=doc.createElementNS('http://www.w3.org/2000/svg','path');
             svg.setAttribute('class','np-ui-icon');svg.setAttribute('viewBox',I.viewBox);svg.setAttribute('aria-hidden','true');svg.setAttribute('fill','currentColor');
             path.setAttribute('d',I.paths[name]||I.paths.info);path.setAttribute('transform',I.transform);svg.appendChild(path);return svg;
-        }
-        function sidebarIcon(){
-            var svg=doc.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('class','np-sidebar-icon');svg.setAttribute('viewBox','0 0 24 24');svg.setAttribute('aria-hidden','true');svg.setAttribute('fill','none');svg.setAttribute('stroke','currentColor');svg.setAttribute('stroke-width','2');svg.setAttribute('stroke-linecap','round');svg.setAttribute('stroke-linejoin','round');
-            [['rect',{x:3,y:3,width:18,height:18,rx:2}],['path',{d:'M9 3v18'}],['path',{d:'m16 15-3-3 3-3','class':'np-sidebar-direction'}]].forEach(function(item){var node=doc.createElementNS('http://www.w3.org/2000/svg',item[0]);Object.keys(item[1]).forEach(function(key){node.setAttribute(key,item[1][key]);});svg.appendChild(node);});return svg;
         }
         function val(value,unit){return value==null||value===''||value==='—'?'—':String(value)+(unit||'');}
         function rate(value){if(!D.known(value)||value<0)return '—';var bits=value*8;return bits>=1e9?(bits/1e9).toFixed(2)+' Gbps':bits>=1e6?(bits/1e6).toFixed(2)+' Mbps':bits>=1e3?(bits/1e3).toFixed(2)+' Kbps':Math.round(bits)+' bps';}
@@ -54,26 +50,49 @@
             while(before.childNodes.length>children.length)before.lastChild.remove();
             return before;
         }
-        function metrics(primary,stale){
-            var specs=[['rsrp','RSRP','dBm',-120,-75,'blue',D.rsrpQuality],['rsrq','RSRQ','dB',-20,-3,'orange',D.rsrqQuality],['sinr','SINR','dB',-5,30,'green',D.sinrQuality]];
-            if(!stale&&D.known(primary.rssi))specs.push(['rssi','RSSI','dBm',-100,-45,'purple',D.rssiQuality]);
-            return n('div',{'class':'np-signal-grid'+(specs.length===3?' three':' four')},specs.map(function(s){
-                var value=stale?null:primary[s[0]],known=D.known(value),quality=s[6](value),level=known?quality.level:null;
-                var percent=known?Math.max(0,Math.min(100,(value-s[3])/(s[4]-s[3])*100)):0;
-                var meter=n('div',{'class':'np-signal-meter'+(known?'':' unknown')},known?n('span',{'class':'np-meter-fill',style:'width:'+percent.toFixed(2)+'%'},n('span',{'class':'np-meter-dot'})):null);
-                if(known){meter.setAttribute('role','meter');meter.setAttribute('aria-label',s[1]);meter.setAttribute('aria-valuenow',value);meter.setAttribute('aria-valuemin',Math.min(s[3],value));meter.setAttribute('aria-valuemax',Math.max(s[4],value));}
-                return n('article',{'class':'np-signal-parameter '+s[5],'data-metric':s[0]},[
-                    n('div',{'class':'np-parameter-head'},[n('strong',{},s[1]),badge(known?quality.text:'未读取',level==null?'neutral':'quality-'+level)]),
-                    n('div',{'class':'np-parameter-reading'},[n('strong',{},known?String(value).replace('-','−'):'—'),n('span',{},known?s[2]:'')]),meter,
-                    n('div',{'class':'np-parameter-range'},[n('span',{},(s[0]==='rsrq'||s[0]==='sinr'?'差 ':'弱 ')+s[3]),n('span',{},s[4]+(s[0]==='rsrq'||s[0]==='sinr'?' 好':' 强'))])]);
-            }));
-        }
         function signal(snapshot){
             var radio=snapshot.radio||{},network=D.network(snapshot),p=network.primary||{},stale=!!radio.stale||!!p.stale,operator=radio.networkOperator||{};
-            var name=!stale&&!operator.stale?operator.name:null;
-            var head=n('div',{'class':'np-signal-heading'},[heading('信号看板','neighbors','blue'),n('div',{'class':'np-signal-context'},[badge(stale?'数据已过期':network.networkMode,'neutral'),n('span',{'class':'np-network-registration'},stale?'未确认':p.rat?'已驻留':'等待驻留')])]);
-            var secondary=snapshot.radio?.secondaryMeasurement;
-            return n('section',{'class':'np-signal-board'},[head,n('p',{'class':'np-hint'},name||(!stale&&p.mcc?val(p.mcc)+'-'+val(p.mnc):'运营商未读取')),metrics(p,stale),!stale&&secondary?.stale===false&&Number.isFinite(secondary.observedAtMs)?n('div',{},[n('p',{'class':'np-hint'},'5G NSA 信号测量 · 未绑定小区，不计入载波或锁定目标'),metrics(secondary,false)]):null]);
+            var name=!stale&&!operator.stale?operator.name:null,score=D.scoreSignal(radio,p),scored=score.value!==null;
+            var radioNote=score.carrierText?'载波 '+score.carrierText:scored?'当前小区信号':p.rat?'等待完整的信号参数':'等待模组采样';
+            var specs=[
+                ['rsrp','RSRP','dBm','接收强度',-160,-20],
+                ['rsrq','RSRQ','dB','信号质量',-60,3],
+                ['sinr','SINR','dB','信干噪比',-40,60]
+            ];
+            var readings=specs.map(function(s){
+                var value=p[s[0]],valid=!stale&&D.known(value)&&value>=s[4]&&value<=s[5];
+                return n('div',{'class':'np-hero-metric','data-metric':s[0]},[
+                    n('span',{'class':'np-hero-label'},s[1]),
+                    n('div',{'class':'np-hero-number'},[n('strong',{},valid?String(value):'—'),valid?n('span',{},s[2]):null]),
+                    n('span',{'class':'np-hero-detail'},s[3])
+                ]);
+            });
+            var extra=[], secondary=radio.secondaryMeasurement;
+            if(!stale&&D.known(p.rssi))extra.push(n('div',{},['RSSI ',n('strong',{},val(p.rssi,' dBm'))]));
+            if(!stale&&secondary?.stale===false&&Number.isFinite(secondary.observedAtMs)){
+                var measured=[['rsrp','RSRP',' dBm'],['rsrq','RSRQ',' dB'],['sinr','SINR',' dB'],['rssi','RSSI',' dBm']].filter(function(spec){return D.known(secondary[spec[0]]);});
+                if(measured.length)extra.push(n('div',{},[n('span',{},'5G NSA 独立测量（未绑定小区）')].concat(measured.map(function(spec){return n('strong',{},spec[1]+' '+val(secondary[spec[0]],spec[2]));}))));
+            }
+            return n('section',{'class':'np-signal-hero'+(scored?' has-signal':''),'aria-label':'信号看板'},[
+                n('div',{'class':'np-hero-header'},[
+                    n('div',{'class':'np-hero-network'},[n('h3',{},name||(!stale&&p.mcc?val(p.mcc)+'-'+val(p.mnc):'蜂窝网络')),!stale&&p.rat?n('span',{'class':'np-hero-mode'},network.networkMode):null]),
+                    n('span',{'class':'np-hero-state'},stale?'数据已过期':scored?score.label:p.rat?'信号不完整':'信号未读取')
+                ]),
+                n('div',{'class':'np-hero-score'},[
+                    n('span',{},'综合信号评分'),
+                    n('div',{'class':'np-hero-score-value'+(scored?'':' is-unavailable')},[n('strong',{},scored?score.value.toFixed(1):'未读取'),scored?n('span',{},'/ 10'):null]),
+                    n('span',{'class':'np-hero-note'},radioNote+(score.bandwidth===null?'':' · 下行 '+score.bandwidth+' MHz'))
+                ]),
+                n('div',{'class':'np-hero-bars','aria-hidden':'true'},[0,1,2,3,4].map(function(i){
+                    return n('i',{'class':i<score.level?'is-active':''});
+                })),
+                n('div',{'class':'np-hero-metrics'},readings),
+                n('div',{'class':'np-hero-footer'},[
+                    n('span',{'class':'np-network-registration'},[glyph('neighbors'),stale?'驻留状态未确认':p.rat?'已驻留':'等待驻留']),
+                    !stale&&D.known(p.pci)?n('span',{},'PCI '+p.pci+(D.known(p.channel)?' · '+(p.rat==='LTE'?'EARFCN ':'ARFCN ')+p.channel:'')):null
+                ]),
+                extra.length?n('div',{'class':'np-hero-supplement'},extra):null
+            ]);
         }
         function carriers(snapshot){
             var r=snapshot.radio||{},net=D.network(snapshot),liveKeys=new Set(),nodes=net.carrierInfo.map(function(c){
@@ -111,7 +130,7 @@
                 return n('article',{'class':'np-neighbor-card'},[n('div',{'class':'np-neighbor-head'},[n('strong',{},row.type+' '+row.bandLabel),choose]),n('p',{'class':'np-hint'},'PCI: '+row.pci+' · ARFCN: '+row.arfcn),n('dl',{'class':'np-neighbor-metrics'},[['RSRP',row.rsrp,'dBm',D.rsrpQuality],['RSRQ',row.rsrq,'dB',D.rsrqQuality],['SINR',row.sinr,'dB',D.sinrQuality]].map(function(v){var quality=v[3](v[1]);return n('div',{},[n('dt',{},v[0]),n('dd',{},[n('strong',{},val(v[1],v[2])),badge(quality.text,quality.level==null?'neutral':'quality-'+quality.level)])]);}))]);
             }):[n('div',{'class':'np-empty-state'},[glyph('neighbors'),n('strong',{},state.queryStatus==='pending'?'正在读取邻区':state.queryStatus==='error'?'邻区读取未成功':state.status==='unsupported'?'被动邻区查询暂不可用':'暂无邻区数据'),n('p',{'class':'np-hint'},search||filter?'可更改筛选条件':state.queryStatus==='error'?'请稍后刷新；读取失败不代表附近没有基站':state.status==='unsupported'?'当前通道未提供经核验的被动查询，不会自动搜网':state.status==='empty'?'模组未报告可用邻区；部分固件不返回 5G 邻区测量':'以模组实际返回的测量为准')])]);
             neighborNotice.textContent=state.automaticRetryPaused?'原事务结果未确认，已暂停自动邻区重试；请先确认 modem 服务恢复，刷新页面不会重发。':rows.length&&(state.queryStatus==='error'||state.stale)?'邻区状态尚未确认，展示上次读取的记录。':'';neighborNotice.hidden=!neighborNotice.textContent;
-            filterButtons.forEach(function(item){item.node.classList.toggle('selected',filter===item.value);item.node.setAttribute('aria-pressed',String(filter===item.value));});
+            filterButtons.forEach(function(item){item.node.setAttribute('aria-pressed',String(filter===item.value));});
         }
         function copy(item){if(copying||!item.code||disposed)return;copying=true;Promise.resolve().then(function(){return bridge.copySmsCode(item);}).catch(bridge.notify).finally(function(){copying=false;});}
         var readButton=action('读取短信',function(){if(reading||!bridge.canReadSms()||disposed)return;reading=true;draw();Promise.resolve().then(bridge.readSms).catch(bridge.notify).finally(function(){reading=false;if(!disposed)draw();});});
@@ -131,32 +150,48 @@
             smsNote.textContent=cache.stale&&cache.loaded?'历史缓存 · 点击读取可更新；验证码有效期以原短信为准。':'';smsNote.hidden=!smsNote.textContent;
         }
         function refresh(){if(refreshing||!bridge.canRefresh()||disposed)return;refreshing=true;draw();Promise.resolve().then(bridge.refresh).catch(bridge.notify).finally(function(){refreshing=false;if(!disposed)draw();});}
-        var workspace=n('div',{'class':'np-webui-workspace'}),aside=n('aside',{'class':'np-workspace-navigation'}),nav=n('nav',{'class':'np-workspace-nav','aria-label':'网络面板功能导航'}),content=n('section',{'class':'np-webui-content'});
+        var workspace=n('div',{'class':'np-webui-workspace'}),nav=n('nav',{'class':'np-primary-tabs','aria-label':'网络面板功能导航'}),content=n('section',{'class':'np-webui-content'});
         var title=n('div',{'class':'np-page-title',role:'heading','aria-level':2}),description=n('p',{'class':'np-page-description'}),themeButton=action('外观：自动',function(){theme=theme==='auto'?'light':theme==='light'?'dark':'auto';applyTheme();try{global.sessionStorage.setItem('wlmb-server.appearance',theme);}catch(_){}}),refreshButton=action('刷新数据',refresh,'primary');
         var body=n('div',{'class':'np-native-presentation'}),management=n('div',{'class':'np-management-status'},[bridge.status,n('div',{'class':'np-help-line'},[n('span',{},'第一次使用？启动插件 → 手机同一局域网 → 小程序连接'),tutorial('查看连接教程','#connect')])]);
-        var overview=n('div',{'class':'np-network-overview'}),overviewParts=[],neighborRows=n('div',{'class':'np-neighbor-grid'}),count=n('span',{'class':'np-hint'}),searchInput=n('input',{'class':'np-input','aria-label':'筛选邻区',placeholder:'频段、PCI 或频点',type:'search'}),filterButtons=[];
-        var filterRow=n('div',{'class':'np-neighbor-filter'});
-        [['','全部'],['NR','5G'],['LTE','4G']].forEach(function(item){var node=action(item[1],function(){filter=item[0];showNeighbors();});filterButtons.push({value:item[0],node:node});filterRow.appendChild(node);});
-        searchInput.addEventListener('input',function(){search=searchInput.value;showNeighbors();});filterRow.appendChild(searchInput);filterRow.appendChild(count);
-        var neighborNotice=n('p',{'class':'np-hint',role:'status'}),neighbors=n('div',{'class':'np-neighbor-presentation'},[filterRow,neighborRows,neighborNotice]),subnav=n('nav',{'class':'np-section-tabs','aria-label':'当前功能分组'}),mobile=n('nav',{'class':'np-mobile-navigation','aria-label':'主要功能导航'});
-        var brand=n('div',{'class':'np-navigation-brand'},[n('strong',{},'网络面板'),n('span',{},'免费 OpenWrt 插件 · 1117')]),service=n('div',{'class':'np-navigation-status',role:'status'});
-        nav.id='np-primary-navigation';
-        var collapseButton=action('',function(){collapsed=!collapsed;applyCollapse();try{global.sessionStorage.setItem('wlmb-server.sidebar',collapsed?'collapsed':'expanded');}catch(_){} });collapseButton.appendChild(sidebarIcon());collapseButton.classList.add('np-collapse-toggle');collapseButton.setAttribute('aria-controls',nav.id);
-        aside.appendChild(n('div',{'class':'np-navigation-top'},[brand,collapseButton]));aside.appendChild(service);aside.appendChild(nav);aside.appendChild(tutorial('连接小程序','#connect','np-navigation-guide'));
-        content.appendChild(n('div',{'class':'np-page-heading'},[n('div',{},[title,description]),n('div',{'class':'np-heading-actions'},[themeButton,refreshButton])]));
-        content.appendChild(subnav);content.appendChild(management);content.appendChild(bridge.toolbar);content.appendChild(body);content.appendChild(bridge.pages);
+        var overview=n('div',{'class':'np-network-overview'}),overviewParts=[],neighborRows=n('div',{'class':'np-neighbor-grid'}),count=n('span',{'class':'np-hint'}),searchInput=n('input',{'class':'np-neighbor-search','aria-label':'筛选邻区',placeholder:'频段、PCI 或频点',type:'search'}),filterButtons=[];
+        var filterOptions=n('div',{'class':'np-neighbor-options',role:'group','aria-label':'邻区制式'});
+        [['','全部'],['NR','5G'],['LTE','4G']].forEach(function(item){
+            var node=n('button',{type:'button','class':'np-neighbor-option','aria-pressed':String(filter===item[0])},item[1]);
+            node.addEventListener('click',function(){filter=item[0];showNeighbors();});
+            filterButtons.push({value:item[0],node:node});
+            filterOptions.appendChild(node);
+        });
+        searchInput.addEventListener('input',function(){search=searchInput.value;showNeighbors();});
+        var filterRow=n('div',{'class':'np-neighbor-filter'},[filterOptions,searchInput]);
+        var neighborNotice=n('p',{'class':'np-hint',role:'status'}),subnav=n('nav',{'class':'np-section-tabs','aria-label':'当前功能分组'});
+        var neighbors=card('邻区列表',[filterRow,neighborRows,neighborNotice],'neighbors','blue',count);
+        neighbors.classList.add('np-neighbor-presentation');
+        var serviceDot=n('span',{'class':'np-service-dot','aria-hidden':'true'}),serviceText=doc.createTextNode(''),service=n('div',{'class':'np-service-status',role:'status'},[serviceDot,serviceText]);
+        content.appendChild(n('div',{'class':'np-page-heading'},[n('div',{},[title,description,service]),n('div',{'class':'np-heading-actions'},[themeButton,refreshButton])]));
+        content.appendChild(nav);content.appendChild(subnav);
+        content.appendChild(n('div',{'class':'np-page-region'},[management,bridge.toolbar,body,bridge.pages]));
         content.appendChild(n('div',{'class':'np-client-entry'},[n('strong',{},'网络面板助手 · 微信小程序'),tutorial('连接教程','#connect')]));content.appendChild(bridge.footer);
-        workspace.appendChild(aside);workspace.appendChild(content);workspace.appendChild(mobile);target.appendChild(workspace);
-        var navFrame=0;
-        function positionNavigation(){navFrame=0;if(disposed||!workspace.isConnected)return;var rect=workspace.getBoundingClientRect(),padding=parseFloat(global.getComputedStyle(workspace).paddingLeft)||0;workspace.style.setProperty('--np-navigation-left',(rect.left+padding)+'px');}
-        function queueNavigation(){if(!disposed&&!navFrame)navFrame=global.requestAnimationFrame(positionNavigation);}
-        var navResize=typeof global.ResizeObserver==='function'?new global.ResizeObserver(queueNavigation):null;
-        if(navResize)navResize.observe(workspace);
-        global.addEventListener('resize',queueNavigation);global.addEventListener('scroll',queueNavigation,true);positionNavigation();
+        workspace.appendChild(content);target.appendChild(workspace);
+        function fitWorkspace(){
+            var top=target.getBoundingClientRect().top+global.scrollY,tail=0;
+            for(var host=target.parentElement;host&&host!==doc.body;host=host.parentElement){
+                var style=global.getComputedStyle(host);
+                top+=host.scrollTop;
+                tail+=(parseFloat(style.paddingBottom)||0)+(parseFloat(style.marginBottom)||0);
+            }
+            var footer=doc.querySelector('body > footer, .main-right > footer, #maincontent > footer');
+            if(footer)tail+=footer.getBoundingClientRect().height;
+            var height=doc.documentElement.clientHeight-Math.max(0,top)-tail;
+            workspace.style.setProperty('--np-workspace-height',Math.max(0,Math.floor(height))+'px');
+        }
         var originalToolbarButtons=Array.from(bridge.toolbar.children).filter(function(node){return node.tagName==='BUTTON';});originalToolbarButtons.forEach(function(node){node.hidden=true;});
-        try{var saved=global.sessionStorage.getItem('wlmb-server.appearance');if(['auto','light','dark'].includes(saved))theme=saved;collapsed=global.sessionStorage.getItem('wlmb-server.sidebar')==='collapsed';}catch(_){}
-        function applyCollapse(){workspace.classList.toggle('is-collapsed',collapsed);collapseButton.setAttribute('aria-expanded',String(!collapsed));collapseButton.setAttribute('aria-label',collapsed?'展开导航':'收起导航');collapseButton.title=collapsed?'展开导航':'收起导航';collapseButton.querySelector('.np-sidebar-direction').setAttribute('d',collapsed?'m14 9 3 3-3 3':'m16 15-3-3 3-3');}
-        function scrollTop(){if(!workspace.isConnected)return;var host=workspace.closest('.main-right, main')||workspace.closest('#maincontent')||workspace;host.scrollTop=0;if(typeof host.scrollIntoView==='function')host.scrollIntoView({block:'start',behavior:'auto'});}
+        try{var saved=global.sessionStorage.getItem('wlmb-server.appearance');if(['auto','light','dark'].includes(saved))theme=saved;}catch(_){}
+        function scrollTop(){
+            if(!workspace.isConnected)return;
+            for(var host=workspace.parentElement;host&&host!==doc.body;host=host.parentElement)
+                if(host.scrollTop)host.scrollTop=0;
+            if(global.scrollY)global.scrollTo({top:0,behavior:'instant'});
+        }
         function applyTheme(){
             if(panelRoot)panelRoot.setAttribute('data-np-appearance',theme);
             themeButton.textContent='外观：'+({auto:'自动',light:'浅色',dark:'深色'})[theme];var mode=bridge.dark()?'dark':'light';workspace.setAttribute('data-color-mode',mode);content.setAttribute('data-color-mode',mode);
@@ -168,29 +203,36 @@
         function enterGroup(item){navigate(item.keys.includes(lastGroup[item.index])?lastGroup[item.index]:item.keys[0]);}
         var menuStamp='',subnavStamp='';
         function navigate(key){if(disposed||key===current||!menu().some(function(entry){return entry.key===key;}))return;current=key;lastGroup[definitions.find(function(entry){return entry.key===key;}).group]=key;bridge.select(key);draw();scrollTop();}
-        nav.addEventListener('keydown',function(event){if(!['ArrowUp','ArrowDown','Home','End'].includes(event.key))return;var entries=groupMenu(menu());if(!entries.length)return;event.preventDefault();var group=definitions.find(function(entry){return entry.key===current;}).group,at=entries.findIndex(function(entry){return entry.index===group;}),next=event.key==='Home'?0:event.key==='End'?entries.length-1:(at+(event.key==='ArrowDown'?1:-1)+entries.length)%entries.length;enterGroup(entries[next]);var node=nav.querySelector('[data-group="'+entries[next].index+'"]');if(node)node.focus();});
+        nav.addEventListener('keydown',function(event){if(!['ArrowLeft','ArrowRight','Home','End'].includes(event.key))return;var entries=groupMenu(menu());if(!entries.length)return;event.preventDefault();var group=definitions.find(function(entry){return entry.key===current;}).group,at=entries.findIndex(function(entry){return entry.index===group;}),next=event.key==='Home'?0:event.key==='End'?entries.length-1:(at+(event.key==='ArrowRight'?1:-1)+entries.length)%entries.length;enterGroup(entries[next]);var node=nav.querySelector('[data-group="'+entries[next].index+'"]');if(node)node.focus();});
         function updateNavigation(entries){
             var stamp=JSON.stringify(entries.map(function(entry){return entry.key;}));
-            if(stamp!==menuStamp){menuStamp=stamp;nav.replaceChildren();mobile.replaceChildren();groupMenu(entries).forEach(function(item){
-                [nav,mobile].forEach(function(container){var node=n('button',{type:'button','class':container===nav?'np-menu-button':'np-mobile-button','data-group':item.index,'aria-label':item.group.name,title:item.group.name},[glyph(item.group.icon),n('span',{},item.group.name)]);node.addEventListener('click',function(){enterGroup(item);});container.appendChild(node);});});}
+            if(stamp!==menuStamp){menuStamp=stamp;nav.replaceChildren();groupMenu(entries).forEach(function(item){
+                var node=n('button',{type:'button','class':'np-primary-tab','data-group':item.index},[glyph(item.group.icon),n('span',{},item.group.name)]);
+                node.addEventListener('click',function(){enterGroup(item);});nav.appendChild(node);
+            });}
             var group=definitions.find(function(entry){return entry.key===current;}).group;
             nav.querySelectorAll('button').forEach(function(node){var active=Number(node.dataset.group)===group;node.classList.toggle('is-active',active);if(active)node.setAttribute('aria-current','page');else node.removeAttribute('aria-current');});
-            mobile.querySelectorAll('button').forEach(function(node){var active=Number(node.dataset.group)===group;node.classList.toggle('is-active',active);if(active)node.setAttribute('aria-current','page');else node.removeAttribute('aria-current');});
             var peers=groups[group].keys.filter(function(key){return entries.some(function(entry){return entry.key===key;});});subnav.hidden=peers.length<2;
             var subStamp=JSON.stringify(peers);if(subStamp!==subnavStamp){subnavStamp=subStamp;subnav.replaceChildren();
-                peers.forEach(function(key){var node=action(definitions.find(function(entry){return entry.key===key;}).name,function(){navigate(key);});node.dataset.page=String(key);subnav.appendChild(node);});}
-            subnav.querySelectorAll('button').forEach(function(node){var active=Number(node.dataset.page)===current;node.classList.toggle('selected',active);node.setAttribute('aria-current',active?'page':'false');});
+                peers.forEach(function(key){
+                    var node=n('button',{type:'button','class':'np-section-tab','data-page':String(key)},definitions.find(function(entry){return entry.key===key;}).name);
+                    node.addEventListener('click',function(){navigate(key);});
+                    subnav.appendChild(node);
+                });}
+            subnav.querySelectorAll('button').forEach(function(node){node.setAttribute('aria-current',Number(node.dataset.page)===current?'page':'false');});
         }
-        function release(){if(disposed)return;disposed=true;cancelMotion();if(navFrame)global.cancelAnimationFrame(navFrame);if(navResize)navResize.disconnect();global.removeEventListener('resize',queueNavigation);global.removeEventListener('scroll',queueNavigation,true);if(motion?.removeEventListener)motion.removeEventListener('change',motionChanged);observer.disconnect();bridge.redraw=null;originalToolbarButtons.forEach(function(node){node.hidden=false;});var select=bridge.toolbar.querySelector('select');if(select)select.hidden=false;}
+        function release(){if(disposed)return;disposed=true;cancelMotion();global.removeEventListener('resize',fitWorkspace);if(motion?.removeEventListener)motion.removeEventListener('change',motionChanged);observer.disconnect();bridge.redraw=null;originalToolbarButtons.forEach(function(node){node.hidden=false;});var select=bridge.toolbar.querySelector('select');if(select)select.hidden=false;}
         function draw(){
             if(disposed||failed)return;
             try{
                 var entries=menu(),snapshot=bridge.snapshot||{},runtime=bridge.runtime()||{};
                 if(!entries.some(function(entry){return entry.key===current;})){current=0;bridge.select(0);}
                 lastGroup[definitions.find(function(entry){return entry.key===current;}).group]=current;
-                updateNavigation(entries);applyTheme();applyCollapse();var page=definitions.find(function(entry){return entry.key===current;});title.textContent=page.name;
-                description.textContent=(snapshot.system?.board?.model||snapshot.system?.board?.board_name||'OpenWrt 设备')+' · 根据qmodem为参考开发接入';
-                service.replaceChildren(n('span',{'class':'np-service-dot'+(runtime.running&&runtime.controlReady?' ready':'')}),doc.createTextNode((runtime.failure?'状态未确认':runtime.running?runtime.controlReady?'运行中':'启动中':'已停止')+' · '+(snapshot.connection?.sharedService==='luoye-modem-cache'?'modem 缓存':snapshot.connection?.mode==='shared'?'共享通道':snapshot.connection?.mode==='independent'?'独立通道':'通道待核对')));
+                updateNavigation(entries);applyTheme();var page=definitions.find(function(entry){return entry.key===current;});title.textContent=page.name;
+                description.textContent=(snapshot.system?.board?.model||snapshot.system?.board?.board_name||'OpenWrt 设备')+(current===0?' · 模组信号与载波':'');
+                serviceDot.classList.toggle('ready',!!(runtime.running&&runtime.controlReady));
+                var serviceLabel=(runtime.failure?'状态未确认':runtime.running?runtime.controlReady?'运行中':'启动中':'已停止')+' · '+(snapshot.connection?.sharedService==='luoye-modem-cache'?'modem 缓存':snapshot.connection?.mode==='shared'?'共享通道':snapshot.connection?.mode==='independent'?'独立通道':'通道待核对');
+                if(serviceText.nodeValue!==serviceLabel)serviceText.nodeValue=serviceLabel;
                 refreshButton.disabled=refreshing||!bridge.canRefresh();refreshButton.textContent=refreshing?'正在刷新…':'刷新数据';refreshButton.setAttribute('aria-busy',String(refreshing));management.hidden=current!==3;
                 var selector=bridge.toolbar.querySelector('select');if(selector)selector.hidden=(snapshot.modems||[]).length<=1;
                 body.hidden=current!==0&&current!==1;bridge.pages.hidden=current===0||current===1;
@@ -200,7 +242,13 @@
             }catch(error){failed=true;release();bridge.fail(error);}
         }
         var observer=new global.MutationObserver(function(){if(!disposed)applyTheme();});observer.observe(doc.documentElement,{attributes:true,attributeFilter:['data-theme','data-darkmode','class']});observer.observe(doc.body,{attributes:true,attributeFilter:['data-theme','data-darkmode','class']});if(panelRoot)observer.observe(panelRoot,{attributes:true,attributeFilter:['style']});
-        bridge.redraw=draw;draw();if(!failed){bridge.ready();scrollTop();}
+        bridge.redraw=draw;draw();
+        if(!failed){
+            bridge.ready();
+            fitWorkspace();
+            global.addEventListener('resize',fitWorkspace);
+            scrollTop();
+        }
         return {unmount:function(){release();workspace.remove();}};
     }};
 })(window);

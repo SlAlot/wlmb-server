@@ -4,7 +4,7 @@ include $(TOPDIR)/rules.mk
 WLMB_FEED_DIR:=$(abspath $(realpath $(CURDIR))/../..)
 
 PKG_NAME:=wlmb-server
-PKG_VERSION:=1.1.6
+PKG_VERSION:=1.1.7
 PKG_RELEASE:=1
 PKG_MAINTAINER:=SlAlot
 PKG_LICENSE:=LicenseRef-WLMB-NonCommercial

@@ -8,26 +8,24 @@ dom.window.document.querySelector('style').textContent=css
 assert.ok(dom.window.document.styleSheets[0].cssRules.length>0)
 const root=dom.window.document.querySelector('#wlmb-panel'),style=node=>dom.window.getComputedStyle(node)
 assert.equal(style(root).getPropertyValue('--np-muted').trim(),'#78818f')
-assert.ok(css.includes('grid-template-columns:repeat(auto-fit,minmax(min(180px,100%),1fr))'))
 assert.equal(style(root.querySelector('.np-row>div')).minWidth,'0')
 assert.equal(style(root.querySelector('.np-input')).maxWidth,'100%')
 const matrix=[]
 for(const viewport of [320,350,375,390,768,1024,1440,1920]){
- for(const collapsed of [false,true]){
-  const mobile=viewport<=760,host=mobile?0:240,padding=mobile?20:viewport<=1100?28:36,gap=mobile?0:viewport<=1100?16:24,sidebar=mobile?0:collapsed?68:viewport<=1100?176:208
-  const content=viewport-host-padding-gap-sidebar
-  assert.ok(content>0,'内容区域不能为负')
-  if(!mobile)for(const count of [3,4]){
-   const columns=Math.max(1,Math.min(count,Math.floor((content+14)/(180+14))))
-   const card=(content-14*(columns-1))/columns
-   assert.ok(card>=Math.min(content,180)-.01,'桌面参数最小宽度由内容区域保证')
-   assert.ok(card*columns+14*(columns-1)<=content+.01)
-  }
-  matrix.push({viewport,collapsed,content})
- }
+ const mobile=viewport<=760,host=mobile?0:240,padding=mobile?20:viewport<=1100?28:36
+ const content=Math.min(viewport-host-padding,1360)
+ const columns=content>=720?Math.floor((content-28-40-270)*.43):Math.floor((content-28-10)/3)
+ assert.ok(columns>=40,'最窄布局仍为每个指标保留独立空间')
+ matrix.push({viewport,content,columns})
 }
-assert.ok(css.includes('.np-parameter-reading{flex-wrap:wrap}')&&css.includes('.np-parameter-reading span{white-space:nowrap}'))
-assert.ok(css.includes('max-width:350px')&&css.includes('font-size:28px'))
+assert.ok(css.includes('container:wlmb-panel / inline-size'))
+assert.ok(css.includes('@container wlmb-panel (min-width:720px)'))
+assert.ok(css.includes('grid-template-columns:repeat(3,minmax(0,1fr))'))
+assert.ok(css.includes('.np-hero-number { flex-wrap:wrap'))
+assert.ok(css.includes('.np-primary-tabs { overflow-x:auto'))
+assert.ok(css.includes('@container wlmb-panel (max-width:320px)'))
+assert.ok(css.includes('.np-neighbor-filter { grid-template-columns:minmax(0,1fr) }'))
+assert.ok(!/<animate\b/i.test(fs.readFileSync(path.join(__dirname,'../frontend/www/luci-static/resources/wlmb-server/signal-ribbon.svg'),'utf8')))
 assert.ok(css.includes('prefers-reduced-motion:reduce'))
 assert.ok(css.includes('.np-lock-controls')&&css.includes('gap:16px'))
 dom.window.close()

@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" preserveAspectRatio="none">
+  <defs>
+    <filter id="b-ambient" filterUnits="userSpaceOnUse" x="-128" y="-128" width="656" height="556" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation="21"/></filter>
+    <filter id="b-soft" filterUnits="userSpaceOnUse" x="-128" y="-128" width="656" height="556" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation="10"/></filter>
+    <filter id="b-lip" filterUnits="userSpaceOnUse" x="-128" y="-128" width="656" height="556" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation="3"/></filter><linearGradient id="b-color" x1="0" y1="0" x2="0" y2="1" gradientUnits="objectBoundingBox">
+    <stop stop-color="#75e8ff" stop-opacity=".11"/><stop offset=".45" stop-color="#7bf4ff" stop-opacity=".8"/>
+    <stop offset=".79" stop-color="#4bcaff" stop-opacity=".52"/><stop offset="1" stop-color="#478cff" stop-opacity=".19"/>
+    </linearGradient>
+    <path id="b-primary" d="M421 -26 C343 26 381 85 286 139 C208 183 191 210 204 263 C211 289 230 313 260 326"/>
+    <path id="b-secondary" d="M415 8 C374 65 331 80 285 128 C230 185 255 227 287 275 C311 307 343 316 365 327"/>
+  </defs>
+  <g fill="none">
+    <use href="#b-primary" transform="translate(32 3)" stroke="#3dbaff" stroke-width="122" opacity=".44" filter="url(#b-ambient)"/>
+    <use href="#b-primary" stroke="url(#b-color)" stroke-width="42" filter="url(#b-soft)"/>
+    <use href="#b-primary" stroke="url(#b-color)" stroke-width="7" opacity=".47" filter="url(#b-lip)"/>
+    <use href="#b-secondary" stroke="#8bc8ff" stroke-width="31" opacity=".49" filter="url(#b-soft)"/>
+  </g>
+</svg>

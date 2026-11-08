@@ -25,6 +25,22 @@ assert.ok(feedback([lockItem],{...lockRadio,serving:[{...lockRadio.serving[0],ch
 assert.ok(feedback([lockItem],lockRadio,'other').includes('模组已更换'))
 assert.ok(feedback([{...lockItem,receipt:{savedVerified:false}}],lockRadio,'m1').includes('不要重复提交'))
 assert.ok(!fs.readdirSync(path.join(resources,'wlmb-server')).some(name=>/^webui-(vendor|reference)-/.test(name)),'Historical copied assets are not current source')
+const score=feedbackContext.window.WLMBUIData.scoreSignal
+const primary={rat:'NR',networkMode:'5G SA',band:'n78',channel:627264,pci:488,rsrp:-64,rsrq:-11,sinr:33.5}
+const anchor={...primary,role:'pcc',roleKnown:true,dlBandwidthMHz:100}
+const secondary={...anchor,role:'scc',channel:636666,pci:311}
+const carrierState={status:'reported',stale:false}
+const radio={carrierState,carriers:[anchor,secondary,{...secondary},{...secondary,channel:640000,active:false}]}
+assert.equal(score(radio,primary).value,9.4)
+assert.equal(score(radio,primary).bandwidth,200)
+assert.equal(score(radio,primary).carrierText,'n78 + n78 · 2CC')
+assert.equal(score({carrierState,carriers:[anchor]},primary).value,score(radio,primary).value,'带宽和载波数量不改变信号评分')
+assert.equal(score({...radio,stale:true},primary).value,null)
+assert.equal(score(radio,{...primary,sinr:null}).value,null)
+assert.equal(score(radio,{...primary,rsrp:-999}).value,null)
+assert.equal(score(radio,{...primary,pci:505}).carrierText,'n78')
+assert.equal(score({...radio,carrierState:{...carrierState,queryStatus:'pending'}},primary).bandwidth,null)
+assert.equal(score({...radio,carriers:[anchor,{...secondary,dlBandwidthMHz:null}]},primary).bandwidth,null)
 const errors=[]
 const cssSource=fs.readFileSync(path.join(resources,'wlmb-server/panel.css'),'utf8')
 const lockLayoutDom=new JSDOM('<style></style><div class="np-root"><div class="np-lock-layout"><div class="np-lock-controls"><label class="np-lock-field"><span>网络制式</span><select class="np-input"></select></label><label class="np-lock-field"><span>锁定方式</span><select class="np-input"></select></label></div><details open class="np-lock-advanced"><div class="np-toolbar"><input aria-label="PCI"><select hidden aria-label="SCS"></select></div></details><div class="np-lock-footer"><p class="np-lock-message"></p></div></div></div>')
@@ -39,25 +55,15 @@ for(const theme of ['light','dark']){
 }
 lockLayoutDom.window.close()
 assert.ok(cssSource.includes('max-width:760px'))
-assert.ok(cssSource.includes('repeat(auto-fit,minmax(min(180px,100%),1fr))'),'桌面参数按内容区宽度排布')
-assert.ok(cssSource.includes('.np-signal-grid .np-parameter-reading strong{font-size:28px}'),'极窄屏数值不能挤掉单位')
-assert.ok(cssSource.includes('.np-parameter-reading{flex-wrap:wrap}')&&cssSource.includes('.np-parameter-reading span{white-space:nowrap}'),'数值和单位保持可换行的独立块')
-assert.ok(cssSource.includes('.np-signal-grid.three>.np-signal-parameter:last-child{grid-column:1/-1}'))
 assert.ok(cssSource.includes('repeat(4,minmax(0,1fr))'))
-assert.ok(cssSource.includes('repeat(5,minmax(0,1fr))'))
-assert.ok(cssSource.includes('env(safe-area-inset-bottom)'))
 assert.ok(cssSource.includes('.np-overview-bottom>.np-native-card{height:auto;min-width:0;display:flex;flex-direction:column}'))
 assert.ok(cssSource.includes('align-items:stretch')&&cssSource.includes('contain:size;overflow:auto'),'短信内容不撑高设备状态所在行')
-assert.ok(cssSource.includes('.np-workspace-navigation{position:fixed;top:18px;'),'导航从首次显示起固定，不随宿主头部滚动跳位')
 assert.ok(!cssSource.includes('np-details-column'),'Remove uneven independently stacked overview columns')
 assert.ok(cssSource.includes('.np-webui-workspace{border-radius:0!important}'))
 assert.ok(cssSource.includes('body.np-luci-surface,body .np-luci-surface{background:var(--np-page-surface)!important'))
 assert.ok(cssSource.includes('.np-luci-surface>header:after{display:none!important}'),'Disable the host header decorative band only while this plugin owns its surface')
 assert.ok(!cssSource.includes('np-overview-two-column'),'Remove obsolete equal-height row rules')
-assert.ok(cssSource.includes('.np-webui-workspace.is-collapsed{--np-sidebar-width:68px}'))
-assert.ok(!cssSource.includes('min-height:max(680px')&&!cssSource.includes('margin-top:auto'),'No viewport filler or footer pinning')
 assert.ok(cssSource.includes('.np-recent-sms .np-empty-state{min-height:0;'))
-assert.ok(cssSource.includes('#wlmb-panel .np-section-tabs .np-btn.selected{background:var(--np-card)!important;color:var(--np-text)!important'), 'Neutral tabs outrank the generic selected-action rule')
 assert.ok(!/wlmb-ant|np-reference|backdrop-filter/.test(cssSource))
 assert.ok(cssSource.includes('.np-root .np-btn[aria-busy=true]:before')&&cssSource.includes('.np-root .np-toggle[aria-busy=true] .np-track:before'),'Unified loading ring for actions and toggles')
 assert.ok(cssSource.includes('.np-root *:before,.np-root *:after{transition:none!important;animation:none!important'),'Reduced motion also stops pseudo-element spinners')
@@ -67,8 +73,7 @@ virtual.on('jsdomError',error=> { if (!error.message.includes('Could not parse C
 const dom = new JSDOM('<!doctype html><html><body></body></html>',{url:'http://fixture.invalid/cgi-bin/luci/admin/services/wlmb-server',runScripts:'outside-only',pretendToBeVisual:true,virtualConsole:virtual})
 const w=dom.window, doc=w.document
 let scrollCalls=0
-const scrollTargets=[]
-w.HTMLElement.prototype.scrollIntoView=function(){scrollCalls++;scrollTargets.push(this)}
+w.scrollTo=function(){scrollCalls++}
 const computed=w.getComputedStyle.bind(w)
 w.getComputedStyle=node=>computed(node)
 let reducedMotion=false
@@ -124,13 +129,12 @@ async function main() {
   const root=page.render(await page.load());container.appendChild(root)
   await settle(()=>root.classList.contains('np-webui-ready'))
   assert.equal(root.querySelector('.np-webui-mount .np-page-title').textContent,'网络信息')
-  await settle(()=>root.querySelectorAll('.np-menu-button').length===5)
-  assert.equal(root.querySelectorAll('.np-workspace-navigation').length,1,'One scoped secondary navigation, not nested application chrome')
-  assert.equal(root.querySelectorAll('.np-navigation-brand').length,1)
-  assert.equal(root.querySelectorAll('.np-menu-button.is-active').length,1)
+  await settle(()=>root.querySelectorAll('.np-primary-tab').length===5)
+  assert.equal(root.querySelectorAll('.np-primary-tabs').length,1,'All widths use one primary navigation')
+  assert.equal(root.querySelectorAll('.np-primary-tab.is-active').length,1)
   const guideLinks=[...root.querySelectorAll('a.np-help-link')],guideCalls=calls.length
-  assert.ok(guideLinks.length>=8,'侧栏、连接与各功能教程共用帮助按钮')
-  assert.ok(root.querySelector('.np-navigation-guide.np-btn.np-help-link'))
+  assert.ok(guideLinks.length>=7,'连接与各功能教程共用帮助按钮')
+  assert.ok(root.querySelector('.np-client-entry .np-help-link'))
   assert.ok(guideLinks.every(node=>!node.textContent.includes('↗')&&node.target==='_blank'&&node.rel.includes('noopener')))
   const guideAppearance=root.querySelector('.np-heading-actions button')
   for(const mode of ['light','dark','auto']){
@@ -139,33 +143,23 @@ async function main() {
     assert.ok(guideLinks.every(node=>new w.URL(node.href).searchParams.get('appearance')===resolved),'新窗口教程继承主界面的实际主题')
   }
   assert.equal(calls.length,guideCalls,'教程主题变更不查询设备')
-  const collapse=root.querySelector('.np-collapse-toggle'),beforeCollapse=calls.length
-  assert.ok(collapse.querySelector('svg.np-sidebar-icon rect')&&collapse.querySelector('.np-sidebar-direction'))
-  assert.equal(collapse.textContent,'','Standard panel-left-close/open glyphs, no competing label')
-  const collapseSvg=collapse.querySelector('svg')
-  collapse.click();assert.ok(root.querySelector('.np-webui-workspace.is-collapsed'))
-  assert.equal(collapse.querySelector('.np-sidebar-direction').getAttribute('d'),'m14 9 3 3-3 3')
-  assert.equal(collapse.getAttribute('aria-expanded'),'false');assert.equal(collapse.getAttribute('aria-label'),'展开导航')
-  assert.equal(w.sessionStorage.getItem('wlmb-server.sidebar'),'collapsed');assert.equal(calls.length,beforeCollapse)
-  collapse.click();assert.ok(!root.querySelector('.np-webui-workspace.is-collapsed'));assert.equal(collapse.getAttribute('aria-expanded'),'true')
-  assert.equal(collapse.querySelector('svg'),collapseSvg,'Preserve the icon for state transition')
   const navigation=root.querySelector('[aria-label="网络面板功能导航"]')
-  assert.deepEqual([...navigation.querySelectorAll('.np-menu-button')].map(node=>Number(node.dataset.group)),[0,1,2,3,4],'Only five parents, not duplicated child pages')
-  assert.deepEqual([...navigation.querySelectorAll('.np-menu-button')].map(node=>node.textContent),['概览','网络','WiFi','短信','设置'])
+  assert.deepEqual([...navigation.querySelectorAll('.np-primary-tab')].map(node=>Number(node.dataset.group)),[0,1,2,3,4],'Only five parents, not duplicated child pages')
+  assert.deepEqual([...navigation.querySelectorAll('.np-primary-tab')].map(node=>node.textContent),['概览','网络','WiFi','短信','设置'])
   function goPage(title){
     const parents={'网络信息':0,'邻区扫描':1,'频段与小区':1,'WiFi 与设备':2,'短信':3,'短信转发':3,'设备与流量':4,'AT 控制台':4,'插件设置':4}
     navigation.querySelector('[data-group="'+parents[title]+'"]').click()
     if(root.querySelector('.np-page-title').textContent!==title){const child=[...root.querySelectorAll('.np-section-tabs button')].find(node=>node.textContent===title);assert.ok(child,'Grouped child '+title);child.click()}
   }
   host.scrollTop=58
-  navigation.dispatchEvent(new w.KeyboardEvent('keydown',{key:'ArrowDown',bubbles:true,cancelable:true}))
+  navigation.dispatchEvent(new w.KeyboardEvent('keydown',{key:'ArrowRight',bubbles:true,cancelable:true}))
   await settle(()=>root.querySelector('.np-page-title').textContent==='邻区扫描')
-  assert.equal(host.scrollTop,0);assert.equal(scrollTargets.at(-1),host,'Keep the host header in view, not align the nested workspace past it')
-  navigation.dispatchEvent(new w.KeyboardEvent('keydown',{key:'ArrowDown',bubbles:true,cancelable:true}))
+  assert.equal(host.scrollTop,0);assert.equal(doc.activeElement.dataset.group,'1','Keyboard navigation keeps focus on the active tab')
+  navigation.dispatchEvent(new w.KeyboardEvent('keydown',{key:'ArrowRight',bubbles:true,cancelable:true}))
   await settle(()=>root.querySelector('.np-page-title').textContent==='WiFi 与设备')
   navigation.dispatchEvent(new w.KeyboardEvent('keydown',{key:'Home',bubbles:true,cancelable:true}))
   await settle(()=>root.querySelector('.np-page-title').textContent==='网络信息')
-  await settle(()=>root.querySelector('.np-network-overview')?.textContent.includes('信号看板'))
+  await settle(()=>root.querySelector('.np-network-overview')?.querySelector('[aria-label="信号看板"]'))
   assert.ok(container.classList.contains('np-luci-fullwidth'))
   assert.ok(host.classList.contains('np-luci-host'))
   assert.equal(computed(container).maxWidth,'none','Remove the actual theme 1440px cap only in this view')
@@ -173,7 +167,7 @@ async function main() {
   await settle(()=>root.querySelector('.np-recent-sms')?.textContent.includes('暂无短信预览'))
   assert.ok(root.querySelector('.np-overview-bottom .np-recent-sms'),'SMS card stays present even when empty')
   const overview=root.querySelector('.np-network-overview')
-  assert.ok(overview.children[0].classList.contains('np-signal-board'))
+  assert.ok(overview.children[0].classList.contains('np-signal-hero'))
   assert.equal(overview.children[1].querySelector('.np-native-title').textContent,'载波聚合信息','Carriers immediately follow signal in DOM and mobile reading order')
   assert.equal(overview.children[2].querySelector('.np-native-title').textContent,'网络与速率')
   assert.deepEqual([...overview.querySelector('.np-overview-bottom').querySelectorAll('.np-native-title')].map(title=>title.textContent),['设备状态','最近短信'])
@@ -194,11 +188,11 @@ async function main() {
   assert.ok(!overview.textContent.includes('共用短信缓存 · 不额外轮询模组；复制不会标为已读。'))
   assert.ok(!root.textContent.includes('独立客户端，授权与界面单独管理')&&!overview.textContent.includes('点击读取，不额外轮询模组'),'首版移除多余介绍文案，不留空提示行')
   assert.equal(overview.querySelector('.np-recent-sms .np-empty-state .np-hint'),null)
-  const stableSignal=overview.querySelector('.np-signal-board'),stableDevice=overview.querySelector('.np-device-status-grid'),stableSms=overview.querySelector('.np-recent-sms')
+  const stableSignal=overview.querySelector('.np-signal-hero'),stableDevice=overview.querySelector('.np-device-status-grid'),stableSms=overview.querySelector('.np-recent-sms')
   const removals=[];const updateObserver=new w.MutationObserver(records=>records.forEach(record=>removals.push(...record.removedNodes)))
   updateObserver.observe(overview,{childList:true,subtree:true})
   status.system.cpuUsage=8.2;await page.update(true);await pause()
-  assert.equal(overview.querySelector('.np-signal-board'),stableSignal)
+  assert.equal(overview.querySelector('.np-signal-hero'),stableSignal)
   assert.equal(overview.querySelector('.np-device-status-grid'),stableDevice)
   assert.equal(overview.querySelector('.np-recent-sms'),stableSms)
   assert.ok(stableDevice.textContent.includes('8.2%'),'仅CPU变化也更新设备状态')
@@ -207,11 +201,11 @@ async function main() {
   statusError=true;await page.update(true)
   assert.equal(page.selected,'fixture');assert.equal(page.snapshot.radio.serving.length,1)
   assert.ok(overview.textContent.includes('状态暂未更新'))
-  assert.ok(overview.querySelector('[data-metric="rsrp"] .np-parameter-reading').textContent.includes('81'))
+  assert.ok(overview.querySelector('[data-metric="rsrp"] .np-hero-number').textContent.includes('81'))
   assert.equal(page.smsBlocked('sms'),true,'保留展示不放开失败状态下的写入')
   page.lastGoodStatusAt=Date.now()-16000;await page.update(true)
   assert.equal(page.snapshot.radio.stale,true);assert.equal(page.snapshot.system.stale,true)
-  assert.ok(overview.querySelector('[data-metric="rsrp"] .np-parameter-reading').textContent.includes('—'),'过期时不继续显示为实时值')
+  assert.ok(overview.querySelector('[data-metric="rsrp"] .np-hero-number').textContent.includes('—'),'过期时不继续显示为实时值')
   statusError=false;await page.update(true)
   serviceError=true;await page.update(true)
   assert.equal(page.selected,'fixture');assert.equal(page.snapshot.radio.serving.length,1)
@@ -270,14 +264,17 @@ async function main() {
   assert.equal(root.querySelector('.np-network-overview').textContent.includes('主载波'),false,'Do not assume the first unknown carrier is primary')
   assert.ok(root.querySelector('.np-network-overview').textContent.includes('载波 1 · 角色未报告'),'Actual rendered unknown-role label, not just the props adapter')
   assert.ok(root.textContent.includes('Fixture OpenWrt'))
-  assert.equal(root.querySelectorAll('.np-signal-parameter').length,3)
-  assert.ok(root.querySelector('.np-signal-grid.three'))
-  assert.deepEqual([...root.querySelectorAll('.np-mobile-button')].map(node=>node.textContent),['概览','网络','WiFi','短信','设置'])
-  status.radio.serving[0].rssi=-75;await page.update(true)
-  assert.equal(root.querySelectorAll('.np-signal-parameter').length,4)
-  assert.ok(root.querySelector('[data-metric="rssi"]').textContent.includes('一般'),'RSSI has its own thresholds, not RSRP thresholds')
-  delete status.radio.serving[0].rssi;await page.update(true)
-  assert.equal(root.querySelectorAll('.np-signal-parameter').length,3)
+  assert.equal(root.querySelectorAll('.np-hero-metric').length,3)
+  assert.match(root.querySelector('.np-hero-score').textContent,/7\.1/)
+  status.radio.serving[0].rssi=-75
+  status.radio.secondaryMeasurement={stale:false,observedAtMs:Date.now(),rsrp:-91,sinr:9}
+  await page.update(true)
+  assert.match(root.querySelector('.np-hero-supplement').textContent,/RSSI -75 dBm/)
+  assert.match(root.querySelector('.np-hero-supplement').textContent,/5G NSA 独立测量（未绑定小区）.*RSRP -91 dBm/)
+  delete status.radio.serving[0].rssi
+  status.radio.secondaryMeasurement.stale=true
+  await page.update(true)
+  assert.equal(root.querySelector('.np-hero-supplement'),null)
   const appearance=root.querySelector('.np-heading-actions button')
   appearance.click();assert.equal(root.getAttribute('data-np-appearance'),'light')
   assert.equal(host.style.getPropertyValue('--np-page-surface'),'#f3f5f9','Outer padding follows explicit light appearance')
@@ -495,7 +492,7 @@ async function main() {
   assert.equal(lteOnlyMode.value,'band');assert.equal(lteOnlyMode.children[1].hidden,true)
   page.lockSnapshot=savedLockSnapshot;page.capabilities=savedLockCapabilities;lteOnlyRat.value='NR';page.refreshLock(true)
   status.capabilities.lockBand=status.capabilities.lockCell=false;page.draw(status)
-  await settle(()=>root.querySelectorAll('.np-menu-button').length===5)
+  await settle(()=>root.querySelectorAll('.np-primary-tab').length===5)
   goPage('频段与小区')
   assert.ok([...root.querySelectorAll('.np-section-tabs button')].some(node=>node.textContent==='频段与小区'))
   const readOnlyLock=page.pages[5];
