@@ -1,4 +1,4 @@
-//! SoftBank Air 6 integrated MT6990 data call and telemetry.
+//! 软银 Air 6 的 MT6990 数据会话及 RIL 状态读取。
 use super::PROVIDER;
 use crate::{
     PanelError, Result,
@@ -422,6 +422,7 @@ fn stop_call(bus: &dyn Bus) -> Result<()> {
 }
 
 fn connect(bus: &dyn Bus, config: &Value) -> Result<()> {
+    // 板级服务由 procd 启动，先等待 CCCI 和 RIL 完成初始化。
     for _ in 0..30 {
         if ready() {
             break;
@@ -519,6 +520,7 @@ fn connect(bus: &dyn Bus, config: &Value) -> Result<()> {
                 let _ = mipc(&["--data_call_deact_apn", &apn], 8);
                 return Err(error("AIR6_DATA_CALL_INVALID"));
             };
+            // 先记录 CID，供取消或 netifd 重启后的清理使用。
             let result = (|| {
                 let pending = format!("{SESSION}.new");
                 fs::write(&pending, &id)

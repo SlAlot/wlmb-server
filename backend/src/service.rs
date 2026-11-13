@@ -885,7 +885,8 @@ fn run(requested_standalone: Option<bool>) -> Result<()> {
     let air6 = crate::air6::detected();
     let luoye_detected = !air6 && crate::luoye::SystemIo::detected(Path::new("/"));
     let qmodem = crate::connection_mode::qmodem_installed(Path::new("/"));
-    let glinet_detected = !air6 && requested_standalone != Some(true)
+    let glinet_detected = !air6
+        && requested_standalone != Some(true)
         && !luoye_detected
         && !qmodem
         && crate::glinet::Glinet::detected(bus.as_ref())

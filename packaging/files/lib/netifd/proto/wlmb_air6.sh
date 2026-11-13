@@ -24,11 +24,11 @@ proto_wlmb_air6_init_config() {
 }
 
 proto_wlmb_air6_setup() {
-	/usr/sbin/wlmb-server --air6-netifd setup "$1" "$data"
+	exec /usr/sbin/wlmb-server --air6-netifd setup "$1" "$data"
 }
 
 proto_wlmb_air6_teardown() {
-	/usr/sbin/wlmb-server --air6-netifd teardown "$1" '{}'
+	exec /usr/sbin/wlmb-server --air6-netifd teardown "$1" '{}'
 }
 
 [ -n "$INCLUDE_ONLY" ] || add_protocol wlmb_air6
