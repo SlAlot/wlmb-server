@@ -3,6 +3,16 @@ use std::io::{self, BufRead, Read, Write};
 use wlmb_server::{MAX_AT_RESPONSE, radio};
 
 fn main() {
+    #[cfg(unix)]
+    if let [flag, action, interface, config] = std::env::args().skip(1).collect::<Vec<_>>().as_slice()
+        && flag == "--air6-netifd"
+    {
+        if let Err(error) = wlmb_server::air6::netifd(action, interface, config) {
+            eprintln!("wlmb-server: {}", error.code);
+            std::process::exit(1);
+        }
+        return;
+    }
     if std::env::args().skip(1).collect::<Vec<_>>() == ["--catalog"] {
         println!("{}", wlmb_server::catalog::inventory());
         return;

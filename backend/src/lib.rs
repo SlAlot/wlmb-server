@@ -1,5 +1,6 @@
 //! 网络面板服务模块与统一错误类型；对外错误说明不泄露底层敏感回复。
 pub mod actions;
+pub mod air6;
 pub mod at_channel;
 pub mod band_inventory;
 pub mod band_locks;
@@ -191,6 +192,8 @@ impl PanelError {
                 "模组通道暂不可用，请检查接口状态；插件不会抢占供网端口"
             }
             "AT_COOLDOWN" => "上次通道响应不确定，正在保护等待；请稍后读取状态，不要重发修改",
+            "AIR6_DIAL_UNAVAILABLE" => "Air 6 拨号接口暂不可用",
+            "AIR6_DIAL_BUSY" => "另一个 Air 6 拨号操作正在进行",
             "WIFI_CHANNEL_UNSUPPORTED" => "该信道未由当前无线驱动开放，请重新读取可选信道",
             "WIFI_BANDWIDTH_UNSUPPORTED" => "该频宽未由当前无线驱动报告，请重新读取可选频宽",
             "WIFI_MODE_UNSUPPORTED" => "设备未开放该 WiFi 代际，请重新读取可选模式",

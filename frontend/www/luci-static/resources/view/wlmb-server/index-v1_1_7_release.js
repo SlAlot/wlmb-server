@@ -5,6 +5,7 @@
 'require poll';
 'require ui';
 
+var dialRPC = rpc.declare({ object: 'network-panel', method: 'dial_control', params: ['action', 'apn', 'ipType', 'automaticApn'] });
 var statusRPC = rpc.declare({ object: 'network-panel', method: 'status', params: ['modem'] });
 var settingsRPC = rpc.declare({ object: 'network-panel', method: 'settings' });
 var refreshRPC = rpc.declare({ object: 'network-panel', method: 'refresh', params: ['modem'] });
@@ -188,10 +189,10 @@ return view.extend({
         this.stopButton.isBlocked = this.restartButton.isBlocked = function() { return self.readonly || !self.runtime.running; };
         this.boot = toggle('开机自动启动', !!this.runtime.bootEnabled, function(value) { return self.control('boot', value); });
         var controls = card('运行控制', [
-            row('开启网络面板', '只控制本插件，不影响拨号和路由器供网', E('div', { 'class': 'np-actions' }, [this.startButton, this.stopButton, this.restartButton])),
+            row('开启网络面板', '管理网络面板服务', E('div', { 'class': 'np-actions' }, [this.startButton, this.stopButton, this.restartButton])),
             row('开机自动启动', '关闭后仍可手动启动', this.boot), this.controlHint]);
-        this.overview = E('div'); this.cells = E('div'); this.networks = E('div'); this.flow = E('div');
-        this.pages = [E('div', {}, [this.overview]), this.cells, this.consolePage(), E('div',{},[controls,this.settingsPage(data[2])]), this.networks, this.lockPage(), this.smsPage(), this.forwardPage(),this.flow];
+        this.overview = E('div'); this.dialPanel = this.createDialPanel(); this.cells = E('div'); this.networks = E('div'); this.flow = E('div');
+        this.pages = [E('div', {}, [this.dialPanel, this.overview]), this.cells, this.consolePage(), E('div',{},[controls,this.settingsPage(data[2])]), this.networks, this.lockPage(), this.smsPage(), this.forwardPage(),this.flow];
         var tabs = E('div', { 'class': 'np-tabs', role: 'tablist', 'aria-label': '网络面板功能' });
         this.tabs = tabs;
         this.activePage = 0;
@@ -441,8 +442,69 @@ return view.extend({
             if(value&&self.selected===modem){self.imsOverride={modem:modem,at:Date.now(),state:value.settings};ui.addNotification(null,E('p',{},'配置已读回；不代表已经生效或短信送达。不自动重连供网。'));}
         }).finally(function(){self.imsBusy=false;self.draw(self.snapshot);});
     },
+    createDialPanel: function() {
+        var self = this;
+        var state = E('p', { role: 'status' });
+        var apn = E('input', { type: 'text', class: 'np-input', maxlength: 100, 'aria-label': 'APN' });
+        var ipType = E('select', { class: 'np-input', 'aria-label': 'IP 协议' }, [
+            E('option', {value: '1'}, 'IPv4'), E('option', {value: '2'}, 'IPv6'), E('option', {value: '3'}, 'IPv4/IPv6')
+        ]);
+        var auto = E('input', { type: 'checkbox', 'aria-label': '自动 APN' });
+        function apply(action) {
+            self.dialBusy = true;
+            self.syncDialPanel(self.snapshot);
+            return task(dialRPC(action, apn.value.trim(), Number(ipType.value), auto.checked))
+                .then(function() {
+                    self.dialDirty = false;
+                    ui.addNotification(null, E('p', {}, '拨号请求已提交，连接状态以设备回报为准。'));
+                    return self.update(true);
+                }).finally(function() {
+                    self.dialBusy = false;
+                    self.syncDialPanel(self.snapshot);
+                });
+        }
+        var connect = button('连接', function() { return apply('connect'); }, 'primary');
+        var disconnect = button('断开', function() { return apply('disconnect'); }, 'outline');
+        var save = button('保存并连接', function() { return apply('apply'); }, 'primary');
+        [apn, ipType, auto].forEach(function(input) {
+            input.addEventListener('input', function() {
+                self.dialDirty = true;
+                self.syncDialPanel(self.snapshot);
+            });
+        });
+        this.dial = {state: state, apn: apn, ipType: ipType, auto: auto, connect: connect, disconnect: disconnect, save: save};
+        return card('蜂窝拨号', [
+            state, row('自动 APN', '', auto), row('APN', '', apn), row('IP 协议', '', ipType),
+            E('div', { class: 'np-actions' }, [connect, disconnect, save])
+        ]);
+    },
+    syncDialPanel: function(status) {
+        var dial = status.dial || {};
+        var control = this.dial;
+        var visible = status.connection && status.connection.mode === 'air6-mipc';
+        this.dialPanel.hidden = !visible;
+        if (!visible) return;
+        var errors = (dial.errors || []).map(function(item) { return item.code; }).filter(Boolean);
+        control.state.textContent = dial.unavailable ? '拨号接口暂不可用' :
+            dial.up ? '已连接' + (dial.device ? ' · ' + dial.device : '') :
+            dial.pending ? '正在连接' : errors.length ? '连接失败 · ' + errors.join('、') : '未连接';
+        if (!this.dialDirty && !dial.unavailable) {
+            control.apn.value = dial.apn || '';
+            control.ipType.value = String(dial.ipType || 3);
+            control.auto.checked = dial.automaticApn === true;
+        }
+        var blocked = !!(this.readonly || this.dialBusy || status.failure || dial.unavailable);
+        control.connect.isBlocked = function() { return blocked || dial.up || dial.pending; };
+        control.disconnect.isBlocked = function() { return blocked || !dial.up && !dial.pending; };
+        control.save.isBlocked = function() { return blocked || !control.auto.checked && !control.apn.value.trim(); };
+        [control.connect, control.disconnect, control.save].forEach(function(item) {
+            item.disabled = !!item.busy || !!item.isBlocked();
+        });
+        control.apn.disabled = control.ipType.disabled = control.auto.disabled = blocked;
+    },
     draw: function(status) {
         this.snapshot = status;
+        this.syncDialPanel(status);
         this.native = status.backend === 'rust' || this.runtime.backend === 'rust';
         var capabilities = status.capabilities || {};
         this.capabilities = capabilities;
@@ -500,14 +562,14 @@ return view.extend({
         if(!capabilities.sms)this.smsRows.textContent='短信通道暂未就绪。请检查独立端点或现有兼容通道；不会抢占串口。';
         if(capabilities.sms && status.smsMode === 'compat-read-only' && this.smsLoadedModem !== this.selected)this.smsRows.textContent='当前可尝试读取短信；此兼容通道仅读取 / 转发，发送和删除未开放。若读取失败，会显示固件实际拒绝的原因，不将整个短信功能标为不支持。';
         this.interval.disabled = this.unsafe.input.disabled = capabilities.configure === false || this.readonly;
-        this.controlHint.textContent = this.runtime.failure || (running ? '页面共用后台快照，不重复查询模组。' : '服务已停止，可在上方重新启动。WiFi 和拨号继续由原系统管理。');
+        this.controlHint.textContent = this.runtime.failure || (running ? '页面共用后台快照，不重复查询模组。' : '服务已停止，可在上方重新启动。');
         var modem = rows.find(function(item) { return item.id === status.selectedModem; });
         var system = status.system || {}, memory = system.memory || {}, rates = system.network && system.network.rates || {};
         var metrics = ['rsrp', 'rsrq', 'sinr', 'rssi'].filter(function(key) { return key !== 'rssi' || primary[key] != null; });
         var signal = card(system.board && (system.board.model || system.board.board_name) || 'OpenWrt 设备', [
             E('div', { 'class': 'np-metrics' }, metrics.map(function(key) { return E('div', { 'class': 'np-metric' }, [E('span', { 'class': 'np-hint' }, key.toUpperCase()), E('strong', { 'class': 'np-value' }, text(primary[key])), E('small', {}, key === 'rsrp' || key === 'rssi' ? ' dBm' : ' dB')]); })),
             E('p', { 'class': 'np-desc' }, text(primary.networkMode) + ' · ' + band(primary) + ' · PCI ' + text(primary.pci) + ' · ARFCN ' + text(primary.channel)),
-            !modem ? E('div', { 'class': 'np-notice' }, running ? '未发现可查询模组。按教程检查独立 AT 端点，不需要重新拨号。' : '启动服务后自动读取设备信息。') : modem.infoTransport === 'luoye-modem-cache' ? E('div', { 'class': 'np-notice' }, '已接入落叶小通魔改的 modem；参数来自原组件缓存，邻区按已核验的只读事务能力提供，短信与锁定暂不开放。') : modem.infoTransport === 'qmodem-rpc' ? E('div', { 'class': 'np-notice' }, '正在复用 QModem 信息接口；短信与锁定功能按实际通道能力提供。') : modem.transport === 'dedicated' ? (modem.channelReady ? E('span') : E('div', { 'class': 'np-notice' }, '独立 AT 端点未就绪：' + text(modem.channelState) + '。不会抢占串口或改拨号。')) : !modem.shared ? E('div', { 'class': 'np-notice' }, '共享 AT 通道未就绪，且未检测到兼容的信息接口。不会抢占串口或改拨号。') : E('span'),
+            !modem ? E('div', { 'class': 'np-notice' }, running ? '未发现可查询模组。按教程检查独立 AT 端点，不需要重新拨号。' : '启动服务后自动读取设备信息。') : modem.infoTransport === 'air6-mipc' ? E('span') : modem.infoTransport === 'luoye-modem-cache' ? E('div', { 'class': 'np-notice' }, '已接入落叶小通魔改的 modem；参数来自原组件缓存，邻区按已核验的只读事务能力提供，短信与锁定暂不开放。') : modem.infoTransport === 'qmodem-rpc' ? E('div', { 'class': 'np-notice' }, '正在复用 QModem 信息接口；短信与锁定功能按实际通道能力提供。') : modem.transport === 'dedicated' ? (modem.channelReady ? E('span') : E('div', { 'class': 'np-notice' }, '独立 AT 端点未就绪：' + text(modem.channelState) + '。不会抢占串口或改拨号。')) : !modem.shared ? E('div', { 'class': 'np-notice' }, '共享 AT 通道未就绪，且未检测到兼容的信息接口。不会抢占串口或改拨号。') : E('span'),
             radio.pending ? E('p', { 'class': 'np-hint np-loading-status', role:'status' }, [E('span', { 'class':'np-spinner', 'aria-hidden':'true' }), '后台正在更新，先展示已读数据。']) : radio.stale ? E('p', { 'class':'np-hint' }, '数据已过期，请检查模组端点。') : E('span'),
             status.failure ? E('p', { 'class': 'np-notice' }, status.failure) : E('span'),
             E('span')]);

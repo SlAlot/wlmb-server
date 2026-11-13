@@ -5,7 +5,7 @@ WLMB_FEED_DIR:=$(abspath $(realpath $(CURDIR))/../..)
 
 PKG_NAME:=wlmb-server
 PKG_VERSION:=1.1.7
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_MAINTAINER:=SlAlot
 PKG_LICENSE:=LicenseRef-WLMB-NonCommercial
 PKG_LICENSE_FILES:=LICENSE
@@ -36,7 +36,7 @@ endef
 
 define Package/wlmb-server/description
   Network Panel Rust backend and LuCI WebUI, built from the current feed.
-  Shared modem interfaces and protected standalone discovery; no dialer takeover.
+  Shared modem interfaces, protected standalone discovery and SoftBank Air 6 dialing.
 endef
 
 define Package/wlmb-server/conffiles
@@ -68,6 +68,7 @@ define Package/wlmb-server/install
 	$(CP) $(PKG_BUILD_DIR)/frontend/. $(1)/
 	$(CP) $(PKG_BUILD_DIR)/packaging/files/. $(1)/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/packaging/files/etc/init.d/wlmb-server $(1)/etc/init.d/wlmb-server
+	chmod 755 $(1)/lib/netifd/proto/wlmb_air6.sh
 	$(INSTALL_CONF) $(PKG_BUILD_DIR)/packaging/files/etc/config/network_panel $(1)/etc/config/network_panel
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/LICENSE $(1)/usr/share/wlmb-server/LICENSE
 endef

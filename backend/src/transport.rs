@@ -142,7 +142,8 @@ pub(crate) fn allowed(object: &str, method: &str) -> bool {
         .contains(&method),
         "system" => method == "board",
         "luci" => method == "getFeatures",
-        "network.interface" => method == "dump",
+        "network.interface" => matches!(method, "dump" | "notify_proto"),
+        "network.interface.modem5g" => matches!(method, "status" | "up" | "down"),
         "network.wireless" => method == "status",
         "network" => method == "reload",
         "network.interface.lan" => method == "status",
@@ -243,8 +244,11 @@ pub(crate) fn process_capture(
         "/etc/init.d/wlmb-server",
         "/bin/ubus",
         "/bin/date",
+        "/usr/bin/air6-nw-api",
+        "/usr/bin/mipc_wan_cli",
     ]
     .contains(&program)
+        && !(program == "/bin/busybox" && args.first() == Some(&"pidof") && args.len() == 2)
         && !modem_tool
         || timeout.is_zero()
         || timeout > Duration::from_secs(30)

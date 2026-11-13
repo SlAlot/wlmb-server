@@ -27,6 +27,7 @@ fn unavailable() -> PanelError {
 pub fn methods() -> Value {
     json!({
         "status":{"modem":"","ubus_rpc_session":""},
+        "dial_control":{"action":"","apn":"","ipType":32,"automaticApn":false,"ubus_rpc_session":""},
         "settings":{"ubus_rpc_session":""},"diagnostics":{"ubus_rpc_session":""},
         "service_status":{"ubus_rpc_session":""},
         "service_control":{"action":"","enabled":false,"ubus_rpc_session":""},

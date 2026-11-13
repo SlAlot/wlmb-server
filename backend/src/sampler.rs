@@ -319,6 +319,7 @@ impl Sampler {
         let key = id(&entry.modem)?;
         if entry.modem["infoTransport"] == "qmodem-rpc"
             || entry.modem["infoTransport"] == crate::luoye_info::PROVIDER
+            || entry.modem["infoTransport"] == crate::air6::PROVIDER
         {
             let value = self
                 .source
@@ -706,6 +707,7 @@ impl Sampler {
                     e.modem["shared"] == true
                         || e.modem["infoTransport"] == "qmodem-rpc"
                         || e.modem["infoTransport"] == crate::luoye_info::PROVIDER
+                        || e.modem["infoTransport"] == crate::air6::PROVIDER
                         || e.modem["transport"] == "dedicated"
                             && e.modem["channelReady"] == true
                             && e.modem["identityVerified"] == true

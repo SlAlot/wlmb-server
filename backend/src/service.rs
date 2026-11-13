@@ -65,6 +65,10 @@ impl NativeService {
                 status["version"] = json!(VERSION);
                 status["backend"] = json!("rust");
                 status["connection"] = self.connection.lock().map_err(|_| failed())?.clone();
+                if status["connection"]["mode"] == crate::air6::PROVIDER {
+                    status["dial"] = crate::air6::status(self.bus.as_ref())
+                        .unwrap_or_else(|_| json!({"unavailable":true}));
+                }
                 let mut system = self.system.lock().map_err(|_| failed())?.clone();
                 let at = wall_ms();
                 system["stale"] = json!(
@@ -183,7 +187,9 @@ impl NativeService {
                     .iter()
                     .find(|r| r["id"] == key)
                     .map(|r| {
-                        if r["infoTransport"] == crate::luoye_info::PROVIDER {
+                        if r["infoTransport"] == crate::air6::PROVIDER {
+                            json!({"signal":true,"neighbors":true})
+                        } else if r["infoTransport"] == crate::luoye_info::PROVIDER {
                             json!({"signal":true,"carrierAggregation":true,"neighbors":r["infoNeighborQuery"]==true})
                         } else if r["infoTransport"] == "qmodem-rpc" {
                             json!({"signal":true,"carrierAggregation":r["infoAtParams"].is_null() || r["infoCarrierQuery"]==true,"neighbors":r["infoNeighborQuery"]==true})
@@ -275,6 +281,17 @@ impl NativeService {
                         *settings.lock().map_err(|_| failed())? = value;
                         Ok(json!({"saved":true}))
                     },
+                )
+            }
+            "dial_control" => {
+                if self.connection.lock().map_err(|_| failed())?["mode"] != crate::air6::PROVIDER {
+                    return Err(PanelError::new("AIR6_DIAL_UNAVAILABLE", 422));
+                }
+                let operation = crate::air6::Operation::parse(&body)?;
+                let bus = self.bus.clone();
+                self.actions.submit(
+                    owner.ok_or_else(|| PanelError::new("SESSION_EXPIRED", 401))?,
+                    move || operation.run(bus.as_ref()),
                 )
             }
             "refresh" => {
@@ -865,9 +882,10 @@ pub fn run_auto() -> Result<()> {
 }
 fn run(requested_standalone: Option<bool>) -> Result<()> {
     let bus = Arc::new(NativeBus::default());
-    let luoye_detected = crate::luoye::SystemIo::detected(Path::new("/"));
+    let air6 = crate::air6::detected();
+    let luoye_detected = !air6 && crate::luoye::SystemIo::detected(Path::new("/"));
     let qmodem = crate::connection_mode::qmodem_installed(Path::new("/"));
-    let glinet_detected = requested_standalone != Some(true)
+    let glinet_detected = !air6 && requested_standalone != Some(true)
         && !luoye_detected
         && !qmodem
         && crate::glinet::Glinet::detected(bus.as_ref())
@@ -882,7 +900,7 @@ fn run(requested_standalone: Option<bool>) -> Result<()> {
         .then(|| crate::luoye::Luoye::new(Arc::new(crate::luoye::SystemIo::new())));
     let glinet = (backend == crate::connection_mode::Backend::Glinet)
         .then(|| crate::glinet::Glinet::new(bus.clone()));
-    let standalone = backend == crate::connection_mode::Backend::Independent;
+    let standalone = !air6 && backend == crate::connection_mode::Backend::Independent;
     let lan = lan(bus.as_ref())?;
     let listener = TcpListener::bind((lan.address, API_PORT))
         .map_err(|_| PanelError::new("PORT_BUSY", 503))?;
@@ -891,7 +909,7 @@ fn run(requested_standalone: Option<bool>) -> Result<()> {
             crate::independent_at::SystemHardware,
         ))
     });
-    let broker = (!standalone && glinet.is_none() && luoye.is_none()).then(|| {
+    let broker = (!air6 && !standalone && glinet.is_none() && luoye.is_none()).then(|| {
         Arc::new(Broker::new(
             bus.clone(),
             Arc::new(SystemDiscovery {
@@ -899,7 +917,9 @@ fn run(requested_standalone: Option<bool>) -> Result<()> {
             }),
         ))
     });
-    let source: Arc<dyn crate::sampler::Source> = if let Some(source) = &luoye {
+    let source: Arc<dyn crate::sampler::Source> = if air6 {
+        Arc::new(crate::air6::Air6)
+    } else if let Some(source) = &luoye {
         source.clone()
     } else if let Some(source) = &glinet {
         source.clone()
@@ -976,12 +996,12 @@ fn run(requested_standalone: Option<bool>) -> Result<()> {
     )?;
     let cleanup = service.clone();
     *service.connection.lock().map_err(|_| failed())? = json!({
-        "mode":if standalone {"independent"} else {"shared"},
+        "mode":if air6 {crate::air6::PROVIDER} else if standalone {"independent"} else {"shared"},
         "qmodemDetected":qmodem,
         "modemCacheDetected":luoye_detected,
         "selection":"startup",
         "busyPortPolicy":"never-steal",
-        "sharedService":if luoye.is_some() {json!(crate::luoye_info::PROVIDER)} else if standalone {Value::Null} else if glinet.is_some() {json!("glinet-modem-at")} else {json!("at-daemon")}
+        "sharedService":if air6 {json!(crate::air6::PROVIDER)} else if luoye.is_some() {json!(crate::luoye_info::PROVIDER)} else if standalone {Value::Null} else if glinet.is_some() {json!("glinet-modem-at")} else {json!("at-daemon")}
     });
     let stop = Arc::new(AtomicBool::new(false));
     let term = signal_hook::flag::register(signal_hook::consts::SIGTERM, stop.clone())
