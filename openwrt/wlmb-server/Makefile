@@ -9,13 +9,19 @@ PKG_RELEASE:=2
 PKG_MAINTAINER:=SlAlot
 PKG_LICENSE:=LicenseRef-WLMB-NonCommercial
 PKG_LICENSE_FILES:=LICENSE
-PKG_BUILD_DEPENDS:=rust/host
+ifeq ($(strip $(WLMB_PREBUILT_DIR)),)
+  PKG_BUILD_DEPENDS:=rust/host
+endif
 PKG_BUILD_PARALLEL:=1
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 PKG_FILE_DEPENDS:=$(WLMB_FEED_DIR)/backend/Cargo.toml \
 	$(WLMB_FEED_DIR)/backend/Cargo.lock $(WLMB_FEED_DIR)/backend/src \
 	$(WLMB_FEED_DIR)/docs/model-bands.json $(WLMB_FEED_DIR)/frontend \
 	$(WLMB_FEED_DIR)/packaging/files $(WLMB_FEED_DIR)/LICENSE
+
+ifneq ($(strip $(WLMB_PREBUILT_DIR)),)
+  PKG_FILE_DEPENDS+=$(WLMB_PREBUILT_DIR)/wlmb-server
+endif
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -56,10 +62,18 @@ endef
 define Build/Configure
 endef
 
+ifneq ($(strip $(WLMB_PREBUILT_DIR)),)
+define Build/Compile
+	test "$(ARCH)" = aarch64
+	$(INSTALL_DIR) $(PKG_INSTALL_DIR)/bin
+	$(INSTALL_BIN) $(WLMB_PREBUILT_DIR)/wlmb-server $(PKG_INSTALL_DIR)/bin/
+endef
+else
 define Build/Compile
 	test -f "$(RUST_INCLUDE_DIR)/rust-package.mk" || { echo '请更新 packages Feed 并安装 rust 构建依赖'; exit 1; }
 	$(call Build/Compile/Cargo,backend)
 endef
+endif
 
 define Package/wlmb-server/install
 	$(INSTALL_DIR) $(1)/usr/sbin $(1)/usr/libexec/rpcd $(1)/usr/share/wlmb-server
