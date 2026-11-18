@@ -23,6 +23,43 @@ fn failed() -> PanelError {
     PanelError::new("SYSTEM_UNAVAILABLE", 503)
 }
 struct AuthBus(Arc<dyn Bus>);
+#[cfg(test)]
+mod traffic_contract {
+    use super::*;
+    struct NoIo;
+    impl Bus for NoIo {
+        fn call(&self, _: &str, _: &str, _: Value, _: Duration) -> Result<Value> {
+            panic!("unexpected bus access")
+        }
+    }
+    impl crate::sampler::Source for NoIo {
+        fn modems(&self) -> Result<Vec<Value>> {
+            panic!("unexpected modem discovery")
+        }
+        fn query(&self, _: &str, _: &str, _: &str, _: &str) -> Result<String> {
+            panic!("unexpected modem query")
+        }
+    }
+    #[test]
+    fn local_view_matches_full_cached_counters() -> Result<()> {
+        let fake = Arc::new(NoIo);
+        let service = NativeService::new(fake.clone(), Sampler::new(fake));
+        let at = wall_ms();
+        *service.system.lock().map_err(|_| failed())? = json!({"observedAtMs":at,"uptimeSeconds":1234,
+            "network":{"interface":"wan","source":"l3-interface-counter-delta","rates":{"downloadBytesPerSecond":0,"uploadBytesPerSecond":7},"sinceBootRxBytes":123,"sinceBootTxBytes":456},
+            "board":{"model":"fixture"}});
+        let full = service.local("status", json!({}))?;
+        let sample = service.local("status", json!({"view":"traffic-counters-v1"}))?;
+        assert_eq!(sample["view"], "traffic-counters-v1");
+        for field in ["network", "observedAtMs", "stale", "uptimeSeconds"] {
+            assert_eq!(sample["system"][field], full["system"][field]);
+        }
+        assert!(sample.get("radio").is_none());
+        assert!(sample["system"].get("board").is_none());
+        assert!(full.get("capabilities").is_some());
+        Ok(())
+    }
+}
 impl Ubus for AuthBus {
     fn call(&mut self, object: &str, method: &str, params: Value) -> Result<Value> {
         self.0.call(object, method, params, Duration::from_secs(5))
@@ -46,6 +83,10 @@ pub struct NativeService {
 impl NativeService {
     pub fn local(&self, method: &str, body: Value) -> Result<Value> {
         use sha2::{Digest, Sha256};
+        if method == "status" && body["view"] == "traffic-counters-v1" {
+            let system = self.system.lock().map_err(|_| failed())?;
+            return Ok(telemetry::traffic_snapshot(&system, wall_ms()));
+        }
         let owner = body["ubus_rpc_session"]
             .as_str()
             .filter(|s| s.len() == 32 && s.bytes().all(|b| b.is_ascii_hexdigit()))
