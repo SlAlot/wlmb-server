@@ -90,6 +90,7 @@ pub fn queries(model: &str) -> Vec<String> {
                     }
                 )
             })
+            .chain((catalog::normalize(model) == "rg520n-eb").then(|| "AT+CGMR".to_owned()))
             .collect(),
         Some(Kind::Qcfg) => vec!["AT+QCFG=\"band\"".into()],
         Some(Kind::FoxconnCaret) => vec!["AT^BAND_PREF?".into()],
@@ -189,7 +190,17 @@ pub fn parse(model: &str, replies: &BTreeMap<String, String>) -> Result<Value> {
     let k = kind(model).ok_or_else(invalid)?;
     let mut groups = serde_json::Map::new();
     let mut wire = json!({});
-    for query in queries(model) {
+    // This firmware reports additional preference values beyond the published RF profile.
+    // Keep them in the restore set for this firmware only.
+    let rg520n_preferences = catalog::normalize(model) == "rg520n-eb"
+        && replies
+            .get("AT+CGMR")
+            .and_then(|raw| payload(raw, "AT+CGMR").ok())
+            .is_some_and(|lines| lines == ["RG520NEBDFR03A05M4G_TP"]);
+    for query in queries(model)
+        .into_iter()
+        .filter(|query| query != "AT+CGMR")
+    {
         let Some(raw) = replies.get(&query) else {
             continue;
         };
@@ -219,7 +230,20 @@ pub fn parse(model: &str, replies: &BTreeMap<String, String>) -> Result<Value> {
                     })
                     .ok_or_else(invalid)?;
                 let bands = list(bands, ':')?;
-                groups.insert(rat.into(), group(model, rat, bands)?);
+                let mut parsed = group(model, rat, bands)?;
+                if rg520n_preferences {
+                    let mut available = allowed(model, rat)?;
+                    available.extend_from_slice(match rat {
+                        "LTE" => &[34, 39],
+                        "NR" => &[79],
+                        _ => &[],
+                    });
+                    available.sort_unstable();
+                    available.dedup();
+                    parsed["availableBands"] = json!(available);
+                    parsed["availableSource"] = json!("verified-firmware-profile");
+                }
+                groups.insert(rat.into(), parsed);
             }
             Kind::Qcfg => {
                 if lines.len() != 1 {

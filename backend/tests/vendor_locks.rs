@@ -641,3 +641,36 @@ fn fibocom_single_global_cell_slot_binds_previous_rat_when_replacing() {
     );
     assert_eq!(control.read("m1", true).unwrap()["cellWriteScope"], "modem");
 }
+
+#[test]
+fn rg520n_eb_china_firmware_preserves_observed_preference_bands() {
+    let model = "rg520n-eb";
+    let mut replies = BTreeMap::from([
+        (
+            "AT+CGMR".into(),
+            "AT+CGMR\r\r\nRG520NEBDFR03A05M4G_TP\r\nOK\r\n".into(),
+        ),
+        (
+            "AT+QNWPREFCFG=\"lte_band\"".into(),
+            "+QNWPREFCFG: \"lte_band\",1:3:5:7:8:20:28:32:34:38:39:40:41:42:43:71\r\nOK\r\n".into(),
+        ),
+        (
+            "AT+QNWPREFCFG=\"nr5g_band\"".into(),
+            "+QNWPREFCFG: \"nr5g_band\",1:3:5:7:8:20:28:38:40:41:71:75:76:77:78:79\r\nOK\r\n"
+                .into(),
+        ),
+        (
+            "AT+QNWPREFCFG=\"nsa_nr5g_band\"".into(),
+            "+QNWPREFCFG: \"nsa_nr5g_band\",1:3:5:7:8:20:28:38:40:41:71:75:76:77:78\r\nOK\r\n"
+                .into(),
+        ),
+    ]);
+    let state = bands::parse(model, &replies).unwrap();
+    assert_eq!(state["groups"]["LTE"]["mode"], 0);
+    assert_eq!(state["groups"]["NR"]["mode"], 0);
+    assert_eq!(state["groups"]["NR_NSA"]["mode"], 0);
+    let reset = json!({"rat":"NR","mode":"auto","entries":[],"target":"band"});
+    assert!(bands::commands(model, &reset, &state).unwrap()[0].ends_with(":78:79"));
+    replies.remove("AT+CGMR");
+    assert!(bands::parse(model, &replies).is_err());
+}
