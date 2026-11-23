@@ -116,6 +116,12 @@ pub struct Accounting {
     date: Option<Date>,
     today: u64,
     month: u64,
+    today_rx: u64,
+    today_tx: u64,
+    month_rx: u64,
+    month_tx: u64,
+    today_direction_observed: bool,
+    month_direction_observed: bool,
     baseline: Option<(String, u64, u64)>,
     clock_valid: bool,
     pub persistence_ok: bool,
@@ -147,7 +153,8 @@ impl Accounting {
                 ..Self::default()
             });
         }
-        if v["version"] != 1 {
+        let version = v["version"].as_u64().ok_or_else(bad)?;
+        if version != 1 {
             return Err(bad());
         }
         let date = if v["date"].is_null() {
@@ -157,28 +164,57 @@ impl Accounting {
         };
         let today = v["todayBytes"].as_u64().ok_or_else(bad)?;
         let month = v["monthBytes"].as_u64().ok_or_else(bad)?;
+        let complete = |flag: &str, rx: &str, tx: &str, total| {
+            v[flag] == true
+                && v[rx]
+                    .as_u64()
+                    .and_then(|down| down.checked_add(v[tx].as_u64()?))
+                    == Some(total)
+        };
         Ok(Self {
             budget: Budget::decode(&v["budget"])?,
             date,
             today,
             month,
+            today_rx: v["todayRxBytes"].as_u64().unwrap_or(0),
+            today_tx: v["todayTxBytes"].as_u64().unwrap_or(0),
+            month_rx: v["monthRxBytes"].as_u64().unwrap_or(0),
+            month_tx: v["monthTxBytes"].as_u64().unwrap_or(0),
+            today_direction_observed: complete(
+                "todayDirectionObserved",
+                "todayRxBytes",
+                "todayTxBytes",
+                today,
+            ),
+            month_direction_observed: complete(
+                "monthDirectionObserved",
+                "monthRxBytes",
+                "monthTxBytes",
+                month,
+            ),
             persistence_ok: true,
             ..Self::default()
         })
     }
     pub fn checkpoint(&self) -> Result<Vec<u8>> {
         serde_json::to_vec(&json!({"version":1,"date":self.date.map(Date::text),"todayBytes":self.today,"monthBytes":self.month,
+            "todayRxBytes":self.today_rx,"todayTxBytes":self.today_tx,"monthRxBytes":self.month_rx,"monthTxBytes":self.month_tx,
+            "todayDirectionObserved":self.today_direction_observed,"monthDirectionObserved":self.month_direction_observed,
             "budget":self.budget.public(self.month,false)})).map_err(|_| bad())
     }
     pub fn configure(&mut self, next: Budget) {
         if self.budget.start != next.start {
             self.month = 0;
+            self.month_rx = 0;
+            self.month_tx = 0;
+            self.month_direction_observed = false;
         }
         self.budget = next;
     }
     pub fn sample(&mut self, date: Option<Date>, counters: Option<(&str, u64, u64)>) -> Result<()> {
         self.clock_valid = date.is_some_and(|d| self.date.is_none_or(|old| d >= old));
         let mut delta = 0;
+        let mut direction_delta = None;
         if let Some((name, rx, tx)) = counters {
             if let Some((old_name, old_rx, old_tx)) = &self.baseline {
                 if name == old_name {
@@ -186,6 +222,7 @@ impl Accounting {
                         (rx.checked_sub(*old_rx), tx.checked_sub(*old_tx))
                     {
                         delta = down.checked_add(up).ok_or_else(bad)?;
+                        direction_delta = Some((down, up));
                     }
                 }
             }
@@ -197,25 +234,52 @@ impl Accounting {
             return Ok(());
         }
         let d = date.ok_or_else(bad)?;
+        let mut today_can_start = self.today == 0 && !self.today_direction_observed;
+        let mut month_can_start = self.month == 0 && !self.month_direction_observed;
         if let Some(old) = self.date {
             if d.cycle(self.budget.start) != old.cycle(self.budget.start) {
                 self.month = 0;
+                self.month_rx = 0;
+                self.month_tx = 0;
+                self.month_direction_observed = false;
+                month_can_start = true;
             }
             if d != old {
                 self.today = 0;
+                self.today_rx = 0;
+                self.today_tx = 0;
+                self.today_direction_observed = false;
+                today_can_start = true;
             }
         }
         self.date = Some(d);
         self.today = self.today.checked_add(delta).ok_or_else(bad)?;
         self.month = self.month.checked_add(delta).ok_or_else(bad)?;
+        if let Some((down, up)) = direction_delta {
+            self.today_rx = self.today_rx.checked_add(down).ok_or_else(bad)?;
+            self.today_tx = self.today_tx.checked_add(up).ok_or_else(bad)?;
+            self.month_rx = self.month_rx.checked_add(down).ok_or_else(bad)?;
+            self.month_tx = self.month_tx.checked_add(up).ok_or_else(bad)?;
+            if today_can_start {
+                self.today_direction_observed = true;
+            }
+            if month_can_start {
+                self.month_direction_observed = true;
+            }
+        }
         self.observed = counters.is_some();
         Ok(())
     }
     pub fn public(&self) -> Value {
-        json!({"todayBytes":if self.clock_valid && self.observed {Some(self.today)} else {None},
-            "monthBytes":if self.clock_valid && self.observed {Some(self.month)} else {None},"date":self.date.map(Date::text),
-            "source":"plugin-single-wan-counter-delta","persistenceOk":self.persistence_ok,"clockValid":self.clock_valid,
-            "partialHistory":true,"boundaryAttribution":"sample-end"})
+        let ready = self.clock_valid && self.observed;
+        json!({"todayBytes":ready.then_some(self.today), "monthBytes":ready.then_some(self.month),
+            "todayRxBytes":if ready && self.today_direction_observed {Some(self.today_rx)} else {None},
+            "todayTxBytes":if ready && self.today_direction_observed {Some(self.today_tx)} else {None},
+            "monthRxBytes":if ready && self.month_direction_observed {Some(self.month_rx)} else {None},
+            "monthTxBytes":if ready && self.month_direction_observed {Some(self.month_tx)} else {None},
+            "directionObserved":ready && (self.today_direction_observed || self.month_direction_observed),
+            "date":self.date.map(Date::text), "source":"plugin-single-wan-counter-delta",
+            "persistenceOk":self.persistence_ok,"clockValid":self.clock_valid})
     }
     pub fn limit(&self) -> Value {
         self.budget

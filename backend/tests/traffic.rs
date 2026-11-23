@@ -14,6 +14,10 @@ fn real_delta_not_boot_counter_and_reset_or_interface_change_rebaseline() {
     a.sample(date("2026-10-10"), Some(("wan", 10100, 20200)))
         .unwrap();
     assert_eq!(a.public()["todayBytes"], 300);
+    assert_eq!(a.public()["todayRxBytes"], 100);
+    assert_eq!(a.public()["todayTxBytes"], 200);
+    assert_eq!(a.public()["monthRxBytes"], 100);
+    assert_eq!(a.public()["monthTxBytes"], 200);
     a.sample(date("2026-10-10"), Some(("wan", 1, 2))).unwrap();
     a.sample(date("2026-10-10"), Some(("usb", 1000, 2000)))
         .unwrap();
@@ -23,6 +27,8 @@ fn real_delta_not_boot_counter_and_reset_or_interface_change_rebaseline() {
     a.sample(date("2026-10-10"), Some(("usb", 1100, 2100)))
         .unwrap();
     assert_eq!(a.public()["monthBytes"], 300);
+    assert_eq!(a.public()["monthRxBytes"], 100);
+    assert_eq!(a.public()["monthTxBytes"], 200);
 }
 
 #[test]
@@ -53,6 +59,8 @@ fn cycle_day_year_and_clock_rollback_do_not_erase_history() {
     assert_eq!(a.public()["monthBytes"], 400);
     a.sample(date("2027-01-10"), Some(("wan", 550, 0))).unwrap();
     assert_eq!(a.public()["monthBytes"], 50);
+    assert_eq!(a.public()["monthRxBytes"], 50);
+    assert_eq!(a.public()["monthTxBytes"], 0);
 }
 #[test]
 fn checkpoints_restore_history_but_not_counter_or_clock_claims() {
@@ -68,6 +76,8 @@ fn checkpoints_restore_history_but_not_counter_or_clock_claims() {
         .unwrap();
     assert_eq!(b.public()["todayBytes"], 100);
     assert_eq!(b.public()["monthBytes"], 600);
+    assert_eq!(b.public()["todayRxBytes"], 100);
+    assert_eq!(b.public()["todayTxBytes"], 0);
 }
 #[test]
 fn budget_and_dates_fail_closed_without_panicking_on_unicode() {
@@ -104,11 +114,21 @@ fn legacy_checkpoint_preserves_totals_without_replaying_old_counters() {
     a.sample(date("2026-10-10"), Some(("eth2", 50000000100, 9000000200)))
         .unwrap();
     assert_eq!(a.public()["monthBytes"], 37050629626_u64);
+    assert!(a.public()["todayRxBytes"].is_null());
+    assert!(a.public()["monthTxBytes"].is_null());
     let mut b = Accounting::restore(&a.checkpoint().unwrap()).unwrap();
     b.sample(date("2026-10-11"), Some(("eth2", 99, 99)))
         .unwrap();
     assert_eq!(b.public()["todayBytes"], 0);
     assert_eq!(b.public()["monthBytes"], 37050629626_u64);
+    assert!(b.public()["todayRxBytes"].is_null());
+    assert!(b.public()["monthRxBytes"].is_null());
+    b.configure(Budget {
+        start: 5,
+        ..b.budget.clone()
+    });
+    assert!(b.public()["monthRxBytes"].is_null());
+    assert!(b.public()["monthTxBytes"].is_null());
 }
 
 #[test]

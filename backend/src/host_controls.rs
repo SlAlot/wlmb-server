@@ -575,6 +575,10 @@ impl HostControls {
         if stale {
             traffic["todayBytes"] = Value::Null;
             traffic["monthBytes"] = Value::Null;
+            traffic["todayRxBytes"] = Value::Null;
+            traffic["todayTxBytes"] = Value::Null;
+            traffic["monthRxBytes"] = Value::Null;
+            traffic["monthTxBytes"] = Value::Null;
         }
         limit["cutoffSupported"] = json!(!stale && guard_supported(&s.snapshot));
         limit["cutoffActive"] = json!(s.cutoff_active && !stale && !s.apply_error);

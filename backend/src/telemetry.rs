@@ -1,5 +1,23 @@
 //! 系统计数与真实采样差值；首次、回绕、接口变更或过期时不生成伪造速率。
 use serde_json::{Value, json};
+
+/// 供本机历史服务读取已缓存的默认出口计数和观测时间。
+pub fn traffic_snapshot(system: &Value, now: u64) -> Value {
+    let observed = system["observedAtMs"].as_u64();
+    let stale = observed.is_none_or(|at| now < at || now - at > 15_000);
+    let net = &system["network"];
+    let counters = net.is_object().then(|| {
+        json!({
+            "interface": net["interface"], "source": net["source"],
+            "rates": net["rates"], "sinceBootRxBytes": net["sinceBootRxBytes"],
+            "sinceBootTxBytes": net["sinceBootTxBytes"]
+        })
+    });
+    json!({"view":"traffic-counters-v1", "backend":"rust", "system":{
+        "observedAtMs": observed, "stale": stale, "uptimeSeconds":system["uptimeSeconds"],
+        "network":counters
+    }})
+}
 pub fn sample_delay(
     elapsed: std::time::Duration,
     period: std::time::Duration,
